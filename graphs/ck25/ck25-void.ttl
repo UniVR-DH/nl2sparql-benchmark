@@ -1,0 +1,222 @@
+@prefix rdf:         <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:        <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:         <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:         <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:     <http://purl.org/dc/terms/> .
+@prefix void:        <http://rdfs.org/ns/void#> .
+@prefix foaf:        <http://xmlns.com/foaf/0.1/> .
+
+<http://ld.company.org/>
+    a void:Dataset ;
+    dcterms:title "Corporate VoID Description" ;
+    void:sparqlEndpoint <http://157.27.26.146:7001> ;
+    void:triples "27035"^^xsd:integer ;
+    void:distinctSubjects "2693"^^xsd:integer ;
+    void:distinctObjects "2641"^^xsd:integer ;
+    void:classPartition
+        [ void:class <http://ld.company.org/prod-vocab/Price> ;
+          void:entities "1009"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/amount> ; void:triples "1009"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/currency> ; void:triples "1009"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "1009"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "1009"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/Hardware> ;
+          void:entities "1000"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/hasCategory> ; void:triples "2338"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/compatibleProduct> ; void:triples "1938"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/depth_mm> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/hasProductManager> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/hasSupplier> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/height_mm> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/id> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/price> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/weight_g> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/width_mm> ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "1000"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/reliabilityIndex> ; void:triples "912"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/Supplier> ;
+          void:entities "250"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/addressCountry> ; void:triples "250"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/addressCountryCode> ; void:triples "250"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/addressLocality> ; void:triples "250"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/id> ; void:triples "250"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "250"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "250"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "250"^^xsd:integer ] ,
+              [ void:property <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ; void:triples "248"^^xsd:integer ] ,
+              [ void:property <http://www.w3.org/2003/01/geo/wgs84_pos#long> ; void:triples "248"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/country> ; void:triples "227"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/BomPart> ;
+          void:entities "197"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/quantity> ; void:triples "199"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "199"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/hasPart> ; void:triples "197"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "197"^^xsd:integer ] ],
+        [ void:class <http://dbpedia.org/ontology/Country> ;
+          void:entities "63"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "63"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "63"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/Employee> ;
+          void:entities "47"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/areaOfExpertise> ; void:triples "142"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/email> ; void:triples "47"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/hasManager> ; void:triples "47"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/memberOf> ; void:triples "47"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "47"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "47"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "47"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/phone> ; void:triples "36"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/addressText> ; void:triples "31"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/ProductCategory> ;
+          void:entities "26"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "26"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "26"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "26"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/BillOfMaterial> ;
+          void:entities "20"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/hasBomPart> ; void:triples "197"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "20"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "20"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "20"^^xsd:integer ] ],
+        [ void:class owl:DatatypeProperty ;
+          void:entities "16"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "16"^^xsd:integer ] ,
+              [ void:property rdfs:comment ; void:triples "16"^^xsd:integer ] ,
+              [ void:property rdfs:isDefinedBy ; void:triples "16"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "16"^^xsd:integer ] ,
+              [ void:property rdfs:range ; void:triples "16"^^xsd:integer ] ,
+              [ void:property foaf:depiction ; void:triples "16"^^xsd:integer ] ,
+              [ void:property rdfs:domain ; void:triples "14"^^xsd:integer ] ],
+        [ void:class owl:ObjectProperty ;
+          void:entities "14"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "14"^^xsd:integer ] ,
+              [ void:property rdfs:comment ; void:triples "14"^^xsd:integer ] ,
+              [ void:property rdfs:domain ; void:triples "14"^^xsd:integer ] ,
+              [ void:property rdfs:isDefinedBy ; void:triples "14"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "14"^^xsd:integer ] ,
+              [ void:property rdfs:range ; void:triples "14"^^xsd:integer ] ,
+              [ void:property foaf:depiction ; void:triples "14"^^xsd:integer ] ],
+        [ void:class owl:Class ;
+          void:entities "13"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "13"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "13"^^xsd:integer ] ,
+              [ void:property foaf:depiction ; void:triples "13"^^xsd:integer ] ,
+              [ void:property rdfs:comment ; void:triples "12"^^xsd:integer ] ,
+              [ void:property rdfs:isDefinedBy ; void:triples "12"^^xsd:integer ] ,
+              [ void:property rdfs:subClassOf ; void:triples "4"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/Manager> ;
+          void:entities "9"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "9"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "9"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/email> ; void:triples "6"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/memberOf> ; void:triples "6"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "6"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/phone> ; void:triples "6"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/addressText> ; void:triples "4"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/Service> ;
+          void:entities "9"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/eligibleFor> ; void:triples "2093"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/hasProductManager> ; void:triples "9"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/id> ; void:triples "9"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "9"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/price> ; void:triples "9"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "9"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "9"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/hasCategory> ; void:triples "1"^^xsd:integer ] ],
+        [ void:class owl:AnnotationProperty ;
+          void:entities "8"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "8"^^xsd:integer ] ,
+              [ void:property rdfs:isDefinedBy ; void:triples "8"^^xsd:integer ] ],
+        [ void:class <http://ld.company.org/prod-vocab/Department> ;
+          void:entities "6"^^xsd:integer ;
+          void:propertyPartition [ void:property <http://ld.company.org/prod-vocab/responsibleFor> ; void:triples "58"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/id> ; void:triples "6"^^xsd:integer ] ,
+              [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "6"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "6"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "6"^^xsd:integer ] ],
+        [ void:class dcterms:Agent ;
+          void:entities "3"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "6"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "2"^^xsd:integer ] ,
+              [ void:property foaf:name ; void:triples "1"^^xsd:integer ] ],
+        [ void:class foaf:Person ;
+          void:entities "2"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "4"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "2"^^xsd:integer ] ],
+        [ void:class void:Dataset ;
+          void:entities "1"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "1"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "1"^^xsd:integer ] ],
+        [ void:class owl:Ontology ;
+          void:entities "1"^^xsd:integer ;
+          void:propertyPartition [ void:property void:vocabulary ; void:triples "2"^^xsd:integer ] ,
+              [ void:property <http://creativecommons.org/ns#license> ; void:triples "1"^^xsd:integer ] ,
+              [ void:property dcterms:contributor ; void:triples "1"^^xsd:integer ] ,
+              [ void:property dcterms:created ; void:triples "1"^^xsd:integer ] ,
+              [ void:property dcterms:creator ; void:triples "1"^^xsd:integer ] ,
+              [ void:property dcterms:modified ; void:triples "1"^^xsd:integer ] ,
+              [ void:property dcterms:publisher ; void:triples "1"^^xsd:integer ] ,
+              [ void:property <http://purl.org/vocab/vann/preferredNamespacePrefix> ; void:triples "1"^^xsd:integer ] ,
+              [ void:property <http://purl.org/vocab/vann/preferredNamespaceUri> ; void:triples "1"^^xsd:integer ] ,
+              [ void:property rdf:type ; void:triples "1"^^xsd:integer ] ,
+              [ void:property rdfs:comment ; void:triples "1"^^xsd:integer ] ,
+              [ void:property rdfs:isDefinedBy ; void:triples "1"^^xsd:integer ] ,
+              [ void:property rdfs:label ; void:triples "1"^^xsd:integer ] ,
+              [ void:property owl:versionInfo ; void:triples "1"^^xsd:integer ] ],
+        [ void:class foaf:Organization ;
+          void:entities "1"^^xsd:integer ;
+          void:propertyPartition [ void:property rdf:type ; void:triples "2"^^xsd:integer ] ,
+              [ void:property foaf:name ; void:triples "1"^^xsd:integer ] ] ;
+    void:propertyPartition
+        [ void:property rdf:type ; void:triples "2695"^^xsd:integer ],
+        [ void:property rdfs:label ; void:triples "2686"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/hasCategory> ; void:triples "2339"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/eligibleFor> ; void:triples "2093"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/compatibleProduct> ; void:triples "1938"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/name> ; void:triples "1364"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/id> ; void:triples "1265"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/price> ; void:triples "1009"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/hasProductManager> ; void:triples "1009"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/currency> ; void:triples "1009"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/amount> ; void:triples "1009"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/depth_mm> ; void:triples "1000"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/width_mm> ; void:triples "1000"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/weight_g> ; void:triples "1000"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/hasSupplier> ; void:triples "1000"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/height_mm> ; void:triples "1000"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/reliabilityIndex> ; void:triples "912"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/addressLocality> ; void:triples "250"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/addressCountryCode> ; void:triples "250"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/addressCountry> ; void:triples "250"^^xsd:integer ],
+        [ void:property <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ; void:triples "248"^^xsd:integer ],
+        [ void:property <http://www.w3.org/2003/01/geo/wgs84_pos#long> ; void:triples "248"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/country> ; void:triples "227"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/quantity> ; void:triples "199"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/hasPart> ; void:triples "197"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/hasBomPart> ; void:triples "197"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/areaOfExpertise> ; void:triples "142"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/responsibleFor> ; void:triples "58"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/memberOf> ; void:triples "53"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/email> ; void:triples "53"^^xsd:integer ],
+        [ void:property rdfs:isDefinedBy ; void:triples "51"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/hasManager> ; void:triples "47"^^xsd:integer ],
+        [ void:property foaf:depiction ; void:triples "43"^^xsd:integer ],
+        [ void:property rdfs:comment ; void:triples "43"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/phone> ; void:triples "42"^^xsd:integer ],
+        [ void:property <http://ld.company.org/prod-vocab/addressText> ; void:triples "35"^^xsd:integer ],
+        [ void:property rdfs:range ; void:triples "30"^^xsd:integer ],
+        [ void:property rdfs:domain ; void:triples "28"^^xsd:integer ],
+        [ void:property rdfs:subClassOf ; void:triples "4"^^xsd:integer ],
+        [ void:property void:vocabulary ; void:triples "2"^^xsd:integer ],
+        [ void:property owl:versionInfo ; void:triples "1"^^xsd:integer ],
+        [ void:property foaf:name ; void:triples "1"^^xsd:integer ],
+        [ void:property <http://purl.org/vocab/vann/preferredNamespaceUri> ; void:triples "1"^^xsd:integer ],
+        [ void:property <http://purl.org/vocab/vann/preferredNamespacePrefix> ; void:triples "1"^^xsd:integer ],
+        [ void:property dcterms:publisher ; void:triples "1"^^xsd:integer ],
+        [ void:property dcterms:modified ; void:triples "1"^^xsd:integer ],
+        [ void:property dcterms:creator ; void:triples "1"^^xsd:integer ],
+        [ void:property dcterms:created ; void:triples "1"^^xsd:integer ],
+        [ void:property dcterms:contributor ; void:triples "1"^^xsd:integer ],
+        [ void:property <http://creativecommons.org/ns#license> ; void:triples "1"^^xsd:integer ] .
