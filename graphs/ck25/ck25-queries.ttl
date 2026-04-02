@@ -840,7 +840,7 @@ _:sf34 a lsqv:StructuralFeatures ;
   lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
   lsqv:projectVarCount "4"^^xsd:integer ;
   lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "8"^^xsd:integer ;
+  lsqv:bgpCount "4"^^xsd:integer ;
   dct:subject pv:Supplier, pv:addressCountry, pv:addressCountryCode, pv:addressLocality, pv:name .
 
 :35 a lsqv:Query ;
@@ -958,7 +958,7 @@ _:sf38 a lsqv:StructuralFeatures ;
   lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
   lsqv:projectVarCount "5"^^xsd:integer ;
   lsqv:tpCount "7"^^xsd:integer ;
-  lsqv:bgpCount "16"^^xsd:integer ;
+  lsqv:bgpCount "5"^^xsd:integer ;
   dct:subject pv:Agent, pv:email, pv:hasManager, pv:memberOf, pv:name, pv:phone .
 
 :39 a lsqv:Query ;
