@@ -16,7 +16,7 @@ else
   OUTPUT_DIR="${3:-graphs/gptkb}"
 fi
 
-WORKDIR="${OUTPUT_DIR}/metadata"
+WORKDIR="${OUTPUT_DIR}/.split_tmp"
 
 SPARQL_ENDPOINT="http://157.27.26.146:8890/sparql"
 GRAPH="https://www.gptkb.org/"
