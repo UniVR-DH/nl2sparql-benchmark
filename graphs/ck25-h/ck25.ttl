@@ -5,7 +5,7 @@
 <https://text2sparql.aksw.org/2025/corporate/> a void:Dataset;
   rdfs:label "TEXT2SPARQL Benchmark- Corporate Knowledge Graph"@en;
   owl:imports <http://ld.company.org/prod-inst/>, 
-    <http://ld.company.org/prod-vocab/fb76e825e23ba1c0>, 
+    <http://ld.company.org/prod-vocab/>, 
     <http://ld.company.org/.well-known/void#>,
     <http://ld.company.org/.well-known/examples#>,
     <http://ld.company.org/.well-known/shapes#>,
