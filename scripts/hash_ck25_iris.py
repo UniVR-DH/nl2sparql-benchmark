@@ -348,8 +348,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--hash-query-strings",
-        action="store_true",
-        help="Hash IRIs inside embedded SPARQL strings using rdflib (default: off).",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Hash IRIs inside embedded SPARQL strings using rdflib (default: on).",
     )
     parser.add_argument(
         "--skip-file",
