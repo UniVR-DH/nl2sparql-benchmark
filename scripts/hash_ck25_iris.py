@@ -14,7 +14,6 @@ import re
 import shutil
 from pathlib import Path
 
-import rdflib
 from rdflib import Graph, Literal, URIRef
 
 DEFAULT_NAMESPACES = [
