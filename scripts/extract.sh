@@ -5,15 +5,32 @@ set -euo pipefail
 # Usage:
 #   ./scripts/extract.sh [raw.nt] [output_dir]
 #   ./scripts/extract.sh [raw.nt] [types.nt] [output_dir]
+#   ./scripts/extract.sh [raw.nt] [output_dir] [ttl|nt]
+#   ./scripts/extract.sh [raw.nt] [types.nt] [output_dir] [ttl|nt]
 
 INPUT="${1:-gptkb_v1.5.3.nt}"
 
 if [ "$#" -eq 2 ]; then
   TYPES_INPUT="gptkb_v1.5.3_types.nt"
   OUTPUT_DIR="$2"
+  FORMAT="ttl"
+elif [ "$#" -eq 3 ] && { [ "$3" = "ttl" ] || [ "$3" = "nt" ]; }; then
+  TYPES_INPUT="gptkb_v1.5.3_types.nt"
+  OUTPUT_DIR="$2"
+  FORMAT="$3"
+elif [ "$#" -eq 4 ]; then
+  TYPES_INPUT="$2"
+  OUTPUT_DIR="$3"
+  FORMAT="$4"
 else
   TYPES_INPUT="${2:-gptkb_v1.5.3_types.nt}"
   OUTPUT_DIR="${3:-graphs/gptkb}"
+  FORMAT="ttl"
+fi
+
+if [ "$FORMAT" != "ttl" ] && [ "$FORMAT" != "nt" ]; then
+  echo "Invalid format: $FORMAT (expected ttl or nt)"
+  exit 1
 fi
 
 WORKDIR="${OUTPUT_DIR}/.split_tmp"
@@ -38,8 +55,8 @@ RDF_PROPERTY="<http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>"
 PREFIX="https://gptkb.org/entity/"
 PROP_PREFIX="https://gptkb.org/prop/"
 
-VOCAB_OUT="${OUTPUT_DIR}/gptkb-data-vocab.ttl"
-INST_OUT="${OUTPUT_DIR}/gptkb-data-instances.ttl"
+VOCAB_OUT="${OUTPUT_DIR}/gptkb-data-vocab.${FORMAT}"
+INST_OUT="${OUTPUT_DIR}/gptkb-data-instances.${FORMAT}"
 
 CLASS_IRIS_CSV="${WORKDIR}/classes_iris.csv"
 PREDICATES_IRIS_CSV="${WORKDIR}/predicates_iris.csv"
@@ -82,6 +99,7 @@ echo "Input:           $INPUT"
 echo "Types input:     $TYPES_INPUT"
 echo "SPARQL endpoint: $SPARQL_ENDPOINT"
 echo "Output dir:      $OUTPUT_DIR"
+echo "Output format:   $FORMAT"
 
 echo ""
 echo "Step 1: Querying class IRIs from Virtuoso..."
@@ -243,67 +261,56 @@ awk \
 echo "  Vocab triples:    $(wc -l < "$WORKDIR/vocab_raw.nt")"
 echo "  Instance triples:  $(wc -l < "$WORKDIR/inst_raw.nt")"
 
-echo ""
-echo "Step 7: Generating vocab TTL..."
-(
-  echo "$PREFIX_HEADER"
+write_ttl_from_nt() {
+  local input_nt="$1"
+  local output_ttl="$2"
+  (
+    echo "$PREFIX_HEADER"
+    echo ""
+    awk -v ep="$PREFIX" -v pp="$PROP_PREFIX" '{
+      gsub(/\r/, "", $0)
+      if ($NF == ".") NF--
+
+      if (index($1, "<" ep) == 1) {
+        $1 = "gptkb:" substr($1, length(ep) + 2)
+        sub(">$", "", $1)
+      }
+
+      if (index($2, "<" pp) == 1) {
+        $2 = "gptkbp:" substr($2, length(pp) + 2)
+        sub(">$", "", $2)
+      }
+
+      if (index($3, "<" ep) == 1) {
+        $3 = "gptkb:" substr($3, length(ep) + 2)
+        sub(">$", "", $3)
+      }
+
+      if (index($3, "<" pp) == 1) {
+        $3 = "gptkbp:" substr($3, length(pp) + 2)
+        sub(">$", "", $3)
+      }
+
+      print $0 " ."
+    }' "$input_nt"
+  ) > "$output_ttl"
+}
+
+if [ "$FORMAT" = "ttl" ]; then
   echo ""
-  echo "# Ontology"
-  echo "<${PREFIX}>"
-  echo "  a owl:Ontology ;"
-  echo "  rdfs:label \"GPTKB Knowledge Graph Vocabulary\"@en ."
+  echo "Step 7: Converting split outputs to TTL..."
+  write_ttl_from_nt "$WORKDIR/vocab_raw.nt" "$VOCAB_OUT"
+  echo "  Created $VOCAB_OUT: $(wc -l < "$VOCAB_OUT") lines"
+  write_ttl_from_nt "$WORKDIR/inst_raw.nt" "$INST_OUT"
+  echo "  Created $INST_OUT: $(wc -l < "$INST_OUT") lines"
+else
   echo ""
-  echo "# Classes"
-  tail -n +2 "$CLASS_DEFINITIONS_CSV" | sed 's/"//g' | awk -F',' -v pp="$PREFIX" '{
-    class=$1
-    label=$2
-    sub(pp, "gptkb:", class)
-    if (label != "") {
-      printf "%s\n  a owl:Class ;\n  rdfs:label \"%s\"@en .\n\n", class, label
-    } else {
-      split(class, parts, ":")
-      printf "%s\n  a owl:Class ;\n  rdfs:label \"%s\"@en .\n\n", class, parts[2]
-    }
-  }'
-  echo "# Properties"
-  tail -n +2 "$TOP_PREDICATES_CSV" | sed 's/"//g' | awk -F',' -v pp="$PROP_PREFIX" '{
-    pred=$1
-    sub(pp, "gptkbp:", pred)
-    if (pred !~ /rdf-syntax-ns|rdf-schema/) {
-      printf "%s\n  a owl:ObjectProperty .\n\n", pred
-    }
-  }'
-) > "$VOCAB_OUT"
-echo "  Created $VOCAB_OUT: $(wc -l < "$VOCAB_OUT") lines"
-
-echo ""
-echo "Step 8: Converting instances to TTL..."
-(
-  echo "$PREFIX_HEADER"
-  echo ""
-  awk -v ep="$PREFIX" -v pp="$PROP_PREFIX" '{
-    gsub(/\r/, "", $0)
-    if ($NF == ".") NF--
-
-    if (index($1, "<" ep) == 1) {
-      $1 = "gptkb:" substr($1, length(ep) + 2)
-      sub(">$", "", $1)
-    }
-
-    if (index($2, "<" pp) == 1) {
-      $2 = "gptkbp:" substr($2, length(pp) + 2)
-      sub(">$", "", $2)
-    }
-
-    if (index($3, "<" ep) == 1) {
-      $3 = "gptkb:" substr($3, length(ep) + 2)
-      sub(">$", "", $3)
-    }
-
-    print $0 " ."
-  }' "$WORKDIR/inst_raw.nt"
-) > "$INST_OUT"
-echo "  Created $INST_OUT: $(wc -l < "$INST_OUT") lines"
+  echo "Step 7: Writing NT outputs..."
+  cp "$WORKDIR/vocab_raw.nt" "$VOCAB_OUT"
+  cp "$WORKDIR/inst_raw.nt" "$INST_OUT"
+  echo "  Created $VOCAB_OUT: $(wc -l < "$VOCAB_OUT") lines"
+  echo "  Created $INST_OUT: $(wc -l < "$INST_OUT") lines"
+fi
 
 echo ""
 echo "=========================================="
