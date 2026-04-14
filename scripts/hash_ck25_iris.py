@@ -17,17 +17,17 @@ from pathlib import Path
 from rdflib import Graph, Literal, URIRef
 
 DEFAULT_NAMESPACES = [
+    "http://dbpedia.org/resource/",
     "http://ld.company.org/prod-vocab/",
     "http://ld.company.org/prod-instances/",
     "http://ld.company.org/prod-inst/",
-    "http://dbpedia.org/resource/",
 ]
 
 SKIP_FILES: set[str] = set()
 
 COPY_ONLY_FILES = {
-    "ck25-queries.ttl",
-    "ck25-queries.graph",
+#     "ck25-queries.ttl",
+#     "ck25-queries.graph",
 }
 
 SPARQL_STRING_PREDICATES = {
@@ -175,10 +175,10 @@ def replace_prefixed_names(
 
     if not prefix_to_ns:
         return text
-
+    
     patterns = {
         prefix: re.compile(
-            rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([A-Za-z0-9._~%-]+)"
+            rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([^\s;,]+)"
         )
         for prefix in prefix_to_ns
     }
