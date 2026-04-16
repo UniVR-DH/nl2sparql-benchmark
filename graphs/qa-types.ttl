@@ -5,6 +5,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix terms: <http://purl.org/dc/terms/> .
 @prefix qa: <https://w3id.org/wdaqua/qanary#> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
 @prefix lsqv: <http://lsq.aksw.org/vocab#> .
 @prefix sp: <http://spinrdf.org/sp#> .
 @prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
@@ -19,12 +20,14 @@
     rdfs:label "QA Question Types taxonomy"@en ;
     rdfs:comment "Taxonomy of natural language question types for QA systems, extending Qanary. SPARQL structural signatures are expressed via lsqv:usesFeature rather than custom string patterns."@en ;
     rdfs:comment "Ontology structure and taxonomy co-edited with Claude Sonnet 4.6 (Anthropic) on 2026-04-08. Question type hierarchy, disjointness axioms, and vocabulary alignment with lsqv: and sp: developed interactively."@en ;
+    rdfs:comment "The ontology also defines a lightweight diagnostic issue layer for question-level QA error analysis, aligned with Qanary annotations and Open Annotation targeting/body relations."@en ;
     terms:title "QA Question Types"@en ;
     terms:created "2026-04-08"^^xsd:date ;
     terms:creator <https://w3id.org/univr-qa> ;
     owl:versionInfo 1.0 ;
     terms:license <https://creativecommons.org/publicdomain/zero/1.0/> ;
     owl:imports <https://w3id.org/wdaqua/qanary#> ,
+        <http://www.w3.org/ns/oa#> ,
         <http://lsq.aksw.org/vocab#> ,
         <http://spinrdf.org/sp> ,
         <http://www.w3.org/ns/sparql-service-description#> .
@@ -35,6 +38,136 @@ qat:QuestionType rdf:type owl:Class ;
     rdfs:subClassOf qa:Question ;
     rdfs:label "Question type"@en ;
     rdfs:comment "Abstract superclass for all question type categories."@en .
+
+# ── Diagnostic issue layer ───────────────────────────────────────────────────
+# These classes support orthogonal question-level error analysis without
+# changing the existing question-type taxonomy or LSQ feature alignment.
+# Instances are expected to follow the Qanary/Open Annotation pattern:
+# qa:AnnotationQuestion with oa:hasTarget pointing to the question resource and
+# oa:hasBody pointing to the diagnostic issue class or a more specific issue node.
+
+qat:LinguisticIssue rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnnotationQuestion ;
+    rdfs:label "Linguistic issue"@en ;
+    rdfs:comment "Issues related to linguistic realization of the question, including syntax, lexical choice, ambiguity, and phrasing."@en ;
+    rdfs:comment "This layer captures failures in surface form interpretation before or alongside schema grounding."@en ;
+    rdfs:seeAlso oa:hasTarget , oa:hasBody .
+
+qat:SemanticIssue rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnnotationQuestion ;
+    rdfs:label "Semantic issue"@en ;
+    rdfs:comment "Issues related to meaning representation, schema alignment, ontology mapping, and SPARQL structural-semantic correspondence."@en ;
+    rdfs:comment "This layer complements lsqv:hasStructuralFeatures analysis by capturing mismatches between intended meaning, RDF modeling, and query structure."@en ;
+    rdfs:seeAlso oa:hasTarget , oa:hasBody .
+
+qat:LinguisticIssue owl:disjointWith qat:SemanticIssue .
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Linguistic Layer subclasses (qat:LinguisticIssue)
+# ─────────────────────────────────────────────────────────────────────────────
+
+qat:OrthographicNoise rdf:type owl:Class ;
+    rdfs:subClassOf qat:LinguisticIssue ;
+    rdfs:label "Orthographic noise"@en ;
+    rdfs:comment "Spelling mistakes, typos, ASR errors, or MT artifacts affecting token-level interpretation."@en ;
+    rdfs:comment "Example: 'emplyees with hgh salery'."@en ;
+    rdfs:comment "Example: 'averge revenu of compnies'."@en .
+
+qat:SyntacticDistortion rdf:type owl:Class ;
+    rdfs:subClassOf qat:LinguisticIssue ;
+    rdfs:label "Syntactic distortion"@en ;
+    rdfs:comment "Ungrammatical or non-canonical syntactic structures affecting parsing and dependency analysis."@en ;
+    rdfs:comment "Example: 'employees high sales?'."@en ;
+    rdfs:comment "Example: 'salary employees highest department which'."@en ;
+    rdfs:comment "Example: 'in Berlin departments managers list'."@en .
+
+qat:LexicalGroundingMismatch rdf:type owl:Class ;
+    rdfs:subClassOf qat:LinguisticIssue ;
+    rdfs:label "Lexical grounding mismatch"@en ;
+    rdfs:comment "Lexical variation requiring normalization such as synonyms, paraphrases, or compositional expressions."@en ;
+    rdfs:comment "Example: 'French poets' → poets with France as nationality/affiliation."@en ;
+    rdfs:comment "Example: 'pay' → salary."@en ;
+    rdfs:comment "Example: 'companies that make cars' → automotive manufacturers."@en .
+
+qat:AbbreviationAmbiguity rdf:type owl:Class ;
+    rdfs:subClassOf qat:LinguisticIssue ;
+    rdfs:label "Abbreviation ambiguity"@en ;
+    rdfs:comment "Underspecified abbreviations or acronyms requiring expansion or contextual disambiguation."@en ;
+    rdfs:comment "Example: 'GDP growth in EU'."@en ;
+    rdfs:comment "Example: 'avg temp in US states'."@en .
+
+qat:DiscourseReferenceFailure rdf:type owl:Class ;
+    rdfs:subClassOf qat:LinguisticIssue ;
+    rdfs:label "Discourse reference failure"@en ;
+    rdfs:comment "Failures in resolving pronouns, ellipsis, or implicit discourse references."@en ;
+    rdfs:comment "Example: 'Who is John's manager and what is his salary?'."@en ;
+    rdfs:comment "Example: 'Which companies acquired startups and where are they located?'."@en .
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Semantic–Structural Layer subclasses (qat:SemanticIssue)
+# ─────────────────────────────────────────────────────────────────────────────
+
+qat:EntityLinkingAmbiguity rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Entity linking ambiguity"@en ;
+    rdfs:comment "Ambiguity where a surface form maps to multiple candidate RDF entities."@en ;
+    rdfs:comment "Example: 'Paris' → city vs mythology entity."@en ;
+    rdfs:comment "Example: 'John' → multiple people named John."@en .
+
+qat:EntityAttributeMismatch rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Entity/attribute mismatch"@en ;
+    rdfs:comment "Concept is present but requires transformation or derived computation from available attributes."@en ;
+    rdfs:comment "Example: 'customer age' → derived from birthDate."@en ;
+    rdfs:comment "Example: 'company size' → number of employees."@en ;
+    rdfs:comment "Example: 'products with volume < 15 cm3' → computed from length × width × height."@en .
+
+qat:ImplicitRelationInference rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Implicit relation inference"@en ;
+    rdfs:comment "Missing explicit predicates requiring multi-hop traversal or inferred joins between entities."@en ;
+    rdfs:comment "Example: 'managers in departments in Berlin' → manager → department → location."@en ;
+    rdfs:comment "Example: 'employees with skills in data science' → employee → hasSkill → skillCategory."@en ;
+    rdfs:comment "Example: 'People married in 2020' → requires join through marriage event and date."@en .
+
+qat:AggregationUnderspecification rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Aggregation underspecification"@en ;
+    rdfs:comment "Ambiguity in aggregation operators, grouping, ranking, or aggregation scope (COUNT, SUM, ORDER BY)."@en ;
+    rdfs:comment "Example: 'top selling products'."@en ;
+    rdfs:comment "Example: 'number of employees in each department'."@en .
+
+qat:LogicalFormAmbiguity rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Logical form ambiguity"@en ;
+    rdfs:comment "Ambiguity in quantification, scope, and logical composition (AND/OR/NOT/OPTIONAL)."@en ;
+    rdfs:comment "Example: 'departments where employees earn more than 50k' → all vs at least one employee."@en ;
+    rdfs:comment "Example: 'average salary of employees in hardware departments' → per-department vs global average."@en ;
+    rdfs:comment "Example: 'number of employees in sales or marketing who are managers' → different AND/OR groupings."@en .
+
+qat:VaguePredicateGrounding rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Vague predicate grounding"@en ;
+    rdfs:comment "Predicates lacking explicit thresholds or formal schema grounding requiring external interpretation."@en ;
+    rdfs:comment "Example: 'young employees'."@en ;
+    rdfs:comment "Example: 'high salary'."@en ;
+    rdfs:comment "Example: 'recent publications'."@en .
+
+qat:SchemaCoverageMismatch rdf:type owl:Class ;
+    rdfs:subClassOf qat:SemanticIssue ;
+    rdfs:label "Schema coverage mismatch"@en ;
+    rdfs:comment "Required concept is absent or not modeled in the ontology or knowledge base."@en ;
+    rdfs:comment "Example: 'employee satisfaction score' not in schema."@en ;
+    rdfs:comment "Example: 'manager nationality' not modeled in schema."@en .
+
+
+
+
+
+
 
 # ── hasAnswerType property ────────────────────────────────────────────────────
 # Neither lsqv: nor sp: model expected answer shape at the type level,
@@ -72,7 +205,7 @@ qat:EntityListAnswer rdf:type qa:AnswerType ;
 
 qat:AggregateListAnswer rdf:type qa:AnswerType ;
     rdfs:label "Aggregate list answer"@en ;
-    rdfs:comment "Answer is an enumeration of (group, aggregate value) pairs."@en .
+    rdfs:comment "Answer is an enumeration of (group, aggregate value) pairs or tuples."@en .
 
 qat:RankedListAnswer rdf:type qa:AnswerType ;
     rdfs:label "Ranked list answer"@en ;
