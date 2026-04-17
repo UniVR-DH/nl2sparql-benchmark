@@ -1472,7 +1472,7 @@ _:annq13 a qa:AnnotationQuestion ;
 _:annq15 a qa:AnnotationQuestion ;
     oa:hasTarget :20 ;
     oa:hasBody [
-        a qat:LinguisticIssue
+        a qat:SemanticIssue
     ] .
 
 :65 a lsqv:Query ;
@@ -1606,12 +1606,6 @@ _:annq25 a qa:AnnotationQuestion ;
     oa:hasBody [
         a qat:LinguisticIssue
     ] .
-
-_:annq25 a qa:AnnotationQuestion ;
-    oa:hasTarget :30 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
      
 :75 a lsqv:Query ;
   rdfs:label "For each product category, what are the minimum and maximum weights (in grams) of hardware items?" ;
@@ -1619,10 +1613,16 @@ _:annq25 a qa:AnnotationQuestion ;
   dct:modified "2026-04-17T16:09:30.432146Z"^^xsd:dateTime ;
   skos:closeMatch :31 .
 
-_:annq26 a qa:AnnotationQuestion ;
+_:annq26a a qa:AnnotationQuestion ;
     oa:hasTarget :31 ;
     oa:hasBody [
         a qat:SemanticIssue
+    ] .
+
+_:annq26b a qa:AnnotationQuestion ;
+    oa:hasTarget :31 ;
+    oa:hasBody [
+        a qat:LinguisticIssue
     ] .
 
 :76 a lsqv:Query ;
@@ -1685,7 +1685,7 @@ _:annq31 a qa:AnnotationQuestion ;
     ] .
 
 :81 a lsqv:Query ;
-  rdfs:label "For each bill of material (BOM), return its IRI, the count of its BOM parts, and the sum of their quantities. Include only BOMs where the total quantity exceeds 600, and order results by total quantity in descending order." ;
+  rdfs:label "For each Bill of Material (BOM), return its IRI, the count of its BOM parts, and the sum of their quantities. Include only Bill of Materials where the total quantity exceeds 600, and order results by total quantity in descending order." ;
   dct:created "2026-04-17T16:09:44.124136Z"^^xsd:dateTime ;
   dct:modified "2026-04-17T16:09:44.124136Z"^^xsd:dateTime ;
   skos:closeMatch :37 .
@@ -1795,7 +1795,7 @@ _:annq39 a qa:AnnotationQuestion ;
 _:annq40 a qa:AnnotationQuestion ;
     oa:hasTarget :47 ;
     oa:hasBody [
-        a qat:LinguisticIssue
+        a qat:SemanticIssue
     ] .
 
 :90 a lsqv:Query ;
