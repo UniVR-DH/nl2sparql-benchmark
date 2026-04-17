@@ -7,7 +7,9 @@ Purpose: define a compact, reusable approach to model benchmark queries using su
 - Input: natural-language question + SPARQL query text.
 - Output: Turtle resource encoding query metadata, a structural summary node, and referenced schema/IRI terms.
 
-## Canonical Mapping from `text2sparql` Encoding
+## Structural Annotation of Query Operators
+
+### Canonical Mapping from `text2sparql` Encoding
 
 | Current concept | Legacy pattern | Guideline pattern |
 |---|---|---|
@@ -19,7 +21,7 @@ Purpose: define a compact, reusable approach to model benchmark queries using su
 | Result cardinality | not present | `lsqv:resultCount` |
 
 
-## Modeling Rules
+### Modeling Rules
 
 1. Always type each query as `lsqv:Query`.
 2. Keep the full SPARQL source in `lsqv:text`.
@@ -30,7 +32,7 @@ Purpose: define a compact, reusable approach to model benchmark queries using su
 7. Use `dct:subject` only, and include all IRIs appearing in the query (classes, predicates, and any concrete resource/entity IRIs).
 
 
-### Blank Node Policy (Summary Encoding)
+#### Blank Node Policy (Summary Encoding)
 
 Use blank nodes for the summary node and related compact metadata nodes.
 
@@ -63,11 +65,11 @@ Avoid:
   lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern .
 ```
 
-## Practical Usage
+### Practical Usage
 
-### Example 1
+#### Example 1
 
-#### 1) Source SPARQL Query (from benchmark):
+##### 1) Source SPARQL Query (from benchmark):
 
 ```sparql
 PREFIX pv: <http://ld.company.org/prod-vocab/>
@@ -78,7 +80,7 @@ WHERE {
 }
 ```
 
-#### 2) Legacy text2sparql TTL Encoding (Before)
+##### 2) Legacy text2sparql TTL Encoding (Before)
 
 ```turtle
 @prefix ns2: <http://purl.org/dc/terms/> .
@@ -105,7 +107,7 @@ WHERE
   <https://text2sparql.aksw.org/2025/corporate/queries/relatedClass> pv:Employee, pv:Department .
 ```
 
-#### 3) LSQ-Compatible TTL Encoding (After)
+##### 3) LSQ-Compatible TTL Encoding (After)
 
 ```turtle
 @prefix : <https://text2sparql.aksw.org/2025/corporate/queries/> .
@@ -139,9 +141,9 @@ _:sf1 a lsqv:StructuralFeatures ;
   dct:subject <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org>, pv:memberOf, pv:Department .
 ```
 
-### Example 2
+#### Example 2
 
-#### 1) Source SPARQL Query (from benchmark):
+##### 1) Source SPARQL Query (from benchmark):
 
 ```sparql
 PREFIX prodi: <http://ld.company.org/prod-instances/>
@@ -158,7 +160,7 @@ GROUP BY ?dept ?name
 HAVING (COUNT(?emp) > 5)
 ```
 
-#### 2) Legacy text2sparql TTL Encoding (Before)
+##### 2) Legacy text2sparql TTL Encoding (Before)
 
 ```turtle
 <https://text2sparql.aksw.org/2025/corporate/queries/30> a shui:SparqlQuery;
@@ -187,7 +189,7 @@ HAVING (COUNT(?emp) > 5)
   <https://text2sparql.aksw.org/2025/corporate/queries/relatedClass> pv:Employee, pv:Department .
 ```
 
-#### 3) LSQ-Compatible TTL Encoding (After)
+##### 3) LSQ-Compatible TTL Encoding (After)
 
 ```turtle
 @prefix : <https://text2sparql.aksw.org/2025/corporate/queries/> .
@@ -226,9 +228,7 @@ _:sf30 a lsqv:StructuralFeatures ;
   dct:subject pv:Department, pv:Employee, pv:memberOf, pv:name .
 ```
 
-
-
-## Checklist for New Query Entries
+### Checklist for New Query Entries
 
 - Add or verify required prefixes.
 - Create one `lsqv:Query` resource.
@@ -236,3 +236,110 @@ _:sf30 a lsqv:StructuralFeatures ;
 - Add `lsqv:hasStructuralFeatures` and explicit `lsqv:usesFeature` values.
 - Add `dct:subject` to capture classes, predicates, and any concrete resource/entity IRIs appearing in the query.
 - Add `lsqv:resultCount` to capture the number of results when in the benchmark output.
+
+
+## Semantic Annotation of Question Noise
+
+A 2-Level Taxonomy of Failure Sources in NL → SPARQL Generation
+
+---
+
+# 1. Linguistic Form Layer (Surface Realization & Interpretation Issues)
+
+* **Orthographic noise**
+
+  * Spelling mistakes, typos, ASR errors, MT artifacts that corrupt tokens before parsing
+  * *Example:* “emplyees with hgh salery”
+  * *Example:* “averge revenu of compnies”
+
+
+* **Syntactic distortion**
+
+  * Ungrammatical or Ill-formed or non-canonical syntax affecting parsing or dependency structure
+  * Includes fragment queries and scrambled constituent order
+  * *Example:* “employees high sales?”
+  * *Example:* “salary employees highest department which”
+  * *Example:* “in Berlin departments managers list”
+
+
+* **Lexical grounding mismatch**
+
+  * Lexical variation requiring normalization prior to schema alignment: synonyms, paraphrases, and compositional phrases 
+  * *Example:* “French poets” → poets with France as nationality/affiliation
+  * *Example:* “pay” → salary
+  * *Example:* “companies that make cars” → automotive manufacturers
+
+* **Abbreviation ambiguity**
+
+ * Underspecified shorthand requiring expansion or contextual disambiguation
+
+  * *Example:* “GDP growth in EU”
+  * *Example:* “avg temp in US states”
+
+* **Discourse reference failure**
+
+  * Ambiguous or unresolved coreference (pronouns, ellipsis, implicit referents)
+  * *Example:* “Who is John's manager and what is his salary?”
+  * *Example:* “Which companies acquired startups and where are they located?”
+
+
+
+---
+
+# 2. Semantic–Structural & Schema Alignment Layer (Meaning → RDF/SPARQL Mapping Issues)
+
+* **Entity linking ambiguity**
+
+  * Multiple candidate entities for the same surface form
+  * *Example:* “Paris” → city vs mythology entity
+  * *Example:* “John” → multiple people named John
+
+* **Entity/attribute mismatch**
+
+  * Concept exists in schema but requires transformation or derived computation
+  * *Example:* “customer age” → derived from `birthDate`
+  * *Example:* “company size” → number of employees
+  * *Example:* “products with volume < 15 cm3” → computed from `length × width × height`
+    
+
+* **Implicit relation inference**
+
+  * Missing explicit predicates (join gaps) requiring multi-hop traversal or inferred joins between entities not directly connected in the query
+  * *Example:* “managers in departments in Berlin”, no direct `manager → city` relation;
+  * *Example:* “employees with skills in data science”, no direct `employee → skill` relation, requires join through `hasSkill` and `skillCategory`
+  * *Example:* “People married in 2020” → requires join between `hasMarriage`,`spouse` and `hasDate` attributes
+
+* **Aggregation underspecification**
+
+  * * Missing or ambiguous aggregation intent or ranking criteria generating ambiguity in constructs (COUNT, SUM, ORDER BY, LIMIT)
+  * *Example:* “top selling products”
+  * *Example:* “number of employees in each department” (COUNT vs GROUP BY)
+
+
+* **Logical form ambiguity**
+
+  * Ambiguity in quantification (e.g., for all vs exist), scope of constraints, and logical composition of clauses (AND/OR/NOT/OPTIONAL)
+  * *Example:* “departments where employees earn more than 50k”  
+      → all employees vs at least one employee
+
+  * *Example:* “average salary of employees in hardware departments” → average within each department vs average across all departments 
+
+  * *Example:* “number of employees in sales or in marketing who are managers”  
+      → `(sales OR marketing) AND manager` vs `sales OR (marketing AND manager)`
+  
+* **Vague predicate grounding**
+
+  * Filters or attributes are expressed without explicit measurable thresholds or formal grounding in the schema
+  * *Example:* “young employees”
+  * *Example:* “high salary”
+  * *Example:* “recent publications”
+
+* **Schema coverage mismatch**
+
+  * Required concept not present or not modeled in the ontology
+  * *Example:* “employee satisfaction score” not in schema
+  * *Example:* “manager nationality” only current address is modeled but no nationality modeled in schema 
+
+
+
+
