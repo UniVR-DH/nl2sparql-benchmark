@@ -1303,7 +1303,9 @@ _:sf50 a lsqv:StructuralFeatures ;
 
 _:annq1 a qa:AnnotationQuestion ;
     oa:hasTarget :1 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :52 a lsqv:Query ;
   rdfs:label "What is the phone number of Baldwin Dirksen?" ;
@@ -1313,7 +1315,9 @@ _:annq1 a qa:AnnotationQuestion ;
 
 _:annq2 a qa:AnnotationQuestion ;
     oa:hasTarget :2 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :53 a lsqv:Query ;
   rdfs:label "Who has area of expertise in Transistors?" ;
@@ -1323,7 +1327,9 @@ _:annq2 a qa:AnnotationQuestion ;
 
 _:annq3 a qa:AnnotationQuestion ;
     oa:hasTarget :5 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :54 a lsqv:Query ;
   rdfs:label "Who has area of expertise in Sensor?" ;
@@ -1333,11 +1339,15 @@ _:annq3 a qa:AnnotationQuestion ;
 
 _:annq4a a qa:AnnotationQuestion ;
     oa:hasTarget :6 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 _:annq4b a qa:AnnotationQuestion ;
     oa:hasTarget :6 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :55 a lsqv:Query ;
   rdfs:label "Who manages the people that are members of the Data Services department?" ;
@@ -1347,7 +1357,9 @@ _:annq4b a qa:AnnotationQuestion ;
 
 _:annq5 a qa:AnnotationQuestion ;
     oa:hasTarget :7 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :56 a lsqv:Query ;
   rdfs:label "Which department is responsible for the M558-2275045 - Sensor Switch?" ;
@@ -1357,7 +1369,9 @@ _:annq5 a qa:AnnotationQuestion ;
 
 _:annq6 a qa:AnnotationQuestion ;
     oa:hasTarget :8 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :57 a lsqv:Query ;
   rdfs:label "How many items have both the Sensor and Switch categories?" ;
@@ -1367,7 +1381,9 @@ _:annq6 a qa:AnnotationQuestion ;
 
 _:annq7 a qa:AnnotationQuestion ;
     oa:hasTarget :9 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :58 a lsqv:Query ;
   rdfs:label "What are the names of employees with area of expertise in Network in the Marketing department?" ;
@@ -1377,11 +1393,15 @@ _:annq7 a qa:AnnotationQuestion ;
 
 _:annq8a a qa:AnnotationQuestion ;
     oa:hasTarget :10 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 _:annq8b a qa:AnnotationQuestion ;
     oa:hasTarget :10 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :59 a lsqv:Query ;
   rdfs:label "Which departments have employees with an area of expertise in Transducer?" ;
@@ -1391,7 +1411,9 @@ _:annq8b a qa:AnnotationQuestion ;
 
 _:annq9 a qa:AnnotationQuestion ;
     oa:hasTarget :11 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :60 a lsqv:Query ;
   rdfs:label "Which suppliers are available to deliver Compensators?" ;
@@ -1401,7 +1423,9 @@ _:annq9 a qa:AnnotationQuestion ;
 
 _:annq10 a qa:AnnotationQuestion ;
     oa:hasTarget :12 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :61 a lsqv:Query ;
   rdfs:label "How many suppliers in France supply at least one product?" ;
@@ -1411,7 +1435,9 @@ _:annq10 a qa:AnnotationQuestion ;
 
 _:annq11 a qa:AnnotationQuestion ;
     oa:hasTarget :13 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :62 a lsqv:Query ;
   rdfs:label "Which suppliers in France delivers Compensators?" ;
@@ -1421,7 +1447,9 @@ _:annq11 a qa:AnnotationQuestion ;
 
 _:annq12 a qa:AnnotationQuestion ;
     oa:hasTarget :14 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :63 a lsqv:Query ;
   rdfs:label "What is the cheapest Encoder we can get from a supplier in France or Germany?" ;
@@ -1431,7 +1459,9 @@ _:annq12 a qa:AnnotationQuestion ;
 
 _:annq13 a qa:AnnotationQuestion ;
     oa:hasTarget :15 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :64 a lsqv:Query ;
   rdfs:label "Who is the product manager of the most expensive service we offer?" ;
@@ -1441,7 +1471,9 @@ _:annq13 a qa:AnnotationQuestion ;
 
 _:annq15 a qa:AnnotationQuestion ;
     oa:hasTarget :20 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :65 a lsqv:Query ;
   rdfs:label "What is the heaviest item in the Coil category with width and depth each at most 15 mm?" ;
@@ -1451,11 +1483,15 @@ _:annq15 a qa:AnnotationQuestion ;
 
 _:annq16a a qa:AnnotationQuestion ;
     oa:hasTarget :21 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 _:annq16b a qa:AnnotationQuestion ;
     oa:hasTarget :21 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :66 a lsqv:Query ;
   rdfs:label "What products are compatible with the U990-5234138 - LCD Inductor?" ;
@@ -1465,7 +1501,9 @@ _:annq16b a qa:AnnotationQuestion ;
 
 _:annq17 a qa:AnnotationQuestion ;
     oa:hasTarget :22 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :67 a lsqv:Query ;
   rdfs:label "What products can I get from suppliers in United States that are compatible with the U990-5234138 - LCD Inductor?" ;
@@ -1475,7 +1513,9 @@ _:annq17 a qa:AnnotationQuestion ;
 
 _:annq18 a qa:AnnotationQuestion ;
     oa:hasTarget :23 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :68 a lsqv:Query ;
   rdfs:label "What is the Potentiometer with the smallest volume?" ;
@@ -1485,7 +1525,9 @@ _:annq18 a qa:AnnotationQuestion ;
 
 _:annq19 a qa:AnnotationQuestion ;
     oa:hasTarget :24 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :69 a lsqv:Query ;
   rdfs:label "Which item in the Coil category has the highest density measured in kilograms per cubic meter?" ;
@@ -1495,7 +1537,9 @@ _:annq19 a qa:AnnotationQuestion ;
 
 _:annq20 a qa:AnnotationQuestion ;
     oa:hasTarget :25 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :70 a lsqv:Query ;
   rdfs:label "What are the address localities of suppliers in the United States that supply LCDs?" ;
@@ -1505,7 +1549,9 @@ _:annq20 a qa:AnnotationQuestion ;
 
 _:annq21 a qa:AnnotationQuestion ;
     oa:hasTarget :26 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :71 a lsqv:Query ;
   rdfs:label "Give me IRI, name, email, and phone number of all employees who do not manage anyone, sorted by name." ;
@@ -1515,7 +1561,9 @@ _:annq21 a qa:AnnotationQuestion ;
 
 _:annq22 a qa:AnnotationQuestion ;
     oa:hasTarget :27 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :72 a lsqv:Query ;
   rdfs:label "Is there any service that is eligible for at least one part used in a bill of material (BOM) that includes parts supplied by suppliers in Russia?" ;
@@ -1525,11 +1573,15 @@ _:annq22 a qa:AnnotationQuestion ;
 
 _:annq23a a qa:AnnotationQuestion ;
     oa:hasTarget :28 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 _:annq23b a qa:AnnotationQuestion ;
     oa:hasTarget :28 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :73 a lsqv:Query ;
   rdfs:label "List the names and countries of suppliers and the prices of hardware items ranked from 11th to 15th highest by price (in EUR).”" ;
@@ -1539,7 +1591,9 @@ _:annq23b a qa:AnnotationQuestion ;
 
 _:annq24 a qa:AnnotationQuestion ;
     oa:hasTarget :29 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :74 a lsqv:Query ;
   rdfs:label "Which departments have more than 5 employees? List each department name and its employee count." ;
@@ -1549,11 +1603,15 @@ _:annq24 a qa:AnnotationQuestion ;
 
 _:annq25 a qa:AnnotationQuestion ;
     oa:hasTarget :30 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 _:annq25 a qa:AnnotationQuestion ;
     oa:hasTarget :30 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
      
 :75 a lsqv:Query ;
   rdfs:label "For each product category, what are the minimum and maximum weights (in grams) of hardware items?" ;
@@ -1563,7 +1621,9 @@ _:annq25 a qa:AnnotationQuestion ;
 
 _:annq26 a qa:AnnotationQuestion ;
     oa:hasTarget :31 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :76 a lsqv:Query ;
   rdfs:label "For each supplier, return the supplier’s name and the average price in EUR of the hardware items they supply, rounded to two decimal places." ;
@@ -1573,7 +1633,9 @@ _:annq26 a qa:AnnotationQuestion ;
 
 _:annq27 a qa:AnnotationQuestion ;
     oa:hasTarget :32 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :77 a lsqv:Query ;
   rdfs:label "Are there any departments that have no members of type Manager?" ;
@@ -1583,7 +1645,9 @@ _:annq27 a qa:AnnotationQuestion ;
 
 _:annq28 a qa:AnnotationQuestion ;
     oa:hasTarget :33 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :78 a lsqv:Query List all suppliers with their names and available address information, including locality, country code, and country." ;
   dct:created "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
@@ -1592,7 +1656,9 @@ _:annq28 a qa:AnnotationQuestion ;
 
 _:annq29 a qa:AnnotationQuestion ;
     oa:hasTarget :34 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :79 a lsqv:Query ;
   rdfs:label "For each product, list all products that are compatible with it and compute the difference in EUR price between the two products." ;
@@ -1602,7 +1668,9 @@ _:annq29 a qa:AnnotationQuestion ;
 
 _:annq30 a qa:AnnotationQuestion ;
     oa:hasTarget :35 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :80 a lsqv:Query ;
   rdfs:label "What are the top three product categories based on the number of hardware items they include? Return the category IRI and the category name." ;
@@ -1612,7 +1680,9 @@ _:annq30 a qa:AnnotationQuestion ;
 
 _:annq31 a qa:AnnotationQuestion ;
     oa:hasTarget :36 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :81 a lsqv:Query ;
   rdfs:label "For each bill of material (BOM), return its IRI, the count of its BOM parts, and the sum of their quantities. Include only BOMs where the total quantity exceeds 600, and order results by total quantity in descending order." ;
@@ -1622,11 +1692,15 @@ _:annq31 a qa:AnnotationQuestion ;
 
 _:annq32a a qa:AnnotationQuestion ;
     oa:hasTarget :37 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 _:annq32b a qa:AnnotationQuestion ;
     oa:hasTarget :37 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :82 a lsqv:Query ;
   rdfs:label "For each employee including also  all subclasses, return the name, email, phone number, the name of the department they belong to, and the name of their manager." ;
@@ -1636,7 +1710,9 @@ _:annq32b a qa:AnnotationQuestion ;
 
 _:annq33 a qa:AnnotationQuestion ;
     oa:hasTarget :38 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :83 a lsqv:Query ;
   rdfs:label "Which hardware items have a width greater than their height and a depth less than 50 mm? Return their IRIs and dimensions (width, height, and depth)." ;
@@ -1646,7 +1722,9 @@ _:annq33 a qa:AnnotationQuestion ;
 
 _:annq34 a qa:AnnotationQuestion ;
     oa:hasTarget :39 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :84 a lsqv:Query ;
   rdfs:label "Which hardware items (with their ID and name) do not have an assigned name for the product manager?" ;
@@ -1656,7 +1734,9 @@ _:annq34 a qa:AnnotationQuestion ;
 
 _:annq35 a qa:AnnotationQuestion ;
     oa:hasTarget :40 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :85 a lsqv:Query ;
   rdfs:label "Which Bill of Material has the highest weighted average unit cost of its hardware parts, and what is that value?" ;
@@ -1666,7 +1746,9 @@ _:annq35 a qa:AnnotationQuestion ;
 
 _:annq36 a qa:AnnotationQuestion ;
     oa:hasTarget :42 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :86 a lsqv:Query ;
   rdfs:label "List all product pairs where the first product is compatible with the second product." ;
@@ -1676,7 +1758,9 @@ _:annq36 a qa:AnnotationQuestion ;
 
 _:annq37 a qa:AnnotationQuestion ;
     oa:hasTarget :43 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :87 a lsqv:Query ;
   rdfs:label "Which hardware items have widths in the top 10% of the width range (based on minimum and maximum widths), and what are their IDs, names, and widths?" ;
@@ -1686,7 +1770,9 @@ _:annq37 a qa:AnnotationQuestion ;
 
 _:annq38 a qa:AnnotationQuestion ;
     oa:hasTarget :44 ;
-    oa:hasBody qat:SemanticIssue .
+    oa:hasBody [
+        a qat:SemanticIssue
+    ] .
 
 :88 a lsqv:Query ;
   rdfs:label "What are the top 5 suppliers with the highest average reliability index across the hardware items they supply?" ;
@@ -1696,7 +1782,9 @@ _:annq38 a qa:AnnotationQuestion ;
 
 _:annq39 a qa:AnnotationQuestion ;
     oa:hasTarget :46 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :89 a lsqv:Query ;
   rdfs:label "From which countries do the suppliers of the BOM parts of SkySync MechWave come?" ;
@@ -1706,7 +1794,9 @@ _:annq39 a qa:AnnotationQuestion ;
 
 _:annq40 a qa:AnnotationQuestion ;
     oa:hasTarget :47 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :90 a lsqv:Query ;
   rdfs:label "Which Bill of Materials (BOMs) have at least one part supplied by a supplier from Poland?" ;
@@ -1716,7 +1806,9 @@ _:annq40 a qa:AnnotationQuestion ;
 
 _:annq41 a qa:AnnotationQuestion ;
     oa:hasTarget :48 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :91 a lsqv:Query ;
   rdfs:label "How many suppliers provide products that are compatible with the K367-1320550 - Strain Encoder?" ;
@@ -1726,7 +1818,9 @@ _:annq41 a qa:AnnotationQuestion ;
 
 _:annq42 a qa:AnnotationQuestion ;
     oa:hasTarget :49 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
 
 :92 a lsqv:Query ;
   rdfs:label "Which department is responsible for the most products, and how many products does it handle?" ;
@@ -1736,4 +1830,6 @@ _:annq42 a qa:AnnotationQuestion ;
 
 _:annq43 a qa:AnnotationQuestion ;
     oa:hasTarget :50 ;
-    oa:hasBody qat:LinguisticIssue .
+    oa:hasBody [
+        a qat:LinguisticIssue
+    ] .
