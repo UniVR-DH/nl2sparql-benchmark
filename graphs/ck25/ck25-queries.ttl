@@ -1,4 +1,7 @@
 @prefix : <https://text2sparql.aksw.org/2025/corporate/queries/> .
+@prefix qa: <https://w3id.org/wdaqua/qanary#> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
+@prefix qat: <https://w3id.org/univr-qa/qatypes#> .
 @prefix lsqv: <http://lsq.aksw.org/vocab#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -1649,7 +1652,8 @@ _:annq28 a qa:AnnotationQuestion ;
         a qat:SemanticIssue
     ] .
 
-:78 a lsqv:Query List all suppliers with their names and available address information, including locality, country code, and country." ;
+:78 a lsqv:Query ;
+  rdfs:label "List all suppliers with their names and available address information, including locality, country code, and country." ;
   dct:created "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
   dct:modified "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
   skos:closeMatch :34 .
