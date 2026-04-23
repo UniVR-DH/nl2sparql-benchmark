@@ -220,10 +220,6 @@ qat:BooleanAnswer rdf:type qa:AnswerType ;
 qat:Factoid rdf:type owl:Class ;
     rdfs:subClassOf qat:QuestionType ,
         [ rdf:type owl:Restriction ;
-            owl:onProperty qat:hasAnswerType ;
-            owl:hasValue qat:SingleEntityAnswer
-        ] ,
-        [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
             owl:someValuesFrom [ rdf:type owl:Restriction ;
                     owl:onProperty lsqv:usesFeature ;
@@ -238,7 +234,7 @@ qat:Factoid rdf:type owl:Class ;
                 ]
         ] ;
     rdfs:label "Factoid question"@en ;
-    rdfs:comment "A question expecting a single entity or fact. Typically introduced by a wh-word. Maps to a plain SELECT … WHERE pattern."@en .
+    rdfs:comment "A question expecting as answer one or more facts. Typically introduced by a wh-word. Maps to a plain SELECT … WHERE pattern without DISTINCT, LIMIT, GROUP BY, aggregation."@en .
 
 # ── 2. AggregateFactoid ───────────────────────────────────────────────────────
 
@@ -316,7 +312,7 @@ qat:List rdf:type owl:Class ;
                 ]
         ] ;
     rdfs:label "List question"@en ;
-    rdfs:comment "A question expecting an enumeration of entities or facts (e.g. 'Which states export cocoa?'). Threshold on list length is an open problem in QA. Maps to SELECT DISTINCT."@en .
+    rdfs:comment "A question expecting an enumeration of entities or facts (e.g. 'Which states export cocoa?'). Threshold on list length is an open problem in QA. Maps to SELECT DISTINCT, can be combined with LIMIT."@en .
 
 # ── 5. AggregateList ──────────────────────────────────────────────────────────
 # Multiple inheritance: subtype of both List and AggregateFactoid
