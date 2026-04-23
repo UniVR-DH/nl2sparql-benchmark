@@ -1,14 +1,10 @@
 @prefix : <https://text2sparql.aksw.org/2025/corporate/queries/> .
-@prefix qa: <https://w3id.org/wdaqua/qanary#> .
-@prefix oa: <http://www.w3.org/ns/oa#> .
-@prefix qat: <https://w3id.org/univr-qa/qatypes#> .
 @prefix lsqv: <http://lsq.aksw.org/vocab#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix pv: <http://ld.company.org/prod-vocab/> .
-@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
 :1 a lsqv:Query ;
   rdfs:label "In which department is Ms. Brant?" ;
@@ -184,7 +180,7 @@ _:sf8 a lsqv:StructuralFeatures ;
   dct:created "2026-03-30T16:02:31.732055Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.732055Z"^^xsd:dateTime ;
   lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT (COUNT(?resultR) as ?result)
+SELECT (COUNT(DISTINCT ?resultR) as ?result)
 WHERE {
   ?resultR pv:5e848e <http://ld.company.org/prod-instances/b1d861> .
   ?resultR pv:5e848e <http://ld.company.org/prod-instances/3592d5> .
@@ -195,7 +191,7 @@ WHERE {
   <http://ld.company.org/prod-instances/3592d5> .
 
 _:sf9 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Select, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
   lsqv:projectVarCount "1"^^xsd:integer ;
   lsqv:tpCount "2"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
@@ -291,6 +287,7 @@ _:sf13 a lsqv:StructuralFeatures ;
 
 :14 a lsqv:Query ;
   rdfs:label "Which supplier in France delivers Compensators?" ;
+  
   dct:created "2026-03-30T16:02:31.732213Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.732213Z"^^xsd:dateTime ;
   lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
@@ -355,7 +352,7 @@ WHERE {
   dct:subject pv:be2fdb, pv:1bade2 .
 
 _:sf16 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Ask, lsqv:TriplePattern ;
   lsqv:projectVarCount "0"^^xsd:integer ;
   lsqv:tpCount "2"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
@@ -649,8 +646,8 @@ PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 ASK
 WHERE {
-  { # all BOMs with parts from russia
-    SELECT ?bom
+  { # all Russia-sourced hardware in any BOM
+    SELECT ?bom ?hw
     WHERE {
       ?bom pv:0607c7 ?bomPart .
       ?bomPart pv:d25624 ?hw .
@@ -660,11 +657,9 @@ WHERE {
     }
   }
 
-  # services eligible for parts associated with these BOMs?
+  # is there a service eligible for that specific Russia-sourced hardware?
   ?s a pv:979522 .
   ?s pv:798bd6 ?hw .
-  ?bom pv:0607c7 ?bomPart .
-  ?bomPart pv:d25624 ?hw .
 }""" ;
   lsqv:hasStructuralFeatures _:sf28 ;
   lsqv:resultCount "1"^^xsd:integer ;
@@ -672,9 +667,9 @@ WHERE {
   pv:1bade2 .
 
 _:sf28 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Ask, lsqv:TriplePattern ;
   lsqv:projectVarCount "0"^^xsd:integer ;
-  lsqv:tpCount "8"^^xsd:integer ;
+  lsqv:tpCount "6"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
   dct:subject pv:979522, pv:2f6a8b, pv:798bd6, pv:0607c7, pv:d25624, pv:1bade2 .
 
@@ -696,7 +691,7 @@ WHERE {
     pv:1bade2 ?sup .
 }
 ORDER BY DESC(?price)
-LIMIT 5 OFFSET 10""" ;
+LIMIT 5 OFFSET 5""" ;
   lsqv:hasStructuralFeatures _:sf29 ;
   lsqv:resultCount "5"^^xsd:integer ;
   dct:subject pv:1b4d3f, pv:df4ad3, pv:2f6a8b, pv:af5cae, pv:d7f276, pv:1bade2, pv:704fde,
@@ -723,7 +718,7 @@ WHERE {
   ?emp a pv:236555 ;
     pv:8c4b73 ?dept .
 }
-GROUP BY ?depty ?name
+GROUP BY ?dept ?name
 HAVING (COUNT(?emp) > 5)""" ;
   lsqv:hasStructuralFeatures _:sf30 ;
   lsqv:resultCount "4"^^xsd:integer ;
@@ -814,7 +809,7 @@ WHERE {
   pv:8c4b73 .
 
 _:sf33 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Ask, lsqv:TriplePattern ;
   lsqv:projectVarCount "0"^^xsd:integer ;
   lsqv:tpCount "1"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
@@ -878,7 +873,7 @@ _:sf35 a lsqv:StructuralFeatures ;
   dct:subject pv:217433, pv:af5cae, pv:a6d551, pv:d7f276, pv:e462e7 .
 
 :36 a lsqv:Query ;
-  rdfs:label "Which area of expertise is most relevant among our products, what are the top three skills?" ;
+  rdfs:label "What are the top 3 most common product categories among our hardware?" ;
   dct:created "2026-03-30T16:02:31.733164Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.733164Z"^^xsd:dateTime ;
   lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
@@ -1103,6 +1098,7 @@ _:sf42 a lsqv:StructuralFeatures ;
 SELECT ?a ?b
 WHERE {
   ?a pv:a6d551 ?b .
+  ?b pv:a6d551 ?a .
   FILTER (STR(?a) < STR(?b))
 }""" ;
   lsqv:hasStructuralFeatures _:sf43 ;
@@ -1112,7 +1108,7 @@ WHERE {
 _:sf43 a lsqv:StructuralFeatures ;
   lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
   lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
+  lsqv:tpCount "2"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
   dct:subject pv:a6d551 .
 
@@ -1258,7 +1254,7 @@ _:sf48 a lsqv:StructuralFeatures ;
   dct:created "2026-03-30T16:02:31.733706Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.733706Z"^^xsd:dateTime ;
   lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT (COUNT(?supplier) AS ?result)
+SELECT (COUNT(DISTINCT ?supplier) AS ?result)
 WHERE {
   <http://ld.company.org/prod-instances/f48942> pv:a6d551 ?alternative .
   ?alternative pv:1bade2 ?supplier .
@@ -1269,18 +1265,18 @@ WHERE {
   <http://ld.company.org/prod-instances/f48942> .
 
 _:sf49 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Select, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
   lsqv:projectVarCount "1"^^xsd:integer ;
   lsqv:tpCount "2"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
   dct:subject pv:a6d551, pv:1bade2, <http://ld.company.org/prod-instances/f48942> .
 
 :50 a lsqv:Query ;
-  rdfs:label "Which department is resposible for the most product and how many product are this?" ;
+  rdfs:label "Which department is responsible for the most products, and how many products is it responsible for?" ;
   dct:created "2026-03-30T16:02:31.733737Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.733737Z"^^xsd:dateTime ;
   lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result (COUNT(?result) AS ?count)
+SELECT ?result (COUNT(?product) AS ?count)
 WHERE {
   ?result pv:cd5184 ?product .
 }
@@ -1292,548 +1288,8 @@ LIMIT 1""" ;
   dct:subject pv:cd5184 .
 
 _:sf50 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:GroupBy, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
   lsqv:projectVarCount "2"^^xsd:integer ;
   lsqv:tpCount "1"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
   dct:subject pv:cd5184 .
-
-:51 a lsqv:Query ;
-  rdfs:label "In which department is Karen Brant?" ;
-  dct:created "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  skos:closeMatch :1 .
-
-_:annq1 a qa:AnnotationQuestion ;
-    oa:hasTarget :1 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:52 a lsqv:Query ;
-  rdfs:label "What is the phone number of Baldwin Dirksen?" ;
-  dct:created "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  skos:closeMatch :2 .
-
-_:annq2 a qa:AnnotationQuestion ;
-    oa:hasTarget :2 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:53 a lsqv:Query ;
-  rdfs:label "Who has area of expertise in Transistors?" ;
-  dct:created "2026-04-09T23:02:23.631368Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:02:23.631368Z"^^xsd:dateTime ;
-  skos:closeMatch :5 .
-
-_:annq3 a qa:AnnotationQuestion ;
-    oa:hasTarget :5 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:54 a lsqv:Query ;
-  rdfs:label "Who has area of expertise in Sensor?" ;
-  dct:created "2026-04-09T23:05:02.931564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:05:02.931564Z"^^xsd:dateTime ;
-  skos:closeMatch :6 .
-
-_:annq4a a qa:AnnotationQuestion ;
-    oa:hasTarget :6 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq4b a qa:AnnotationQuestion ;
-    oa:hasTarget :6 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:55 a lsqv:Query ;
-  rdfs:label "Who manages the people that are members of the Data Services department?" ;
-  dct:created "2026-04-09T23:09:50.151567Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:09:50.151567Z"^^xsd:dateTime ;
-  skos:closeMatch :7 .
-
-_:annq5 a qa:AnnotationQuestion ;
-    oa:hasTarget :7 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:56 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the M558-2275045 - Sensor Switch?" ;
-  dct:created "2026-04-09T23:14:12.531564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:14:12.531564Z"^^xsd:dateTime ;
-  skos:closeMatch :8 .
-
-_:annq6 a qa:AnnotationQuestion ;
-    oa:hasTarget :8 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:57 a lsqv:Query ;
-  rdfs:label "How many items have both the Sensor and Switch categories?" ;
-  dct:created "2026-04-09T23:18:34.901564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:18:34.901564Z"^^xsd:dateTime ;
-  skos:closeMatch :9 .
-
-_:annq7 a qa:AnnotationQuestion ;
-    oa:hasTarget :9 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:58 a lsqv:Query ;
-  rdfs:label "What are the names of employees with area of expertise in Network in the Marketing department?" ;
-  dct:created "2026-04-09T23:22:14.301564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:22:14.301564Z"^^xsd:dateTime ;
-  skos:closeMatch :10 .
-
-_:annq8a a qa:AnnotationQuestion ;
-    oa:hasTarget :10 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq8b a qa:AnnotationQuestion ;
-    oa:hasTarget :10 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:59 a lsqv:Query ;
-  rdfs:label "Which departments have employees with an area of expertise in Transducer?" ;
-  dct:created "2026-04-10T10:22:24.131564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-10T10:22:24.131564Z"^^xsd:dateTime ;
-  skos:closeMatch :11 .
-
-_:annq9 a qa:AnnotationQuestion ;
-    oa:hasTarget :11 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:60 a lsqv:Query ;
-  rdfs:label "Which suppliers are available to deliver Compensators?" ;
-  dct:created "2026-04-16T16:02:31.732156Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:31.732156Z"^^xsd:dateTime ;
-  skos:closeMatch :12 .
-
-_:annq10 a qa:AnnotationQuestion ;
-    oa:hasTarget :12 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:61 a lsqv:Query ;
-  rdfs:label "How many suppliers in France supply at least one product?" ;
-  dct:created "2026-04-16T16:02:34.132158Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:34.132158Z"^^xsd:dateTime ;
-  skos:closeMatch :13 .
-
-_:annq11 a qa:AnnotationQuestion ;
-    oa:hasTarget :13 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:62 a lsqv:Query ;
-  rdfs:label "Which suppliers in France delivers Compensators?" ;
-  dct:created "2026-04-16T16:02:37.812142Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:37.812142Z"^^xsd:dateTime ;
-  skos:closeMatch :14 .
-
-_:annq12 a qa:AnnotationQuestion ;
-    oa:hasTarget :14 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:63 a lsqv:Query ;
-  rdfs:label "What is the cheapest Encoder we can get from a supplier in France or Germany?" ;
-  dct:created "2026-04-16T16:02:40.135154Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:40.135154Z"^^xsd:dateTime ;
-  skos:closeMatch :15 .
-
-_:annq13 a qa:AnnotationQuestion ;
-    oa:hasTarget :15 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:64 a lsqv:Query ;
-  rdfs:label "Who is the product manager of the most expensive service we offer?" ;
-  dct:created "2026-04-16T16:02:42.637152Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:42.637152Z"^^xsd:dateTime ;
-  skos:closeMatch :20 .
-
-_:annq15 a qa:AnnotationQuestion ;
-    oa:hasTarget :20 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:65 a lsqv:Query ;
-  rdfs:label "What is the heaviest item in the Coil category with width and depth each at most 15 mm?" ;
-  dct:created "2026-04-16T16:02:45.232156Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:45.232156Z"^^xsd:dateTime ;
-  skos:closeMatch :21 .
-
-_:annq16a a qa:AnnotationQuestion ;
-    oa:hasTarget :21 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-_:annq16b a qa:AnnotationQuestion ;
-    oa:hasTarget :21 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:66 a lsqv:Query ;
-  rdfs:label "What products are compatible with the U990-5234138 - LCD Inductor?" ;
-  dct:created "2026-04-16T16:02:47.732131Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:47.732131Z"^^xsd:dateTime ;
-  skos:closeMatch :22 .
-
-_:annq17 a qa:AnnotationQuestion ;
-    oa:hasTarget :22 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:67 a lsqv:Query ;
-  rdfs:label "What products can I get from suppliers in United States that are compatible with the U990-5234138 - LCD Inductor?" ;
-  dct:created "2026-04-16T16:02:49.132143Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:49.132143Z"^^xsd:dateTime ;
-  skos:closeMatch :23 .
-
-_:annq18 a qa:AnnotationQuestion ;
-    oa:hasTarget :23 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:68 a lsqv:Query ;
-  rdfs:label "What is the Potentiometer with the smallest volume?" ;
-  dct:created "2026-04-16T16:02:51.432146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:51.432146Z"^^xsd:dateTime ;
-  skos:closeMatch :24 .
-
-_:annq19 a qa:AnnotationQuestion ;
-    oa:hasTarget :24 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:69 a lsqv:Query ;
-  rdfs:label "Which item in the Coil category has the highest density measured in kilograms per cubic meter?" ;
-  dct:created "2026-04-17T16:09:14.432541Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:14.432541Z"^^xsd:dateTime ;
-  skos:closeMatch :25 .
-
-_:annq20 a qa:AnnotationQuestion ;
-    oa:hasTarget :25 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:70 a lsqv:Query ;
-  rdfs:label "What are the address localities of suppliers in the United States that supply LCDs?" ;
-  dct:created "2026-04-17T16:09:16.832845Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:16.832845Z"^^xsd:dateTime ;
-  skos:closeMatch :26 .
-
-_:annq21 a qa:AnnotationQuestion ;
-    oa:hasTarget :26 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:71 a lsqv:Query ;
-  rdfs:label "Give me IRI, name, email, and phone number of all employees who do not manage anyone, sorted by name." ;
-  dct:created "2026-04-17T16:09:20.332846Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:20.332846Z"^^xsd:dateTime ;
-  skos:closeMatch :27 .
-
-_:annq22 a qa:AnnotationQuestion ;
-    oa:hasTarget :27 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:72 a lsqv:Query ;
-  rdfs:label "Is there any service that is eligible for at least one part used in a bill of material (BOM) that includes parts supplied by suppliers in Russia?" ;
-  dct:created "2026-04-17T16:09:23.632866Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:23.632866Z"^^xsd:dateTime ;
-  skos:closeMatch :28 .
-
-_:annq23a a qa:AnnotationQuestion ;
-    oa:hasTarget :28 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-_:annq23b a qa:AnnotationQuestion ;
-    oa:hasTarget :28 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:73 a lsqv:Query ;
-  rdfs:label "List the names and countries of suppliers and the prices of hardware items ranked from 11th to 15th highest by price (in EUR).”" ;
-  dct:created "2026-04-17T16:09:25.332766Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:25.332766Z"^^xsd:dateTime ;
-  skos:closeMatch :29 .
-
-_:annq24 a qa:AnnotationQuestion ;
-    oa:hasTarget :29 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:74 a lsqv:Query ;
-  rdfs:label "Which departments have more than 5 employees? List each department name and its employee count." ;
-  dct:created "2026-04-17T16:09:27.432766Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:27.432766Z"^^xsd:dateTime ;
-  skos:closeMatch :30 .
-
-_:annq25 a qa:AnnotationQuestion ;
-    oa:hasTarget :30 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-     
-:75 a lsqv:Query ;
-  rdfs:label "For each product category, what are the minimum and maximum weights (in grams) of hardware items?" ;
-  dct:created "2026-04-17T16:09:30.432146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:30.432146Z"^^xsd:dateTime ;
-  skos:closeMatch :31 .
-
-_:annq26a a qa:AnnotationQuestion ;
-    oa:hasTarget :31 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq26b a qa:AnnotationQuestion ;
-    oa:hasTarget :31 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:76 a lsqv:Query ;
-  rdfs:label "For each supplier, return the supplier’s name and the average price in EUR of the hardware items they supply, rounded to two decimal places." ;
-  dct:created "2026-04-17T16:09:32.042145Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:32.042145Z"^^xsd:dateTime ;
-  skos:closeMatch :32 .
-
-_:annq27 a qa:AnnotationQuestion ;
-    oa:hasTarget :32 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:77 a lsqv:Query ;
-  rdfs:label "Are there any departments that have no members of type Manager?" ;
-  dct:created "2026-04-17T16:09:34.262143Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:34.262143Z"^^xsd:dateTime ;
-  skos:closeMatch :33 .
-
-_:annq28 a qa:AnnotationQuestion ;
-    oa:hasTarget :33 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:78 a lsqv:Query ;
-  rdfs:label "List all suppliers with their names and available address information, including locality, country code, and country." ;
-  dct:created "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
-  skos:closeMatch :34 .
-
-_:annq29 a qa:AnnotationQuestion ;
-    oa:hasTarget :34 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:79 a lsqv:Query ;
-  rdfs:label "For each product, list all products that are compatible with it and compute the difference in EUR price between the two products." ;
-  dct:created "2026-04-17T16:09:40.602137Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:40.602137Z"^^xsd:dateTime ;
-  skos:closeMatch :35 .
-
-_:annq30 a qa:AnnotationQuestion ;
-    oa:hasTarget :35 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:80 a lsqv:Query ;
-  rdfs:label "What are the top three product categories based on the number of hardware items they include? Return the category IRI and the category name." ;
-  dct:created "2026-04-17T16:09:45.302136Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:45.302136Z"^^xsd:dateTime ;
-  skos:closeMatch :36 .
-
-_:annq31 a qa:AnnotationQuestion ;
-    oa:hasTarget :36 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:81 a lsqv:Query ;
-  rdfs:label "For each Bill of Material (BOM), return its IRI, the count of its BOM parts, and the sum of their quantities. Include only Bill of Materials where the total quantity exceeds 600, and order results by total quantity in descending order." ;
-  dct:created "2026-04-17T16:09:44.124136Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:44.124136Z"^^xsd:dateTime ;
-  skos:closeMatch :37 .
-
-_:annq32a a qa:AnnotationQuestion ;
-    oa:hasTarget :37 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq32b a qa:AnnotationQuestion ;
-    oa:hasTarget :37 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:82 a lsqv:Query ;
-  rdfs:label "For each employee including also  all subclasses, return the name, email, phone number, the name of the department they belong to, and the name of their manager." ;
-  dct:created "2026-04-17T16:09:47.702136Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:47.702136Z"^^xsd:dateTime ;
-  skos:closeMatch :38 .
-
-_:annq33 a qa:AnnotationQuestion ;
-    oa:hasTarget :38 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:83 a lsqv:Query ;
-  rdfs:label "Which hardware items have a width greater than their height and a depth less than 50 mm? Return their IRIs and dimensions (width, height, and depth)." ;
-  dct:created "2026-04-17T16:09:50.135196Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:50.135196Z"^^xsd:dateTime ;
-  skos:closeMatch :39 .
-
-_:annq34 a qa:AnnotationQuestion ;
-    oa:hasTarget :39 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:84 a lsqv:Query ;
-  rdfs:label "Which hardware items (with their ID and name) do not have an assigned name for the product manager?" ;
-  dct:created "2026-04-17T16:09:52.752190Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:52.752190Z"^^xsd:dateTime ;
-  skos:closeMatch :40 .
-
-_:annq35 a qa:AnnotationQuestion ;
-    oa:hasTarget :40 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:85 a lsqv:Query ;
-  rdfs:label "Which Bill of Material has the highest weighted average unit cost of its hardware parts, and what is that value?" ;
-  dct:created "2026-04-17T16:09:55.032196Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:55.032196Z"^^xsd:dateTime ;
-  skos:closeMatch :42 .
-
-_:annq36 a qa:AnnotationQuestion ;
-    oa:hasTarget :42 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:86 a lsqv:Query ;
-  rdfs:label "List all product pairs where the first product is compatible with the second product." ;
-  dct:created "2026-04-17T16:09:58.132146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:58.132146Z"^^xsd:dateTime ;
-  skos:closeMatch :43 .
-
-_:annq37 a qa:AnnotationQuestion ;
-    oa:hasTarget :43 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:87 a lsqv:Query ;
-  rdfs:label "Which hardware items have widths in the top 10% of the width range (based on minimum and maximum widths), and what are their IDs, names, and widths?" ;
-  dct:created "2026-04-17T16:10:01.402147Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:01.402147Z"^^xsd:dateTime ;
-  skos:closeMatch :44 .
-
-_:annq38 a qa:AnnotationQuestion ;
-    oa:hasTarget :44 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:88 a lsqv:Query ;
-  rdfs:label "What are the top 5 suppliers with the highest average reliability index across the hardware items they supply?" ;
-  dct:created "2026-04-17T16:10:05.252147Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:05.252147Z"^^xsd:dateTime ;
-  skos:closeMatch :46 .
-
-_:annq39 a qa:AnnotationQuestion ;
-    oa:hasTarget :46 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:89 a lsqv:Query ;
-  rdfs:label "From which countries do the suppliers of the BOM parts of SkySync MechWave come?" ;
-  dct:created "2026-04-17T16:10:12.242146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:12.242146Z"^^xsd:dateTime ;
-  skos:closeMatch :47 .
-
-_:annq40 a qa:AnnotationQuestion ;
-    oa:hasTarget :47 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:90 a lsqv:Query ;
-  rdfs:label "Which Bill of Materials (BOMs) have at least one part supplied by a supplier from Poland?" ;
-  dct:created "2026-04-17T16:10:15.632746Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:15.632746Z"^^xsd:dateTime ;
-  skos:closeMatch :48 .
-
-_:annq41 a qa:AnnotationQuestion ;
-    oa:hasTarget :48 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:91 a lsqv:Query ;
-  rdfs:label "How many suppliers provide products that are compatible with the K367-1320550 - Strain Encoder?" ;
-  dct:created "2026-04-17T16:10:18.572149Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:18.572149Z"^^xsd:dateTime ;
-  skos:closeMatch :49 .
-
-_:annq42 a qa:AnnotationQuestion ;
-    oa:hasTarget :49 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:92 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the most products, and how many products does it handle?" ;
-  dct:created "2026-04-17T16:10:20.132146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:20.132146Z"^^xsd:dateTime ;
-  skos:closeMatch :50 .
-
-_:annq43 a qa:AnnotationQuestion ;
-    oa:hasTarget :50 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
