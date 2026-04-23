@@ -11,7 +11,7 @@
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show employees and their email addresses.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?email WHERE { ?employee a pv:236555b285e132eb ; pv:e1dbec811bcacd42 ?email }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?email WHERE { ?employee a pv:236555 ; pv:e1dbec ?email }
 
 
 """ ;
@@ -31,7 +31,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?email WHERE { ?
   <http://www.w3.org/2000/01/rdf-schema#comment> "List suppliers from Germany.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?supplier a pv:df4ad34d49d079ea ; pv:2f6a8bbf20139323 "Germany" }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?supplier a pv:df4ad3 ; pv:2f6a8b "Germany" }
 
 
 """ ;
@@ -51,7 +51,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?supplie
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product categories and their associated products.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category ?product WHERE { ?product pv:5e848e9783388ba6 ?category }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category ?product WHERE { ?product pv:5e848e ?category }
 
 
 """ ;
@@ -71,7 +71,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category ?product WHERE {
   <http://www.w3.org/2000/01/rdf-schema#comment> "List departments responsible for services.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept WHERE { ?dept pv:cd5184f37e88872f ?product . ?product a pv:979522efb02f82a8 }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept WHERE { ?dept pv:cd5184 ?product . ?product a pv:979522 }
 
 
 """ ;
@@ -91,7 +91,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept WHERE { ?dept pv:cd5
   <http://www.w3.org/2000/01/rdf-schema#comment> "List BOM parts requiring quantity greater than 100.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?part WHERE { ?bomPart a pv:13078c4ecbfcc51c ; pv:e90f572ae3462a4e ?qty FILTER(?qty > 100) }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?part WHERE { ?bomPart a pv:13078c ; pv:e90f57 ?qty FILTER(?qty > 100) }
 
 
 """ ;
@@ -111,7 +111,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?part WHERE { ?bomPart a p
   <http://www.w3.org/2000/01/rdf-schema#comment> "List employees and their managers.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?manager WHERE { ?employee pv:f6909e1c1b1ee9a0 ?manager }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?manager WHERE { ?employee pv:f6909e ?manager }
 
 
 """ ;
@@ -131,7 +131,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?manager WHERE {
   <http://www.w3.org/2000/01/rdf-schema#comment> "List service products and their eligible hardware.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service ?hardware WHERE { ?service a pv:979522efb02f82a8 ; pv:798bd6c0bdf8baea ?hardware . ?hardware a pv:1b4d3fac04dbe3c8 }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service ?hardware WHERE { ?service a pv:979522 ; pv:798bd6 ?hardware . ?hardware a pv:1b4d3f }
 
 
 """ ;
@@ -151,7 +151,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service ?hardware WHERE {
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find average weight of hardware products.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (AVG(?weight) as ?avgWeight) WHERE { ?hardware a pv:1b4d3fac04dbe3c8 ; pv:c4bb1c05f0eac951 ?weight }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (AVG(?weight) as ?avgWeight) WHERE { ?hardware a pv:1b4d3f ; pv:c4bb1c ?weight }
 
 
 """ ;
@@ -171,7 +171,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (AVG(?weight) as ?avgWeigh
   <http://www.w3.org/2000/01/rdf-schema#comment> "List departments and their responsible product categories.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept ?category WHERE { ?dept pv:cd5184f37e88872f ?product . ?product pv:5e848e9783388ba6 ?category }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept ?category WHERE { ?dept pv:cd5184 ?product . ?product pv:5e848e ?category }
 
 
 """ ;
@@ -191,7 +191,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept ?category WHERE { ?d
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product names with prices over $500.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:704fdeada4c1971c ?name ; pv:e462e79adcde5ba2 ?price . ?price pv:af5caeef839c7672 ?amt FILTER(?amt > 500) }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:704fde ?name ; pv:e462e7 ?price . ?price pv:af5cae ?amt FILTER(?amt > 500) }
 
 
 """ ;
@@ -211,7 +211,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find total quantity of part RTY456 in all BOMs.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?qty) as ?total) WHERE { ?bomPart pv:d256240b3dbde328 ?part ; pv:e90f572ae3462a4e ?qty . ?part pv:ac9b7ec99b9fec7a "RTY456" }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?qty) as ?total) WHERE { ?bomPart pv:d25624 ?part ; pv:e90f57 ?qty . ?part pv:ac9b7e "RTY456" }
 
 
 """ ;
@@ -231,7 +231,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?qty) as ?total) WHER
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show average price per product category.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?amt) as ?avgPrice) WHERE { ?product pv:5e848e9783388ba6 ?category ; pv:e462e79adcde5ba2/pv:af5caeef839c7672 ?amt } GROUP BY ?category
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?amt) as ?avgPrice) WHERE { ?product pv:5e848e ?category ; pv:e462e7/pv:af5cae ?amt } GROUP BY ?category
 
 
 """ ;
@@ -251,7 +251,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?amt) as ?a
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find products with both hardware and service variants.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:704fdeada4c1971c ?name . { ?variant a pv:1b4d3fac04dbe3c8 } UNION { ?variant a pv:979522efb02f82a8 } }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:704fde ?name . { ?variant a pv:1b4d3f } UNION { ?variant a pv:979522 } }
 
 
 """ ;
@@ -271,7 +271,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:
   <http://www.w3.org/2000/01/rdf-schema#comment> "List suppliers with country DBpedia links.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> PREFIX dbo: <http://dbpedia.org/ontology/> SELECT ?supplier ?country WHERE { ?supplier pv:14d94c31a3a25f87 ?country . ?country a dbo:Country }
+PREFIX pv: <http://ld.company.org/prod-vocab/> PREFIX dbo: <http://dbpedia.org/ontology/> SELECT ?supplier ?country WHERE { ?supplier pv:14d94c ?country . ?country a dbo:Country }
 
 
 """ ;
@@ -291,7 +291,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> PREFIX dbo: <http://dbpedia.org/o
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find products with reliability index below 5.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:1b4d3fac04dbe3c8 ; pv:7a26d15d705d8c8a ?index FILTER(?index < 5) }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:1b4d3f ; pv:7a26d1 ?index FILTER(?index < 5) }
 
 
 """ ;
@@ -311,7 +311,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product managers and their departments.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager ?dept WHERE { ?product pv:d55029c4f47b41e6 ?manager . ?manager pv:8c4b73699864d4c2 ?dept }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager ?dept WHERE { ?product pv:d55029 ?manager . ?manager pv:8c4b73 ?dept }
 
 
 """ ;
@@ -331,7 +331,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager ?dept WHERE { ?pr
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find total weight of BOM components for product X.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?weight * ?qty) as ?totalWeight) WHERE { ?bom pv:0607c7ad5f2ee856 [ pv:d256240b3dbde328 ?component ; pv:e90f572ae3462a4e ?qty ] . ?component pv:c4bb1c05f0eac951 ?weight }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?weight * ?qty) as ?totalWeight) WHERE { ?bom pv:0607c7 [ pv:d25624 ?component ; pv:e90f57 ?qty ] . ?component pv:c4bb1c ?weight }
 
 
 """ ;
@@ -351,7 +351,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?weight * ?qty) as ?t
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show agents with multiple areas of expertise.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?agent (COUNT(?expertise) as ?expertiseCount) WHERE { ?agent pv:76f55ebd5a5433da ?expertise } GROUP BY ?agent HAVING(COUNT(?expertise) > 1)
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?agent (COUNT(?expertise) as ?expertiseCount) WHERE { ?agent pv:76f55e ?expertise } GROUP BY ?agent HAVING(COUNT(?expertise) > 1)
 
 
 """ ;
@@ -371,7 +371,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?agent (COUNT(?expertise) 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product names and their supplier countries.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name ?country WHERE { ?product pv:704fdeada4c1971c ?name ; pv:1bade2c885e79882/pv:2f6a8bbf20139323 ?country }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name ?country WHERE { ?product pv:704fde ?name ; pv:1bade2/pv:2f6a8b ?country }
 
 
 """ ;
@@ -391,7 +391,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name ?country WHERE { ?pr
   <http://www.w3.org/2000/01/rdf-schema#comment> "List BOM parts with their quantities and component names.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?partName ?quantity WHERE { ?bomPart pv:d256240b3dbde328 ?part ; pv:e90f572ae3462a4e ?quantity . ?part pv:704fdeada4c1971c ?partName }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?partName ?quantity WHERE { ?bomPart pv:d25624 ?part ; pv:e90f57 ?quantity . ?part pv:704fde ?partName }
 
 
 """ ;
@@ -411,7 +411,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?partName ?quantity WHERE 
   <http://www.w3.org/2000/01/rdf-schema#comment> "List hardware dimensions in descending order of weight.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?width ?height ?depth ?weight WHERE { ?product a pv:1b4d3fac04dbe3c8 ; pv:4811a97ed429b369 ?width ; pv:9eefc0a8ed5c3f68 ?height ; pv:807b0b91936b3a90 ?depth ; pv:c4bb1c05f0eac951 ?weight } ORDER BY DESC(?weight)
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?width ?height ?depth ?weight WHERE { ?product a pv:1b4d3f ; pv:4811a9 ?width ; pv:9eefc0 ?height ; pv:807b0b ?depth ; pv:c4bb1c ?weight } ORDER BY DESC(?weight)
 
 
 """ ;
@@ -431,7 +431,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?width ?height ?d
   <http://www.w3.org/2000/01/rdf-schema#comment> "List product managers responsible for products with reliability index below 6.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager WHERE { ?product pv:d55029c4f47b41e6 ?manager ; pv:7a26d15d705d8c8a ?index FILTER(?index < 6) }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager WHERE { ?product pv:d55029 ?manager ; pv:7a26d1 ?index FILTER(?index < 6) }
 
 
 """ ;
@@ -451,7 +451,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager WHERE { ?product 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show compatible hardware pairs that share the same product category.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prod1 ?prod2 ?category WHERE { ?prod1 pv:a6d55168a121bb71 ?prod2 ; pv:5e848e9783388ba6 ?category . ?prod2 pv:5e848e9783388ba6 ?category }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prod1 ?prod2 ?category WHERE { ?prod1 pv:a6d551 ?prod2 ; pv:5e848e ?category . ?prod2 pv:5e848e ?category }
 
 
 """ ;
@@ -471,7 +471,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prod1 ?prod2 ?category WH
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find BOMs where all parts have suppliers in Germany.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom WHERE { ?bom pv:0607c7ad5f2ee856/pv:d256240b3dbde328/pv:1bade2c885e79882 ?supplier . ?supplier pv:2f6a8bbf20139323 "Germany" }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom WHERE { ?bom pv:0607c7/pv:d25624/pv:1bade2 ?supplier . ?supplier pv:2f6a8b "Germany" }
 
 
 """ ;
@@ -491,7 +491,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom WHERE { ?bom pv:0607c
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product categories with the most hardware products.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (COUNT(?hw) as ?count) WHERE { ?hw a pv:1b4d3fac04dbe3c8 ; pv:5e848e9783388ba6 ?category } GROUP BY ?category ORDER BY DESC(COUNT(?hw))
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (COUNT(?hw) as ?count) WHERE { ?hw a pv:1b4d3f ; pv:5e848e ?category } GROUP BY ?category ORDER BY DESC(COUNT(?hw))
 
 
 """ ;
@@ -511,7 +511,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (COUNT(?hw) as ?
   <http://www.w3.org/2000/01/rdf-schema#comment> "List services eligible for products that weigh less than 300g.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:798bd6c0bdf8baea ?product . ?product pv:c4bb1c05f0eac951 ?weight FILTER(?weight < 300) }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:798bd6 ?product . ?product pv:c4bb1c ?weight FILTER(?weight < 300) }
 
 
 """ ;
@@ -531,7 +531,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product managers and the number of products they manage.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager (COUNT(?product) as ?count) WHERE { ?product pv:d55029c4f47b41e6 ?manager } GROUP BY ?manager
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager (COUNT(?product) as ?count) WHERE { ?product pv:d55029 ?manager } GROUP BY ?manager
 
 
 """ ;
@@ -551,7 +551,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager (COUNT(?product) 
   <http://www.w3.org/2000/01/rdf-schema#comment> "List suppliers that provide parts for products managed by 'Engineering' department.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?dept pv:704fdeada4c1971c "Engineering" ; pv:cd5184f37e88872f/pv:1bade2c885e79882 ?supplier }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?dept pv:704fde "Engineering" ; pv:cd5184/pv:1bade2 ?supplier }
 
 
 """ ;
@@ -571,7 +571,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?dept pv
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show products with compatibility chains (product A compatible with B compatible with C).";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prodA ?prodB ?prodC WHERE { ?prodA pv:a6d55168a121bb71 ?prodB . ?prodB pv:a6d55168a121bb71 ?prodC }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prodA ?prodB ?prodC WHERE { ?prodA pv:a6d551 ?prodB . ?prodB pv:a6d551 ?prodC }
 
 
 """ ;
@@ -591,7 +591,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prodA ?prodB ?prodC WHERE
   <http://www.w3.org/2000/01/rdf-schema#comment> "List departments and their most expensive product.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (SAMPLE(?product) as ?mostExpensive) WHERE { ?dept pv:cd5184f37e88872f ?product . ?product pv:e462e79adcde5ba2/pv:af5caeef839c7672 ?price } GROUP BY ?dept ORDER BY DESC(MAX(?price))
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (SAMPLE(?product) as ?mostExpensive) WHERE { ?dept pv:cd5184 ?product . ?product pv:e462e7/pv:af5cae ?price } GROUP BY ?dept ORDER BY DESC(MAX(?price))
 
 
 """ ;
@@ -611,7 +611,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (SAMPLE(?product) as
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find services that require hardware from specific country suppliers.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:798bd6c0bdf8baea ?hw . ?hw pv:1bade2c885e79882 ?supplier . ?supplier pv:2f6a8bbf20139323 "Japan" }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:798bd6 ?hw . ?hw pv:1bade2 ?supplier . ?supplier pv:2f6a8b "Japan" }
 
 
 """ ;
@@ -631,7 +631,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service 
   <http://www.w3.org/2000/01/rdf-schema#comment> "List BOMs and their total part count.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom (COUNT(?part) as ?partCount) WHERE { ?bom pv:0607c7ad5f2ee856 ?part } GROUP BY ?bom
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom (COUNT(?part) as ?partCount) WHERE { ?bom pv:0607c7 ?part } GROUP BY ?bom
 
 
 """ ;
@@ -651,7 +651,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom (COUNT(?part) as ?par
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show employees who manage products in their area of expertise.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?employee pv:76f55ebd5a5433da ?expertise . ?product pv:d55029c4f47b41e6 ?employee ; pv:5e848e9783388ba6 ?expertise }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?employee pv:76f55e ?expertise . ?product pv:d55029 ?employee ; pv:5e848e ?expertise }
 
 
 """ ;
@@ -671,7 +671,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE {
   <http://www.w3.org/2000/01/rdf-schema#comment> "List hardware products by volume (width × height × depth).";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (?width * ?height * ?depth as ?volume) WHERE { ?product pv:4811a97ed429b369 ?width ; pv:9eefc0a8ed5c3f68 ?height ; pv:807b0b91936b3a90 ?depth } ORDER BY DESC(?volume)
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (?width * ?height * ?depth as ?volume) WHERE { ?product pv:4811a9 ?width ; pv:9eefc0 ?height ; pv:807b0b ?depth } ORDER BY DESC(?volume)
 
 
 """ ;
@@ -691,7 +691,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (?width * ?height
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find departments with products from more than 3 different suppliers.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (COUNT(DISTINCT ?supplier) as ?suppliers) WHERE { ?dept pv:cd5184f37e88872f/pv:1bade2c885e79882 ?supplier } GROUP BY ?dept HAVING(COUNT(DISTINCT ?supplier) > 3)
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (COUNT(DISTINCT ?supplier) as ?suppliers) WHERE { ?dept pv:cd5184/pv:1bade2 ?supplier } GROUP BY ?dept HAVING(COUNT(DISTINCT ?supplier) > 3)
 
 
 """ ;
@@ -711,7 +711,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (COUNT(DISTINCT ?sup
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product lifecycle status based on reliability index.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?index > 8, "Active", "Phase-out") as ?status) WHERE { ?product pv:7a26d15d705d8c8a ?index }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?index > 8, "Active", "Phase-out") as ?status) WHERE { ?product pv:7a26d1 ?index }
 
 
 """ ;
@@ -731,7 +731,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?index > 8, "
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product price in EUR equivalent using fixed conversion rate.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?curr="USD", ?amt*0.85, ?amt) as ?eurPrice) WHERE { ?product pv:e462e79adcde5ba2 [ pv:af5caeef839c7672 ?amt; pv:d7f2768965fbad12 ?curr ] }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?curr="USD", ?amt*0.85, ?amt) as ?eurPrice) WHERE { ?product pv:e462e7 [ pv:af5cae ?amt; pv:d7f276 ?curr ] }
 
 
 """ ;
@@ -751,7 +751,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?curr="USD", 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find products that are both hardware and have associated services.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:1b4d3fac04dbe3c8 . ?service pv:798bd6c0bdf8baea ?product }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:1b4d3f . ?service pv:798bd6 ?product }
 
 
 """ ;
@@ -771,7 +771,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product 
   <http://www.w3.org/2000/01/rdf-schema#comment> "List products with supplier country risk assessment.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?country IN("CountryA","CountryB"), "High Risk", "Low Risk") as ?risk) WHERE { ?product pv:1bade2c885e79882/pv:2f6a8bbf20139323 ?country }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?country IN("CountryA","CountryB"), "High Risk", "Low Risk") as ?risk) WHERE { ?product pv:1bade2/pv:2f6a8b ?country }
 
 
 """ ;
@@ -791,7 +791,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?country IN("
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product categories sorted by average reliability index.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?index) as ?avgReliability) WHERE { ?product pv:5e848e9783388ba6 ?category ; pv:7a26d15d705d8c8a ?index } GROUP BY ?category ORDER BY DESC(AVG(?index))
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?index) as ?avgReliability) WHERE { ?product pv:5e848e ?category ; pv:7a26d1 ?index } GROUP BY ?category ORDER BY DESC(AVG(?index))
 
 
 """ ;
@@ -811,7 +811,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?index) as 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find products that share suppliers with their compatible products.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?compatible WHERE { ?product pv:a6d55168a121bb71 ?compatible ; pv:1bade2c885e79882 ?supplier . ?compatible pv:1bade2c885e79882 ?supplier }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?compatible WHERE { ?product pv:a6d551 ?compatible ; pv:1bade2 ?supplier . ?compatible pv:1bade2 ?supplier }
 
 
 """ ;
@@ -831,7 +831,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?compatible WHERE
   <http://www.w3.org/2000/01/rdf-schema#comment> "List hardware products with cubic dimensions (width = height = depth).";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product pv:4811a97ed429b369 ?dim ; pv:9eefc0a8ed5c3f68 ?dim ; pv:807b0b91936b3a90 ?dim }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product pv:4811a9 ?dim ; pv:9eefc0 ?dim ; pv:807b0b ?dim }
 
 
 """ ;
@@ -851,7 +851,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product 
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product manager email distribution lists by department.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (GROUP_CONCAT(?email; SEPARATOR=";") as ?emails) WHERE { ?manager pv:8c4b73699864d4c2 ?dept ; pv:e1dbec811bcacd42 ?email . ?product pv:d55029c4f47b41e6 ?manager } GROUP BY ?dept
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (GROUP_CONCAT(?email; SEPARATOR=";") as ?emails) WHERE { ?manager pv:8c4b73 ?dept ; pv:e1dbec ?email . ?product pv:d55029 ?manager } GROUP BY ?dept
 
 
 """ ;
@@ -871,7 +871,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (GROUP_CONCAT(?email
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find products with price higher than average in their category.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?price WHERE { ?product pv:5e848e9783388ba6 ?category ; pv:e462e79adcde5ba2/pv:af5caeef839c7672 ?price . { SELECT ?category (AVG(?amt) as ?avg) WHERE { ?p pv:5e848e9783388ba6 ?category ; pv:e462e79adcde5ba2/pv:af5caeef839c7672 ?amt } GROUP BY ?category } FILTER(?price > ?avg) }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?price WHERE { ?product pv:5e848e ?category ; pv:e462e7/pv:af5cae ?price . { SELECT ?category (AVG(?amt) as ?avg) WHERE { ?p pv:5e848e ?category ; pv:e462e7/pv:af5cae ?amt } GROUP BY ?category } FILTER(?price > ?avg) }
 
 
 """ ;
@@ -891,7 +891,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?price WHERE { ?p
   <http://www.w3.org/2000/01/rdf-schema#comment> "Find employees who are experts for products they manage.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?product pv:d55029c4f47b41e6 ?employee . ?employee pv:76f55ebd5a5433da ?expertise . ?product pv:5e848e9783388ba6 ?expertise }
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?product pv:d55029 ?employee . ?employee pv:76f55e ?expertise . ?product pv:5e848e ?expertise }
 
 
 """ ;
@@ -911,7 +911,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE {
   <http://www.w3.org/2000/01/rdf-schema#comment> "Show product volume to weight ratio for shipping optimization.";
 
   <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ((?width * ?height * ?depth) / ?weight as ?ratio) WHERE { ?product pv:4811a97ed429b369 ?width ; pv:9eefc0a8ed5c3f68 ?height ; pv:807b0b91936b3a90 ?depth ; pv:c4bb1c05f0eac951 ?weight } ORDER BY ?ratio
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ((?width * ?height * ?depth) / ?weight as ?ratio) WHERE { ?product pv:4811a9 ?width ; pv:9eefc0 ?height ; pv:807b0b ?depth ; pv:c4bb1c ?weight } ORDER BY ?ratio
 
 
 """ ;

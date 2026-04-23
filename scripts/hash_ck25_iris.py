@@ -343,8 +343,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--hash-len",
         type=int,
-        default=16,
-        help="Hex chars from sha256 to keep (default: 16)",
+        default=6,
+        help="Hex chars from sha256 to keep (default: 6)",
     )
     parser.add_argument(
         "--hash-query-strings",
