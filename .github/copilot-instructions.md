@@ -1,10 +1,20 @@
 # Instructions for Automated Agents
 
 These are to be followed religiously by any automated agents (like GitHub Copilot) that are contributing to the codebase. 
-They are fundamental to avoid: data loss, code, loss,  bugs, developer confusion.
+They are fundamental to avoid: data loss, code loss, bugs, developer confusion.
 The goal is to maintain a consistent communication style and ensure that all contributions are clear and concise.
 
----
+## PREAMBLE: GOLDEN RULES
+
+- **Never move files out of the project root** without explicit user instruction, and even in that case ask for permission and exactly which files to move and where, rather than making assumptions
+- **Never use `cat` or overwrite files** if they have not been backed up or committed, to avoid data loss. Always check for uncommitted changes before modifying files directly.
+- **Always check existing project folders before acting** when facing ambiguity about where to place files or write output. List directory contents first, then confirm or ask the user for clarification.
+- **Never write to `/tmp` unless explicitly asked AND confirmed by the user.** Always prefer project-local directories (`.temp/`, `output/`, etc.) for test output and temporary work.
+- **Always use the patch-based approach** for refactoring imports and moving files, to ensure that all references are updated correctly and to avoid broken imports.
+- **Always ask for feedback** after major changes instead of preemptively listing all details
+- **Always review and follow the Commit Policy below** and use `git status` and `git diff` before committing to ensure that the commit message accurately reflects the changes made.
+
+Then follow all the guidelines below in the next sections for communication style, commit policy, development environment, and bash best practices to ensure a smooth and consistent contribution process.
 
 ## Table of Contents
 - [0. Agent Communication Style](#0-agent-communication-style)
@@ -13,13 +23,7 @@ The goal is to maintain a consistent communication style and ensure that all con
 - [3. Bash Best Practices for Copilot](#3-bash-best-practices-for-copilot)
 - [4. Project Overview](#4-project-overview)  
 
-## GOLDEN RULES:
 
-- **Never move files out of the project root** without explicit user instruction, and even in that case ask for permission and exactly which files to move and where, rather than making assumptions
-- **Never use `cat` or overwrite files** if they have not been backed up or committed, to avoid data loss. Always check for uncommitted changes before modifying files directly.
-- **Always use the patch-based approach** for refactoring imports and moving files, to ensure that all references are updated correctly and to avoid broken imports.
-- **Always ask for feedback** after major changes instead of preemptively listing all details
-- **Always review and follow the Commit Policy below** and use `git status` and `git diff` before committing to ensure that the commit message accurately reflects the changes made.
 
 ## 0. Agent Communication Style
 
@@ -30,6 +34,10 @@ The goal is to maintain a consistent communication style and ensure that all con
 - **PR Text Signature:** Always append a final line in PR descriptions that identifies the agent and model version. Format: `PR text authored by <agent-name> (<model-version>).`
 
 ## 1. Commit Policy
+
+- **Check valid signature** - Always ensure that the agent has a valid git signature configured (name and email) before committing. If not, notify the user and ask for instructions on how to proceed (e.g., set a default signature, use a specific name/email for commits, etc.)
+
+- **Commit Message Format:** Every commit created by an automated agent must include the flag `[BOT]` in the commit title (recommended prefix: `[BOT] <summary>`).
 
 - **Virtual Environment:** Always run all commands, scripts, and hooks inside the project Python virtual environment (`.venv`). Activate the venv before running any Python, pip, or tool commands using `uv`.
 
@@ -52,7 +60,6 @@ The goal is to maintain a consistent communication style and ensure that all con
   - If a change affects multiple topics (e.g., docs and code), prefer separate commits for each topic
   - If a change is extensive (touches many files), group by logical area (e.g., all doc files, all API code, all test files, etc.)
 
-- **Commit Message Format:** Every commit created by an automated agent must include the flag `[BOT]` in the commit title (recommended prefix: `[BOT] <summary>`).
 
 - **Pull Request Disclaimer:** Every PR created or updated by an automated agent must end with a disclaimer line identifying both agent and model version. Required format:
   - `PR text authored by <agent-name> (<model-version>).`
@@ -197,22 +204,3 @@ make build
 ## 4. Project Overview
 
 This repository is expected to evolve. Agents should preserve the core intent and milestones without enforcing overly rigid structure.
-
-### Stable Milestones (Commit-Relevant)
-
-- `README.md` is a key entry point and should stay aligned with the current repository layout and conventions.
-- `graphs/` is a core dataset area and should remain clearly organized.
-- The paired `.graph` / `.ttl` naming idea is a project convention and should be kept consistent when adding new resources. For example, if a new dataset `example` is added, it should be in a subfolder and have both `example.ttl` and `example.graph` files in the same folder.
-- `.external/` contains vendored external vocabularies used by the project and is part of the committed repository state.
-- `GUIDELINE.md` is the canonical modeling guidance and should stay synchronized with actual encoding practice.
-
-### Flexibility Principle
-
-- Prefer guidance over strict enforcement: adapt to new files/folders as the project grows, while keeping naming and documentation coherent.
-- If structure changes are proposed, update `README.md` and `GUIDELINE.md` in the same change set when relevant.
-
-### Local Temporary Data Policy
-
-- `.temp/` is local-only working space.
-- `.temp/` must always be ignored by git (`.gitignore`).
-- Never reference `.temp/` in committed files (docs, examples, instructions, or data files).
