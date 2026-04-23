@@ -195,7 +195,7 @@ WHERE {
   <http://ld.company.org/prod-instances/prod-cat-Switch> .
 
 _:sf9 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
   lsqv:projectVarCount "1"^^xsd:integer ;
   lsqv:tpCount "2"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
@@ -290,8 +290,7 @@ _:sf13 a lsqv:StructuralFeatures ;
   dct:subject pv:addressCountry, pv:hasSupplier .
 
 :14 a lsqv:Query ;
-  rdfs:label "Which supplier in France delivers Compensators?" ;
-  
+  rdfs:label "Which supplier in France delivers Compensators?" ; 
   dct:created "2026-03-30T16:02:31.732213Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.732213Z"^^xsd:dateTime ;
   lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
@@ -695,7 +694,7 @@ WHERE {
     pv:hasSupplier ?sup .
 }
 ORDER BY DESC(?price)
-LIMIT 5 OFFSET 5""" ;
+LIMIT 5 OFFSET 10""" ;
   lsqv:hasStructuralFeatures _:sf29 ;
   lsqv:resultCount "5"^^xsd:integer ;
   dct:subject pv:Hardware, pv:Supplier, pv:addressCountry, pv:amount, pv:currency, pv:hasSupplier, pv:name,
@@ -877,7 +876,7 @@ _:sf35 a lsqv:StructuralFeatures ;
   dct:subject pv:Product, pv:amount, pv:compatibleProduct, pv:currency, pv:price .
 
 :36 a lsqv:Query ;
-  rdfs:label "What are the top 3 most common product categories among our hardware?" ;
+  rdfs:label "Which area of expertise is most relevant among our products, what are the top three skills?" ;
   dct:created "2026-03-30T16:02:31.733164Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.733164Z"^^xsd:dateTime ;
   lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
@@ -1102,7 +1101,6 @@ _:sf42 a lsqv:StructuralFeatures ;
 SELECT ?a ?b
 WHERE {
   ?a pv:compatibleProduct ?b .
-  ?b pv:compatibleProduct ?a .
   FILTER (STR(?a) < STR(?b))
 }""" ;
   lsqv:hasStructuralFeatures _:sf43 ;
@@ -1112,7 +1110,7 @@ WHERE {
 _:sf43 a lsqv:StructuralFeatures ;
   lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
   lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
+  lsqv:tpCount "1"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
   dct:subject pv:compatibleProduct .
 
@@ -1269,14 +1267,14 @@ WHERE {
   <http://ld.company.org/prod-instances/hw-K367-1320550> .
 
 _:sf49 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
+  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
   lsqv:projectVarCount "1"^^xsd:integer ;
   lsqv:tpCount "2"^^xsd:integer ;
   lsqv:bgpCount "1"^^xsd:integer ;
   dct:subject pv:compatibleProduct, pv:hasSupplier, <http://ld.company.org/prod-instances/hw-K367-1320550> .
 
 :50 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the most products, and how many products is it responsible for?" ;
+  rdfs:label "Which department is resposible for the most product and how many product are this?" ;
   dct:created "2026-03-30T16:02:31.733737Z"^^xsd:dateTime ;
   dct:modified "2026-03-30T16:02:31.733737Z"^^xsd:dateTime ;
   lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
@@ -1827,7 +1825,7 @@ _:annq42 a qa:AnnotationQuestion ;
     ] .
 
 :92 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the most products, and how many products does it handle?" ;
+  rdfs:label "Which department is responsible for the most products, and how many products is it responsible for?" ;
   dct:created "2026-04-17T16:10:20.132146Z"^^xsd:dateTime ;
   dct:modified "2026-04-17T16:10:20.132146Z"^^xsd:dateTime ;
   skos:closeMatch :50 .
