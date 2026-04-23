@@ -7,8 +7,11 @@
 #
 # Input files:
 #   gptkb_v1.5.3.nt        — full NT (rapper-generated, clean)
-#   gptkb_v1.5.3_types.nt  — rdf:type triples only
-#                            (instanceOf → rdf:type, entity subjects only)
+#   gptkb_v1.5.3_types.nt  — instanceOf triples rewritten as rdf:type
+#                            (produced with:
+#                              awk '$2 == "<https://gptkb.org/prop/instanceOf>"' gptkb_v1.5.3.nt \
+#                              | sed 's|<https://gptkb.org/prop/instanceOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|' \
+#                              > gptkb_v1.5.3_types.nt)
 #   gptkb_v1.5.3.ttl       — original TTL, used only to extract @prefix lines
 #                            (optional — TTL conversion is skipped if not found)
 #
@@ -67,6 +70,7 @@ localname() {
 
 RDF_TYPE="<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 RDFS_LABEL="<http://www.w3.org/2000/01/rdf-schema#label>"
+RDFS_SUBCLASSOF="<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
 OWL_CLASS="<http://www.w3.org/2002/07/owl#Class>"
 OWL_DTYPE="<http://www.w3.org/2002/07/owl#DatatypeProperty>"
 OWL_OBJ="<http://www.w3.org/2002/07/owl#ObjectProperty>"
@@ -150,6 +154,17 @@ echo "  Saved predicate files to $OUTPUT_DIR/"
 
 # ==============================================================
 # PART 2 — Generate gptkb-data-vocab.nt
+#
+# Vocab contains:
+#   - prop-subject triples from the main NT (property declarations)
+#   - owl:Class + rdfs:label declarations for all classes
+#     (classes = objects of rdf:type in the types file, which are
+#      the original gptkb:instanceOf targets rewritten as rdf:type)
+#   - rdfs:subClassOf triples from the main NT
+#     (both subject and object are entity/ IRIs — these are schema
+#      triples that describe the class hierarchy, not instance data)
+#   - owl:DatatypeProperty / owl:ObjectProperty + rdfs:label
+#     for all classified predicates
 # ==============================================================
 echo ""
 echo "============================================================"
@@ -167,18 +182,24 @@ echo "============================================================"
 # ---- Step 3: prop-subject triples ----
 echo "[3/5] Extracting prop-subject triples..."
 grep '^<https://gptkb.org/prop/' "$NT_MAIN" >> "$VOCAB_OUT"
-# To exlcude alternativeName
-# grep '^<https://gptkb.org/prop/' "$NT_MAIN" \
-#     | grep -v '<https://gptkb.org/prop/alternativeName>' >> "$VOCAB_OUT"
+
+# ---- Step 3b: rdfs:subClassOf triples ----
+# These have entity/ subjects but are schema triples (class hierarchy).
+# There are only ~377 of them but they belong in vocab, not instances.
+echo "[3b/5] Extracting rdfs:subClassOf triples..."
+grep " $RDFS_SUBCLASSOF " "$NT_MAIN" >> "$VOCAB_OUT"
+echo "  rdfs:subClassOf triples: $(grep -c " $RDFS_SUBCLASSOF " "$VOCAB_OUT" || true)"
 
 # ---- Step 4: owl:Class + rdfs:label from types file ----
+# NT_TYPES contains the original gptkb:instanceOf triples rewritten as
+# rdf:type, so objects of rdf:type here are the 179,034 class IRIs.
 echo "[4/5] Extracting class IRIs from $NT_TYPES ..."
 CLASSES_TMP="$TMPDIR_WORK/classes.txt"
-awk '
+awk -v rdf_type="$RDF_TYPE" '
 /^[[:space:]]*#/ { next }
 /^[[:space:]]*$/ { next }
 {
-    if ($2 == "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>") {
+    if ($2 == rdf_type) {
         obj = $3
         gsub(/[[:space:]]*\.[[:space:]]*$/, "", obj)
         if (substr(obj,1,1) == "<") print obj
@@ -222,6 +243,12 @@ echo "  Written: $VOCAB_OUT ($(wc -l < "$VOCAB_OUT") lines)"
 
 # ==============================================================
 # PART 3 — Generate gptkb-data-instances.nt
+#
+# Instances contains:
+#   - All entity-subject triples from the main NT, EXCEPT
+#     rdfs:subClassOf (those go to vocab as class hierarchy)
+#   - rdf:type triples from the types file (entity subjects only),
+#     i.e. the rewritten instanceOf triples
 # ==============================================================
 echo ""
 echo "============================================================"
@@ -234,10 +261,16 @@ echo "============================================================"
     echo "# Auto-generated from: $NT_MAIN + $NT_TYPES"
     echo "# Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# ============================================================"
-    # All entity-subject triples from main NT
-    grep '^<https://gptkb.org/entity/' "$NT_MAIN"
+
+    # All entity-subject triples from main NT, excluding rdfs:subClassOf
+    # (subClassOf triples describe the class hierarchy and belong in vocab)
+    grep '^<https://gptkb.org/entity/' "$NT_MAIN" \
+        # | grep -v " <https://gptkb.org/prop/instanceOf> " \
+        | grep -v " $RDFS_SUBCLASSOF "
+
     # rdf:type triples from types file (entity subjects only)
     grep '^<https://gptkb.org/entity/' "$NT_TYPES"
+
 } > "$INSTANCES_OUT"
 
 echo "  Written: $INSTANCES_OUT ($(wc -l < "$INSTANCES_OUT") lines)"
