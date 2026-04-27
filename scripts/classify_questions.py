@@ -356,19 +356,37 @@ class QuestionTypeClassifier:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _detect_features_from_algebra(algebra_node: CompValue) -> Set[str]:
+    def _detect_features_from_algebra(
+        algebra_node: CompValue,
+        parsed: object,
+    ) -> Set[str]:
         """
         Recursively walk a rdflib SPARQL algebra tree and return the set of
         LSQ feature names that can be determined unambiguously from the
-        algebra structure.
+        algebra structure and parse tree.
 
         Node name → LSQ feature mapping:
           ToMultiSet { p: Project { … } }  → SubQuery
             rdflib wraps every inline SELECT in ToMultiSet(Project(…)).
             A bare GROUP / BGP inside ToMultiSet is NOT a subquery.
-          Filter (expr != TrueFilter)       → Filter
-            TrueFilter is a synthetic no-op rdflib inserts for OPTIONAL
-            blocks; it does not correspond to a user-written FILTER.
+          Filter, discriminated by expr.name and HAVING context:
+            TrueFilter          → (skip) synthetic no-op rdflib inserts for
+                                   OPTIONAL; not a user-written construct.
+            Builtin_NOTEXISTS   → NotExists  (FILTER NOT EXISTS { … })
+            Builtin_EXISTS      → fn-exists  (FILTER EXISTS { … }; LSQ models
+                                   this as a function, not a structural feature)
+            anything else       → Filter     (plain FILTER expression)
+
+            HAVING special case: rdflib compiles HAVING(expr) into a Filter
+            node wrapping the AggregateJoin/Group subtree. This is
+            indistinguishable from a plain Filter at the algebra level, so
+            HAVING is detected from the parse tree (parsed[1]['having'] is a
+            CompValue when HAVING is present, not the bare string sentinel
+            rdflib uses when it is absent). When HAVING is detected:
+              - lsqv:Having is added to the feature set.
+              - The first Filter node encountered in the algebra walk (which
+                is always the outermost one, i.e. the HAVING) is skipped so
+                it does not also produce a spurious lsqv:Filter.
           Extend                            → Bind
             rdflib compiles BIND(?expr AS ?var) into Extend nodes.
           LeftJoin                          → Optional
@@ -379,6 +397,29 @@ class QuestionTypeClassifier:
         """
         found: Set[str] = set()
         seen: Set[int] = set()
+
+        # Detect HAVING from the parse tree. parsed[1]['having'] is a CompValue
+        # when HAVING is present; rdflib sets it to the bare string 'having' as
+        # a sentinel when it is absent.
+        # Note: parsed is a pyparsing.ParseResults (a list subclass). We must
+        # access parsed[1] directly on the ParseResults object — not via a
+        # list/tuple isinstance guard — because pyparsing overrides __getitem__
+        # to return a CompValue proxy. Using list.__getitem__ (triggered by an
+        # isinstance check) bypasses that proxy and returns a plain dict instead.
+        try:
+            query_clause = parsed[1]
+            having_node = query_clause.get("having") if hasattr(query_clause, "get") else None
+            has_having = isinstance(having_node, CompValue)
+        except (IndexError, AttributeError):
+            has_having = False
+        if has_having:
+            found.add("Having")
+
+        # When HAVING is present, the outermost Filter in the algebra tree is
+        # the compiled HAVING expression — it must be skipped so it does not
+        # also emit a spurious lsqv:Filter. This flag is cleared after the
+        # first Filter node is encountered during the walk.
+        skip_next_filter = [has_having]  # list so the closure can mutate it
 
         def _walk(node: CompValue) -> None:
             if not isinstance(node, CompValue):
@@ -395,9 +436,28 @@ class QuestionTypeClassifier:
                 if isinstance(inner, CompValue) and inner.name == "Project":
                     found.add("SubQuery")
             elif name == "Filter":
-                expr = node.get("expr")
-                if isinstance(expr, CompValue) and expr.name != "TrueFilter":
-                    found.add("Filter")
+                if skip_next_filter[0]:
+                    # This is the HAVING-compiled Filter — skip feature
+                    # detection for it but still recurse into its children
+                    # so inner real FILTERs are not missed.
+                    skip_next_filter[0] = False
+                else:
+                    expr = node.get("expr")
+                    expr_name = getattr(expr, "name", None)
+                    # TrueFilter is a synthetic no-op rdflib inserts for
+                    # OPTIONAL blocks — skip it entirely.
+                    if expr_name == "TrueFilter":
+                        pass
+                    # FILTER NOT EXISTS { … } → lsqv:NotExists
+                    elif expr_name == "Builtin_NOTEXISTS":
+                        found.add("NotExists")
+                    # FILTER EXISTS { … } → lsqv:fn-exists (LSQ treats this
+                    # as a function rather than a structural feature)
+                    elif expr_name == "Builtin_EXISTS":
+                        found.add("fn-exists")
+                    # Any other FILTER expression → lsqv:Filter
+                    else:
+                        found.add("Filter")
             elif name == "Extend":
                 found.add("Bind")
             elif name == "LeftJoin":
@@ -415,6 +475,7 @@ class QuestionTypeClassifier:
         return found
 
     @staticmethod
+    @staticmethod
     def _count_from_algebra(algebra_node: CompValue) -> Tuple[int, int, int]:
         """
         Walk the algebra tree and return (bgp_count, tp_count, proj_var_count).
@@ -423,7 +484,15 @@ class QuestionTypeClassifier:
                          those inside subqueries, matching LSQ's own counting).
         tp_count       — total number of triple patterns across all BGP nodes.
         proj_var_count — number of variables in the top-level SELECT projection
-                         (the PV list on the root SelectQuery node).
+                         (the PV list on the root SelectQuery node), or 0 for
+                         ASK / CONSTRUCT / DESCRIBE queries.
+
+                         Note: rdflib populates PV on AskQuery with all pattern
+                         variables, not projected ones. Returning 0 for non-
+                         SELECT roots prevents a spurious mismatch against
+                         lsqv:projectVarCount, and the check is silently skipped
+                         in _check_count_annotations when the computed value is 0
+                         and no declared value is present.
 
         Only CompValue nodes are visited; a seen-set guards against cycles.
         """
@@ -455,9 +524,16 @@ class QuestionTypeClassifier:
 
         _walk(algebra_node)
 
-        # Projection variable count lives on the root SelectQuery node directly
-        pv = algebra_node.get("PV") or []
-        proj_var_count = len(pv)
+        # Projection variable count is only meaningful for SELECT queries.
+        # For ASK, CONSTRUCT and DESCRIBE, rdflib still populates PV on the
+        # root node (with pattern variables for ASK, template variables for
+        # CONSTRUCT) — none of which represent a SELECT projection. Return 0
+        # for any non-SELECT root so _check_count_annotations skips the check.
+        if algebra_node.name == "SelectQuery":
+            pv = algebra_node.get("PV") or []
+            proj_var_count = len(pv)
+        else:
+            proj_var_count = 0
 
         return bgp_count, tp_count, proj_var_count
 
@@ -512,8 +588,21 @@ class QuestionTypeClassifier:
             "tpCount":         actual_tp,
         }
 
+        # projectVarCount is only meaningful for SELECT queries. For ASK /
+        # CONSTRUCT / DESCRIBE, _count_from_algebra returns 0 to avoid the
+        # misleading PV rdflib populates on non-SELECT roots. Skip the check
+        # entirely for those query types so a declared value never triggers
+        # a false mismatch.
+        is_select = algebra_node.name == "SelectQuery"
+
         for prop, declared_val in declared.items():
             if declared_val is None:
+                continue
+            if prop == "projectVarCount" and not is_select:
+                self.logger.debug(
+                    f"Query {short_uri!r}: skipping lsqv:projectVarCount check "
+                    f"(query type is {algebra_node.name}, not SelectQuery)"
+                )
                 continue
             actual_val = actual[prop]
             if declared_val != actual_val:
@@ -618,7 +707,7 @@ class QuestionTypeClassifier:
             # We compare what the algebra tree actually contains against what
             # LSQ declared. Each missing feature is a likely annotation gap.
             # The declared LSQ feature set remains authoritative — we only warn.
-            implied = self._detect_features_from_algebra(algebra.algebra)
+            implied = self._detect_features_from_algebra(algebra.algebra, parsed)
             for feat_name in sorted(implied):
                 if feat_name not in features:
                     msg = (
