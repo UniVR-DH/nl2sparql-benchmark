@@ -49,7 +49,8 @@ qat:hasAnswerType rdf:type owl:ObjectProperty ;
     rdfs:domain qat:QuestionType ;
     rdfs:range qa:AnswerType ;
     rdfs:label "has answer type"@en ;
-    rdfs:comment "Associates a question type class with its expected Qanary answer type."@en .
+    rdfs:comment "Relates a question type to the class of answer it expects."@en .
+
 
 # ── LSQ feature alignment ─────────────────────────────────────────────────────
 # Question type classes are constrained using the standard LSQ pattern
@@ -59,35 +60,68 @@ qat:hasAnswerType rdf:type owl:ObjectProperty ;
 
 # ── Answer type individuals ───────────────────────────────────────────────────
 
-qat:SingleEntityAnswer rdf:type qa:AnswerType ;
+qa:AnswerType rdf:type owl:Class ;
+    rdfs:label "Answer type"@en .
+
+qat:BooleanAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnswerType ;
+    rdfs:label "Boolean answer"@en ;
+    rdfs:comment "Answer is YES/TRUE or NO/FALSE."@en .
+
+qat:SingleEntityAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnswerType ;
     rdfs:label "Single entity answer"@en ;
     rdfs:comment "Answer is a single named entity or literal fact."@en .
 
-qat:ScalarAnswer rdf:type qa:AnswerType ;
-    rdfs:label "Scalar answer"@en ;
-    rdfs:comment "Answer is a single numeric value resulting from an aggregation (MAX, MIN, AVG, COUNT, SUM)."@en .
-
-qat:RankedEntityAnswer rdf:type qa:AnswerType ;
-    rdfs:label "Ranked entity answer"@en ;
-    rdfs:comment "Answer is the entity that wins a comparative aggregation across groups."@en .
-
-qat:EntityListAnswer rdf:type qa:AnswerType ;
+qat:EntityListAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnswerType ;
     rdfs:label "Entity list answer"@en ;
-    rdfs:comment "Answer is an unordered enumeration of entities or facts. It can contains just a single fact."@en .
+    rdfs:comment "Answer is an unordered enumeration of entities or facts."@en .
 
-qat:AggregateListAnswer rdf:type qa:AnswerType ;
-    rdfs:label "Aggregate list answer"@en ;
-    rdfs:comment "Answer is an enumeration of (group, aggregate value) pairs or tuples."@en .
+qat:SampledListAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnswerType ;
+    rdfs:label "Sampled list answer"@en ;
+    rdfs:comment "Answer is a sample of an unordered enumeration of entities or facts."@en .
 
-qat:RankedListAnswer rdf:type qa:AnswerType ;
+qat:RankedListAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnswerType ;
     rdfs:label "Ranked list answer"@en ;
     rdfs:comment "Answer is an ordered list of entities sorted by an existing property, bounded by a cardinality limit."@en .
 
-qat:BooleanAnswer rdf:type qa:AnswerType ;
-    rdfs:label "Boolean answer"@en ;
-    rdfs:comment "Answer is YES or NO."@en .
+qat:ScalarAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qa:AnswerType ;
+    rdfs:label "Scalar answer"@en ;
+    rdfs:comment "Answer is a single numeric value resulting from an aggregation (MAX, MIN, AVG, COUNT, SUM)."@en .
 
-# ── 1. Factoid ────────────────────────────────────────────────────────────────
+qat:RankedEntityAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qat:ScalarAnswer , qat:EntityListAnswer ;
+    rdfs:label "Ranked entity answer"@en ;
+    rdfs:comment "Answer is the tuple describing the entity that wins a comparative aggregation across groups. Specialises both ScalarAnswer (results from aggregation) and EntityListAnswer (identifies entities)."@en .
+
+qat:AggregateListAnswer rdf:type owl:Class ;
+    rdfs:subClassOf qat:ScalarAnswer , qat:EntityListAnswer ;
+    rdfs:label "Aggregate list answer"@en ;
+    rdfs:comment "Answer is an enumeration of (group, aggregate value) pairs. Specialises both ScalarAnswer (each pair contains an aggregate) and EntityListAnswer (groups are entities)."@en .
+
+# ── 1. Confirmation ───────────────────────────────────────────────────────────
+
+qat:Confirmation rdf:type owl:Class ;
+    rdfs:subClassOf qat:QuestionType ,
+        [ rdf:type owl:Restriction ;
+            owl:onProperty qat:hasAnswerType ;
+            owl:someValuesFrom qat:BooleanAnswer
+        ] ,
+        [ rdf:type owl:Restriction ;
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [ rdf:type owl:Restriction ;
+                    owl:onProperty lsqv:usesFeature ;
+                    owl:hasValue lsqv:Ask
+                ]
+        ] ;            
+    rdfs:label "Confirmation question"@en ;
+    rdfs:comment "A question expecting a boolean YES/NO answer. Maps to ASK { … } with BGPs."@en .
+
+# ── 2. Factoid ────────────────────────────────────────────────────────────────
 
 qat:Factoid rdf:type owl:Class ;
     rdfs:subClassOf qat:QuestionType ,
@@ -107,24 +141,17 @@ qat:Factoid rdf:type owl:Class ;
                                owl:onProperty lsqv:usesFeature ;
                                owl:hasValue lsqv:Select
                              ]
-        ] ,
-        [ rdf:type owl:Restriction ;
-          owl:onProperty lsqv:hasStructuralFeatures ;
-          owl:someValuesFrom [ rdf:type owl:Restriction ;
-                               owl:onProperty lsqv:usesFeature ;
-                               owl:hasValue lsqv:TriplePattern
-                             ]
         ];
     rdfs:label "Factoid question"@en ;
-    rdfs:comment "A question expecting as answer one or more facts. Typically introduced by a wh-word. Maps to a plain SELECT … WHERE pattern without DISTINCT, GROUP BY, aggregation. LIMIT are syntactically accepted but semantically ambiguous."@en .
+    rdfs:comment "A question expecting as answer one or more facts. Typically introduced by a wh-word. Maps to a plain SELECT … WHERE pattern."@en .
 
-# ── 2. AggregateFactoid ───────────────────────────────────────────────────────
+# ── 3. Aggregation ───────────────────────────────────────────────────────
 
-qat:AggregateFactoid rdf:type owl:Class ;
-    rdfs:subClassOf qat:QuestionType ,
+qat:Aggregation rdf:type owl:Class ;
+    rdfs:subClassOf qat:Factoid ,
         [ rdf:type owl:Restriction ;
             owl:onProperty qat:hasAnswerType ;
-            owl:hasValue qat:ScalarAnswer
+            owl:someValuesFrom qat:ScalarAnswer
         ] ,
         [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
@@ -134,25 +161,37 @@ qat:AggregateFactoid rdf:type owl:Class ;
                 ]
         ] ;
     rdfs:label "Aggregate factoid question"@en ;
-    rdfs:comment "A question whose single answer requires an aggregation operation (MAX, MIN, AVG, COUNT, SUM) over a set of values. Maps to SELECT (AGG(?x) AS ?val) WHERE."@en .
+    rdfs:comment "A question whose answer requires an aggregation operation (MAX, MIN, AVG, COUNT, SUM) over a set of values. Maps to SELECT (AGG(?x) AS ?val) WHERE."@en .
 
 # Characteristic aggregation functions from sp: (informative)
-qat:AggregateFactoid rdfs:seeAlso sp:Max , sp:Min , sp:Avg , sp:Count , sp:Sum .
+qat:Aggregation rdfs:seeAlso sp:Max , sp:Min , sp:Avg , sp:Count , sp:Sum .
 
-# ── 3. Comparative ────────────────────────────────────────────────────────────
 
-qat:Comparative rdf:type owl:Class ;
-    rdfs:subClassOf qat:AggregateFactoid ,
+# ── 4. Enumeration ────────────────────────────────────────────────────────────
+qat:Enumeration rdf:type owl:Class ;
+    rdfs:subClassOf qat:Factoid,
+        [ rdf:type owl:Restriction ;
+          owl:onProperty qat:hasAnswerType ;
+          owl:someValuesFrom qat:EntityListAnswer ] ,
+        [ rdf:type owl:Restriction ;
+          owl:onProperty lsqv:hasStructuralFeatures ;
+          owl:someValuesFrom
+            [ rdf:type owl:Restriction ;
+              owl:onProperty lsqv:usesFeature ;
+              owl:someValuesFrom
+                [ rdf:type owl:Class ;
+                  owl:unionOf ( lsqv:Distinct lsqv:GroupBy ) ] ] ] ;
+    rdfs:label "Enumeration question"@en ;
+    rdfs:comment "Expects a deduplicated set of entities or facts (e.g. 'Which countries export cocoa?'). Maps to SELECT DISTINCT for plain enumerations, or GROUP BY for aggregate enumerations (qat:AggregateList). Both guarantee a set without duplicate rows."@en .
+
+# ── 5. RankedListing ─────────────────────────────────────────────────────────────
+# Subtype of Factoid only — sorts on an existing property, no aggregation
+
+qat:RankedListing rdf:type owl:Class ;
+    rdfs:subClassOf qat:Factoid ,
         [ rdf:type owl:Restriction ;
             owl:onProperty qat:hasAnswerType ;
-            owl:hasValue qat:RankedEntityAnswer
-        ] ,
-        [ rdf:type owl:Restriction ;
-            owl:onProperty lsqv:hasStructuralFeatures ;
-            owl:someValuesFrom [ rdf:type owl:Restriction ;
-                    owl:onProperty lsqv:usesFeature ;
-                    owl:hasValue lsqv:GroupBy
-                ]
+            owl:someValuesFrom qat:RankedListAnswer
         ] ,
         [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
@@ -160,7 +199,17 @@ qat:Comparative rdf:type owl:Class ;
                     owl:onProperty lsqv:usesFeature ;
                     owl:hasValue lsqv:OrderBy
                 ]
-        ] ,
+        ] ;
+    rdfs:label "Ranked list question"@en ;
+    rdfs:comment "A list question whose answer is ordered by an existing property (e.g. 'Who are the employees by seniority?'). Maps to SELECT … ORDER BY DESC(?prop). No aggregation required."@en .
+
+
+# ── 6. LimitedRankedListing ─────────────────────────────────────────────────────────────
+# Subtype of 5. RankedListing  — sorts on an existing property, no aggregation but with explicit limit feature, 
+#    inheriting restrictions from Factoid through RankedListing
+
+qat:LimitedRankedListing rdf:type owl:Class ;
+    rdfs:subClassOf qat:RankedListing ,
         [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
             owl:someValuesFrom [ rdf:type owl:Restriction ;
@@ -168,43 +217,47 @@ qat:Comparative rdf:type owl:Class ;
                     owl:hasValue lsqv:Limit
                 ]
         ] ;
+    rdfs:label "Limited ranked list question"@en ;
+    rdfs:comment "A list question whose answer is ordered by an existing property, usually with an explicit cardinality limit (e.g. 'Who are the top 3 employees by seniority?'). Maps to SELECT … ORDER BY DESC(?prop) LIMIT n. No aggregation required."@en .
+
+
+# ── 7. Comparative ────────────────────────────────────────────────────────────
+# Multiple inheritance: subtype of both 3. Enumeration and 4. Aggregation
+
+qat:Comparative rdf:type owl:Class ;
+    rdfs:subClassOf qat:Aggregation, qat:Enumeration,
+        [ rdf:type owl:Restriction ;
+            owl:onProperty qat:hasAnswerType ;
+            owl:someValuesFrom qat:RankedEntityAnswer
+        ] ,
+        [ rdf:type owl:Restriction ;
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [ rdf:type owl:Restriction ;
+                    owl:onProperty lsqv:usesFeature ;
+                    owl:hasValue lsqv:SubQuery
+                ]
+        ]  ,
+        [ rdf:type owl:Restriction ;
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [ rdf:type owl:Restriction ;
+                    owl:onProperty lsqv:usesFeature ;
+                    owl:hasValue lsqv:Filter
+                ]
+        ];
     rdfs:label "Comparative question"@en ;
     rdfs:comment "Computes an aggregate across ≥2 groups and returns the entity (or entities) with the extreme aggregate value (e.g. 'Which department has the highest average salary?')."@en ;
     rdfs:comment "Maps to GROUP BY + aggregate + subquery-based FILTER on MAX/MIN to handle ties."@en .
     
 
-# ── 4. Enumeration ────────────────────────────────────────────────────────────
-qat:EnumerationQuestion rdf:type owl:Class ;
-    rdfs:subClassOf qat:QuestionType ,
-        [ rdf:type owl:Restriction ;
-          owl:onProperty qat:hasAnswerType ;
-          owl:hasValue qat:EntityListAnswer
-        ] ,
-        [ rdf:type owl:Restriction ;
-          owl:onProperty lsqv:hasStructuralFeatures ;
-          owl:someValuesFrom [ rdf:type owl:Restriction ;
-                               owl:onProperty lsqv:usesFeature ;
-                               owl:hasValue lsqv:Select
-                             ]
-        ] ,
-        [ rdf:type owl:Restriction ;
-          owl:onProperty lsqv:hasStructuralFeatures ;
-          owl:someValuesFrom [ rdf:type owl:Restriction ;
-                               owl:onProperty lsqv:usesFeature ;
-                               owl:hasValue lsqv:Distinct
-                             ]
-        ] ;
-    rdfs:label "Enumeration question"@en ;
-    rdfs:comment "Expects a deduplicated set of entities or facts (e.g. 'Which countries export cocoa?'). Maps to SELECT DISTINCT or to a GROUP BY as in the subclass qat:AggregateList, reflecting that the question targets a set without duplicates rather than a bag of results."@en .
 
-# ── 5. AggregateList ──────────────────────────────────────────────────────────
-# Multiple inheritance: subtype of both EnumerationQuestion and AggregateFactoid
+# ── 8. AggregateEnumeration ──────────────────────────────────────────────────────────
+# Multiple inheritance: subtype of both 3. Enumeration and 4. Aggregation
 
-qat:AggregateList rdf:type owl:Class ;
-    rdfs:subClassOf qat:EnumerationQuestion , qat:AggregateFactoid ,
+qat:AggregateEnumeration rdf:type owl:Class ;
+    rdfs:subClassOf qat:Enumeration , qat:Aggregation ,
         [ rdf:type owl:Restriction ;
             owl:onProperty qat:hasAnswerType ;
-            owl:hasValue qat:AggregateListAnswer
+            owl:someValuesFrom qat:AggregateListAnswer
         ] ,
         [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
@@ -213,69 +266,58 @@ qat:AggregateList rdf:type owl:Class ;
                     owl:hasValue lsqv:GroupBy
                 ]
         ] ;
-    rdfs:label "Aggregate list question"@en ;
+    rdfs:label "Aggregation list question"@en ;
     rdfs:comment "A list question where each item pairs a group with its computed aggregate value (e.g. 'What is the average salary per department?'). Maps to SELECT ?group (AGG(?x) AS ?val) … GROUP BY ?group."@en .
 
-# ── 6. RankedList ─────────────────────────────────────────────────────────────
-# Subtype of Factoid only — sorts on an existing property, no aggregation
 
-qat:RankedList rdf:type owl:Class ;
-    rdfs:subClassOf qat:Factoid ,
+# ── 9. Sampling  ──────────────────────────────────────────────────────────
+
+qat:Sampling rdf:type owl:Class ;
+    rdfs:subClassOf qat:Factoid,
         [ rdf:type owl:Restriction ;
             owl:onProperty qat:hasAnswerType ;
-            owl:hasValue qat:RankedListAnswer
+            owl:someValuesFrom qat:SampledListAnswer
         ] ,
         [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
             owl:someValuesFrom [ rdf:type owl:Restriction ;
-                    owl:onProperty lsqv:usesFeature ;
-                    owl:hasValue lsqv:OrderBy
-                ]
-        ] ,
-        [ rdf:type owl:Restriction ;
-            owl:onProperty lsqv:hasStructuralFeatures ;
-            owl:someValuesFrom [ rdf:type owl:Restriction ;
-                    owl:onProperty lsqv:usesFeature ;
-                    owl:hasValue lsqv:Limit
-                ]
+                               owl:onProperty lsqv:usesFeature ;
+                               owl:someValuesFrom
+                                   [ rdf:type owl:Class ;
+                                     owl:unionOf (
+                                         lsqv:agg-sample
+                                         lsqv:Limit
+                                     )
+                                   ]
+                             ]
         ] ;
-    rdfs:label "Ranked list question"@en ;
-    rdfs:comment "A list question whose answer is ordered by an existing property, usually with an explicit cardinality limit (e.g. 'Who are the top 3 employees by seniority?'). Maps to SELECT … ORDER BY DESC(?prop) LIMIT n. No aggregation required."@en .
+    rdfs:label "Sampled list question"@en ;
+    rdfs:comment "A list question where the answer is a sample of an unordered enumeration of entities or facts about entities. Maps to SELECT...SAMPLE..."@en .
 
-# ── 7. Confirmation ───────────────────────────────────────────────────────────
+# ── 10. CounterFactualIdentification  ──────────────────────────────────────────────────────────
 
-qat:Confirmation rdf:type owl:Class ;
-    rdfs:subClassOf qat:QuestionType ,
+qat:CounterFactualIdentification rdf:type owl:Class ;
+    rdfs:subClassOf qat:Factoid,
         [ rdf:type owl:Restriction ;
             owl:onProperty qat:hasAnswerType ;
-            owl:hasValue qat:BooleanAnswer
+            owl:someValuesFrom qat:EntityListAnswer
         ] ,
         [ rdf:type owl:Restriction ;
             owl:onProperty lsqv:hasStructuralFeatures ;
             owl:someValuesFrom [ rdf:type owl:Restriction ;
-                    owl:onProperty lsqv:usesFeature ;
-                    owl:hasValue lsqv:Ask
-                ]
+                               owl:onProperty lsqv:usesFeature ;
+                               owl:hasValue lsqv:NotExists
+                             ]
         ] ;
-    rdfs:label "Confirmation question"@en ;
-    rdfs:comment "A question expecting a boolean YES/NO answer. Maps to ASK { … } with BGPs."@en .
+    rdfs:label "Counterfactual question"@en ;
+    rdfs:comment "A question that asks about entities or facts that lack a certain property or relationship, using FILTER NOT EXISTS to exclude results where a given pattern holds."@en .
+
+
 
 # ── Disjointness axioms ───────────────────────────────────────────────────────
 # Siblings in the hierarchy that cannot overlap
 
-qat:Factoid owl:disjointWith qat:AggregateFactoid .
-qat:Factoid owl:disjointWith qat:EnumerationQuestion .
 qat:Factoid owl:disjointWith qat:Confirmation .
-qat:EnumerationQuestion    owl:disjointWith qat:Confirmation .
-
-
-# RankedList is disjoint from AggregateList within List
-# (ranking on existing property vs. computing new aggregate values)
-qat:RankedList owl:disjointWith qat:AggregateList .
-
-# Comparative is disjoint from AggregateList
-# (returns one winning entity vs. full enumeration of groups)
-qat:Comparative owl:disjointWith qat:AggregateList .
 
 
 

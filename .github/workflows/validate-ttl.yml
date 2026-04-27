@@ -1,7 +1,7 @@
 name: Validate Turtle files
 
 env:
-  TTL_PATTERNS: "*-example.ttl *-queries.ttl qa-types.ttl"
+  TTL_PATTERNS: "*-examples.ttl *-queries.ttl qa-types.ttl"
 
 on:
   push:

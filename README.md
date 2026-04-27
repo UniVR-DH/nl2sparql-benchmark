@@ -55,43 +55,49 @@ Vendored vocabulary resources that the benchmark relies on:
 - `sp.ttl` the SP vocabulary, used for representing SPARQL query structures.
 - `sparql-service-description.ttl` the SPARQL Service Description vocabulary, used for describing SPARQL endpoints.
 
-## Modeling Guidance
+---
 
+## Modeling Guidance
 Use `GUIDELINE.md` as the source of truth for query encoding patterns, LSQ feature usage, and compact summary-profile conventions.
 
 ## QA Types Ontology (`graphs/qa-types.ttl`)
-
 The benchmark uses a dedicated ontology for question typing in `graphs/qa-types.ttl` with prefix `qat:` (`https://w3id.org/univr-qa/qatypes#`).
 
 ### Purpose
-
 - Provide a machine-readable taxonomy of NL question types.
 - Link each type to expected answer shape (`qat:hasAnswerType` with Qanary `qa:AnswerType`).
 - Define structural constraints using LSQ features through:
-    - `lsqv:hasStructuralFeatures`
-    - `lsqv:usesFeature`
+  - `lsqv:hasStructuralFeatures`
+  - `lsqv:usesFeature`
 
 ### Core Classes
 
 ```text
 qat:QuestionType
-|-- qat:Factoid
-|-- qat:AggregateFactoid
-|   |-- qat:Comparative
-|   `-- qat:AggregateList
-|-- qat:List
-|   |-- qat:RankedList
-|   `-- qat:AggregateList
-`-- qat:Confirmation
+├── qat:Factoid
+│   └── qat:RankedList
+├── qat:AggregateFactoid
+|   ├── qat:AggregateList
+│   └── qat:Comparative
+├── qat:EnumerationQuestion
+│   └── qat:AggregateList (also subclass of qat:AggregateFactoid)
+└── qat:Confirmation
 ```
 
-Note: `qat:AggregateList` is shown in both branches because it has multiple inheritance
-(`rdfs:subClassOf qat:List` and `rdfs:subClassOf qat:AggregateFactoid`).
+Note: `qat:AggregateList` has multiple inheritance — it is a subclass of both
+`qat:EnumerationQuestion` and `qat:AggregateFactoid`. It appears under
+`EnumerationQuestion` in the tree above because the enumeration semantics
+(returning a set of groups) is its primary classification; the aggregation
+semantics is inherited to express the computational requirement.
 
 > **Disjointness and Ambiguity**
-> The ontology encodes selected `owl:disjointWith` relations for incompatible sibling classes.
-> Not all classes are pairwise disjoint by design (for example, `AggregateList`
-> intentionally overlaps list and aggregation semantics through inheritance).
+> The ontology encodes selected `owl:disjointWith` relations for incompatible sibling
+> classes. Not all classes are pairwise disjoint by design — `qat:AggregateList`
+> intentionally sits at the intersection of enumeration and aggregation semantics
+> through multiple inheritance. The classifier handles this by preferring the most
+> specific matching type in the hierarchy.
+
+---
 
 ## Question Classification Script
 
@@ -124,6 +130,52 @@ Outputs:
 
 - `--output`: Turtle with inferred `rdf:type qat:*` assertions.
 - `--log-file`: syntax errors, classification warnings/errors, and final validation status.
+
+## Development
+ 
+### Create the virtual environment and install dependencies
+ 
+```bash
+# Create venv and install all dependencies in one step
+uv sync
+ 
+# For development dependencies (pytest, ruff, etc.)
+uv sync --dev
+```
+ 
+`uv sync` reads `pyproject.toml`, creates a `.venv` in the project root, and installs everything. No manual `pip install` needed.
+ 
+### Activate the virtual environment
+ 
+```bash
+# Linux / macOS
+source .venv/bin/activate
+ 
+# Windows
+.venv\Scripts\activate
+```
+ 
+Or prefix any command with `uv run` to run it inside the venv without activating:
+ 
+```bash
+uv run python classify_questions.py --help
+```
+
+
+```bash
+# Run tests
+uv run pytest
+ 
+# Run tests with coverage
+uv run pytest --cov
+ 
+# Lint and format
+uv run ruff check .
+uv run ruff format .
+```
+ 
+
+
 
 
 ## Common Vocabularies Used and Prefixes
