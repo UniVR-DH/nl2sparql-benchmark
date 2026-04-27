@@ -3,695 +3,966 @@
 Automated Question Type Classifier for nl2s-bench
 
 This utility parses SPARQL queries in LSQ format and automatically assigns
-question types (Factoid, List, Confirmation, etc.) based on declared structural
-features. Classification rules are derived dynamically from the qa-types.ttl ontology.
+question types (Factoid, AggregateFactoid, Comparative, etc.) based on declared
+structural features. Classification rules are derived dynamically from the
+qa-types.ttl ontology.
 
 The classifier:
 1. Parses the ontology to extract OWL restrictions for each question type
-2. Identifies required features (constraints with owl:someValuesFrom)
-3. Builds a hierarchy of question types with their feature requirements
-4. Matches queries against these requirements using ontology-aware logic
+   (including inherited features via transitive rdfs:subClassOf)
+2. Builds a symmetric disjointness closure
+3. Matches queries against feature requirements
+4. Resolves multiple matches by preferring the most specific type in a hierarchy,
+   or flags genuine ambiguity
 
 Usage:
     python classify_questions.py --query-file <path/to/queries.ttl> \\
                                  --ontology <path/to/qa-types.ttl> \\
-                                 [--output <path/to/output.ttl>]
-
-Author: GitHub Copilot (Claude Haiku 4.5)
-Date: 2026-04-08
+                                 [--output <path/to/output.ttl>] \\
+                                 [--log-file <path/to/log>] \\
+                                 [--verbose] [--debug]
 """
 
 import argparse
-import sys
 import logging
-from pathlib import Path
-from typing import Dict, List, Set, Optional, Tuple
+import sys
 from dataclasses import dataclass, field
-from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS, Literal
 from rdflib.namespace import OWL
 import rdflib.plugins.sparql.parser as _sparql_parser
+import rdflib.plugins.sparql.algebra as _sparql_algebra
+from rdflib.plugins.sparql.parserutils import CompValue
 
-
+# ---------------------------------------------------------------------------
 # Namespace definitions
+# ---------------------------------------------------------------------------
+
 LSQV = Namespace("http://lsq.aksw.org/vocab#")
 QAT = Namespace("https://w3id.org/univr-qa/qatypes#")
 QA = Namespace("https://w3id.org/wdaqua/qanary#")
 
 
+# ---------------------------------------------------------------------------
+# Data model
+# ---------------------------------------------------------------------------
+
+@dataclass
+class FeatureRequirement:
+    """
+    Represents one structural-feature restriction block from the ontology.
+
+    Two shapes are supported:
+      - owl:hasValue lsqv:X        → required = {"X"}, alternatives = {}
+        The feature X MUST be present.
+
+      - owl:someValuesFrom (union of X Y Z)  → required = {}, alternatives = {"X","Y","Z"}
+        AT LEAST ONE of X, Y, Z must be present.
+
+    A restriction block may also combine both (e.g. hasValue + someValuesFrom
+    on the same nested bnode), though that is rare in practice.
+    """
+    required: Set[str] = field(default_factory=set)
+    alternatives: Set[str] = field(default_factory=set)
+
+    def satisfied_by(self, features: Set[str]) -> bool:
+        req_ok = self.required <= features
+        alt_ok = (not self.alternatives) or bool(self.alternatives & features)
+        return req_ok and alt_ok
+
+
 @dataclass
 class QuestionTypeDefinition:
     """Extracted definition of a question type from the ontology."""
-    
+
     uri: URIRef
     name: str
-    required_features: Set[str]  # Features required via owl:someValuesFrom
-    parent_types: Set[str]  # Direct rdfs:subClassOf parent type names
-    disjoint_with: Set[str]  # Names of types that are owl:disjointWith this type
-    warnings: List[str] = field(default_factory=list)  # Any issues encountered during extraction
-    
-    def __repr__(self):
-        features_str = ", ".join(sorted(self.required_features)) if self.required_features else "(none)"
-        disjoint_str = ", ".join(sorted(self.disjoint_with)) if self.disjoint_with else "(none)"
-        return f"QuestionTypeDefinition(name='{self.name}', features=[{features_str}], disjoint=[{disjoint_str}])"
+    # Feature requirements declared directly on this class
+    own_requirements: List[FeatureRequirement] = field(default_factory=list)
+    # All requirements including those inherited from parent types
+    all_requirements: List[FeatureRequirement] = field(default_factory=list)
+    # Direct rdfs:subClassOf parent type names (excluding qat:QuestionType itself)
+    parent_types: Set[str] = field(default_factory=set)
+    # Symmetric closure of owl:disjointWith (populated after all types are loaded)
+    disjoint_with: Set[str] = field(default_factory=set)
 
+    @property
+    def required_features(self) -> Set[str]:
+        """Flat set of all mandatory (non-alternative) features — used for specificity ranking."""
+        result: Set[str] = set()
+        for req in self.all_requirements:
+            result |= req.required
+        return result
+
+    def matches(self, features: Set[str]) -> bool:
+        """True iff every FeatureRequirement in all_requirements is satisfied."""
+        return all(req.satisfied_by(features) for req in self.all_requirements)
+
+    def __repr__(self) -> str:
+        parts = []
+        for r in self.all_requirements:
+            s = ""
+            if r.required:
+                s += f"required={sorted(r.required)}"
+            if r.alternatives:
+                s += (" " if s else "") + f"alternatives={sorted(r.alternatives)}"
+            parts.append(s)
+        reqs = "; ".join(parts) or "(none)"
+        d = ", ".join(sorted(self.disjoint_with)) or "(none)"
+        return f"QuestionTypeDefinition(name={self.name!r}, requirements=[{reqs}], disjoint=[{d}])"
+
+
+# ---------------------------------------------------------------------------
+# Classifier
+# ---------------------------------------------------------------------------
 
 class QuestionTypeClassifier:
     """Classifies SPARQL queries by question type based on LSQ structural features."""
 
     def __init__(self, ontology_path: Path, logger: Optional[logging.Logger] = None):
-        """
-        Initialize classifier by parsing ontology rules dynamically.
-
-        Args:
-            ontology_path: Path to qa-types.ttl containing type definitions.
-            logger: Optional logger for recording issues and progress.
-        """
         self.ontology_path = ontology_path
         self.logger = logger or logging.getLogger(__name__)
+
         self.ontology = Graph()
         self.ontology.parse(str(ontology_path), format="turtle")
-        self.logger.info(f"Loaded ontology from {ontology_path}")
+        self.logger.info(f"Loaded ontology from {ontology_path} ({len(self.ontology)} triples)")
 
-        # Build type definitions from ontology
-        self.type_definitions: Dict[str, QuestionTypeDefinition] = self._extract_type_definitions()
-        self.type_uris = {name: defn.uri for name, defn in self.type_definitions.items()}
-        
-        # Build reverse mapping: URI -> name
-        self.uri_to_name = {defn.uri: name for name, defn in self.type_definitions.items()}
-        
-        # Collect warnings from type extraction
-        for defn in self.type_definitions.values():
-            for warning in defn.warnings:
-                self.logger.warning(warning)
+        self.type_definitions: Dict[str, QuestionTypeDefinition] = self._build_type_definitions()
+        self.type_uris: Dict[str, URIRef] = {
+            name: defn.uri for name, defn in self.type_definitions.items()
+        }
 
-    def _extract_type_definitions(self) -> Dict[str, QuestionTypeDefinition]:
+        # FIX issue 3: depth cache built once after type definitions are finalised,
+        # rather than being recomputed as a local dict on every classify_query call.
+        self._depth_cache: Dict[str, int] = self._build_depth_cache()
+
+    # ------------------------------------------------------------------
+    # Ontology parsing
+    # ------------------------------------------------------------------
+
+    def _uri_to_local(self, uri: URIRef) -> Optional[str]:
+        """Return the local name (fragment) of a URI, or None."""
+        s = str(uri)
+        return s.split("#")[-1] if "#" in s else None
+
+    def _all_question_type_uris(self) -> Set[URIRef]:
         """
-        Extract question type definitions from ontology by parsing OWL restrictions.
-
-        For each class that is a subclass of qat:QuestionType, extract:
-        1. Required features via owl:Restriction chains (lsqv:hasStructuralFeatures → lsqv:usesFeature)
-        2. Parent types via rdfs:subClassOf
-        3. Disjoint types via owl:disjointWith
-
-        Returns:
-            Dict mapping type name → QuestionTypeDefinition
+        Return all URIs that are (directly or transitively) subclasses of
+        qat:QuestionType, excluding qat:QuestionType itself.
         """
-        definitions = {}
-        
-        # Find all subclasses of qat:QuestionType
-        question_type_class = QAT.QuestionType
-        
-        for qtype_uri in self.ontology.subjects(RDFS.subClassOf, question_type_class):
-            type_name = self._uri_to_type_name(qtype_uri)
-            if not type_name:
-                continue
-            
-            # Extract required features
-            required_features = self._extract_required_features(qtype_uri)
-            
-            # Extract parent types
-            parent_types = self._extract_parent_types(qtype_uri)
-            
-            # Extract disjoint types
-            disjoint_types = self._extract_disjoint_types(qtype_uri)
-            
-            warnings = []
-            if not required_features:
-                warnings.append(f"Type '{type_name}' has no required features defined")
-            
-            definitions[type_name] = QuestionTypeDefinition(
-                uri=qtype_uri,
-                name=type_name,
-                required_features=required_features,
-                parent_types=parent_types,
-                disjoint_with=disjoint_types,
-                warnings=warnings
-            )
-        
-        return definitions
+        root = QAT.QuestionType
+        visited: Set[URIRef] = set()
 
-    def _uri_to_type_name(self, uri: URIRef) -> Optional[str]:
-        """
-        Extract question type name from URI fragment.
-        E.g., https://w3id.org/univr-qa/qatypes#Factoid → "Factoid"
-        """
-        uri_str = str(uri)
-        if "#" in uri_str:
-            return uri_str.split("#")[-1]
-        return None
+        def _visit(cls: URIRef) -> None:
+            for sub in self.ontology.subjects(RDFS.subClassOf, cls):
+                if isinstance(sub, URIRef) and sub not in visited:
+                    visited.add(sub)
+                    _visit(sub)
 
-    def _extract_required_features(self, qtype_uri: URIRef) -> Set[str]:
-        """
-        Extract required LSQ features from a question type's OWL restrictions.
+        _visit(root)
+        return visited
 
-        Looks for patterns like:
-          [ rdf:type owl:Restriction ;
-              owl:onProperty lsqv:hasStructuralFeatures ;
-              owl:someValuesFrom [ rdf:type owl:Restriction ;
-                  owl:onProperty lsqv:usesFeature ;
-                  owl:hasValue lsqv:Select
-              ]
+    def _parse_feature_restriction(self, restriction) -> Optional[FeatureRequirement]:
+        """
+        Parse one bnode restriction of the shape:
+          [ owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [
+                owl:onProperty lsqv:usesFeature ;
+                owl:hasValue lsqv:X               ← required
+              OR
+                owl:someValuesFrom [ owl:unionOf (lsqv:X lsqv:Y) ]  ← alternatives
+            ]
           ]
-        """
-        features = set()
-        
-        # Get all blank nodes that are rdfs:subClassOf this type
-        for restriction_node in self.ontology.objects(qtype_uri, RDFS.subClassOf):
-            if not isinstance(restriction_node, URIRef):
-                # It's a blank node (BNode)
-                features_found = self._extract_features_from_restriction(restriction_node)
-                features.update(features_found)
-        
-        return features
 
-    def _extract_features_from_restriction(self, restriction_node) -> Set[str]:
+        Returns a FeatureRequirement or None if the bnode doesn't match the pattern.
         """
-        Extract features from a single OWL restriction node.
-        Handles both direct lsqv:usesFeature and nested restrictions.
-        """
-        features = set()
-        
-        # Check if this restriction is about lsqv:hasStructuralFeatures
-        on_property = list(self.ontology.objects(restriction_node, OWL.onProperty))
-        if not on_property or on_property[0] != LSQV.hasStructuralFeatures:
-            return features
-        
-        # Get the someValuesFrom target
-        some_values_from = list(self.ontology.objects(restriction_node, OWL.someValuesFrom))
-        if not some_values_from:
-            return features
-        
-        nested_restriction = some_values_from[0]
-        
-        # Check the nested restriction
-        nested_on_property = list(self.ontology.objects(nested_restriction, OWL.onProperty))
-        if nested_on_property and nested_on_property[0] == LSQV.usesFeature:
-            # Get the hasValue (feature URI)
-            has_value = list(self.ontology.objects(nested_restriction, OWL.hasValue))
-            if has_value:
-                feature_name = self._feature_uri_to_name(has_value[0])
-                if feature_name:
-                    features.add(feature_name)
-        
-        return features
+        on_prop = list(self.ontology.objects(restriction, OWL.onProperty))
+        if not on_prop or on_prop[0] != LSQV.hasStructuralFeatures:
+            return None
 
-    def _feature_uri_to_name(self, feature_uri: URIRef) -> Optional[str]:
-        """
-        Convert LSQ feature URI to its name.
-        E.g., http://lsq.aksw.org/vocab#Select → "Select"
-        """
-        uri_str = str(feature_uri)
-        if "#" in uri_str:
-            return uri_str.split("#")[-1]
-        return None
+        req = FeatureRequirement()
 
-    def _extract_parent_types(self, qtype_uri: URIRef) -> Set[str]:
-        """
-        Extract parent question type names from rdfs:subClassOf.
-        Filters out non-question-type parents (like qat:QuestionType itself).
-        """
-        parents = set()
-        
-        for parent_uri in self.ontology.objects(qtype_uri, RDFS.subClassOf):
-            # Skip blank nodes (restrictions)
-            if not isinstance(parent_uri, URIRef):
+        for svf in self.ontology.objects(restriction, OWL.someValuesFrom):
+            nested_prop = list(self.ontology.objects(svf, OWL.onProperty))
+            if not nested_prop or nested_prop[0] != LSQV.usesFeature:
                 continue
-            
-            # Only include parent question types
-            if parent_uri == QAT.QuestionType:
-                continue
-            
-            parent_name = self._uri_to_type_name(parent_uri)
-            if parent_name:
-                parents.add(parent_name)
-        
+
+            # Case 1: owl:hasValue lsqv:X  → mandatory feature
+            for val in self.ontology.objects(svf, OWL.hasValue):
+                name = self._uri_to_local(val)
+                if name:
+                    req.required.add(name)
+
+            # FIX issue 1: removed the redundant first loop that used [-1] to
+            # index into the objects list (fragile and semantically misleading —
+            # it attempted to walk the RDF list but duplicated the work done
+            # correctly by the loop below). Only the canonical form is kept:
+            # iterate owl:someValuesFrom nodes, then walk each owl:unionOf list
+            # with self.ontology.items(), which is the correct rdflib API for
+            # RDF lists.
+            for union_node in self.ontology.objects(svf, OWL.someValuesFrom):
+                for union_list in self.ontology.objects(union_node, OWL.unionOf):
+                    for member in self.ontology.items(union_list):
+                        name = self._uri_to_local(member)
+                        if name:
+                            req.alternatives.add(name)
+
+        if not req.required and not req.alternatives:
+            return None
+        return req
+
+    def _own_requirements_of(self, qtype_uri: URIRef) -> List[FeatureRequirement]:
+        """
+        Extract all FeatureRequirement objects declared directly on qtype_uri.
+        Each owl:someValuesFrom restriction block on lsqv:hasStructuralFeatures
+        becomes one FeatureRequirement.
+        """
+        requirements: List[FeatureRequirement] = []
+        for restriction in self.ontology.objects(qtype_uri, RDFS.subClassOf):
+            if isinstance(restriction, URIRef):
+                continue  # named class, not a restriction bnode
+            # Each object of rdfs:subClassOf that is a bnode is expected to be
+            # an owl:Restriction (rdf:type owl:Restriction). We rely on the
+            # structure check inside _parse_feature_restriction (owl:onProperty
+            # must be lsqv:hasStructuralFeatures) to filter out non-feature
+            # restriction bnodes such as hasAnswerType restrictions.
+            req = self._parse_feature_restriction(restriction)
+            if req is not None:
+                requirements.append(req)
+        return requirements
+
+    def _direct_parent_type_names(self, qtype_uri: URIRef, known_uris: Set[URIRef]) -> Set[str]:
+        """Return names of direct question-type parents (not qat:QuestionType itself)."""
+        parents: Set[str] = set()
+        for parent in self.ontology.objects(qtype_uri, RDFS.subClassOf):
+            if isinstance(parent, URIRef) and parent in known_uris:
+                name = self._uri_to_local(parent)
+                if name:
+                    parents.add(name)
         return parents
 
-    def _extract_disjoint_types(self, qtype_uri: URIRef) -> Set[str]:
+    def _build_type_definitions(self) -> Dict[str, QuestionTypeDefinition]:
         """
-        Extract disjoint type names from owl:disjointWith axioms.
+        Build the full type definition map:
+        1. Collect all question-type URIs (transitive subclasses of qat:QuestionType)
+        2. For each, extract own requirements and direct parents
+        3. Propagate inherited requirements (transitive closure over parent_types)
+        4. Build symmetric disjointness closure
+
+        FIX issue 4: after building all definitions, verify that every type
+        (including abstract ones like Factoid) has at least one extracted
+        requirement. A type with no requirements would match every query,
+        causing spurious classifications. A warning is emitted and the type
+        is logged clearly so the ontology parser can be debugged.
         """
-        disjoint = set()
-        
-        for disjoint_uri in self.ontology.objects(qtype_uri, OWL.disjointWith):
-            # Skip blank nodes
-            if not isinstance(disjoint_uri, URIRef):
+        all_uris = self._all_question_type_uris()
+
+        # Pass 1: create skeleton definitions
+        defs: Dict[str, QuestionTypeDefinition] = {}
+        for uri in all_uris:
+            name = self._uri_to_local(uri)
+            if not name:
                 continue
-            
-            disjoint_name = self._uri_to_type_name(disjoint_uri)
-            if disjoint_name:
-                disjoint.add(disjoint_name)
-        
-        return disjoint
+            own = self._own_requirements_of(uri)
+            parents = self._direct_parent_type_names(uri, all_uris)
+            defs[name] = QuestionTypeDefinition(
+                uri=uri,
+                name=name,
+                own_requirements=own,
+                all_requirements=list(own),  # will be expanded below
+                parent_types=parents,
+            )
 
-    def classify_query(self, query_uri: URIRef, features: Set[str]) -> Set[str]:
+        # Pass 2: inherit requirements transitively
+        def _collect_requirements(name: str, visited: Set[str]) -> List[FeatureRequirement]:
+            if name in visited:
+                return []
+            visited.add(name)
+            result = list(defs[name].own_requirements)
+            for parent in defs[name].parent_types:
+                if parent in defs:
+                    result.extend(_collect_requirements(parent, visited))
+            return result
+
+        for name, defn in defs.items():
+            defn.all_requirements = _collect_requirements(name, set())
+
+        # FIX issue 4: explicit post-build validation.
+        # Log each type's extracted requirements at DEBUG level so mismatches
+        # between the ontology structure and the parser are immediately visible.
+        # Emit a WARNING for any type that ends up with no requirements, since
+        # it will vacuously match every query.
+        for name, defn in sorted(defs.items()):
+            if defn.all_requirements:
+                self.logger.debug(
+                    f"Type '{name}' extracted {len(defn.all_requirements)} requirement(s): "
+                    + "; ".join(
+                        f"required={sorted(r.required)} alternatives={sorted(r.alternatives)}"
+                        for r in defn.all_requirements
+                    )
+                )
+            else:
+                self.logger.warning(
+                    f"Type '{name}' has NO extracted requirements (own or inherited). "
+                    f"It will vacuously match every query — check the ontology restriction "
+                    f"shape for this class."
+                )
+
+        # Pass 3: symmetric disjointness closure
+        for subj_name, defn in defs.items():
+            subj_uri = defn.uri
+            for obj_uri in self.ontology.objects(subj_uri, OWL.disjointWith):
+                if not isinstance(obj_uri, URIRef):
+                    continue
+                obj_name = self._uri_to_local(obj_uri)
+                if obj_name and obj_name in defs:
+                    defn.disjoint_with.add(obj_name)
+                    defs[obj_name].disjoint_with.add(subj_name)  # symmetric
+
+        self.logger.info(f"Loaded {len(defs)} question type definitions from ontology")
+        return defs
+
+    def _build_depth_cache(self) -> Dict[str, int]:
         """
-        Classify a single query based on its structural features using ontology rules.
-
-        Algorithm:
-        1. Find all question types whose required features are satisfied by the query
-        2. Apply disjointness constraints: keep only types that don't conflict
-        3. Return the set of all valid, non-conflicting matching types
-
-        This preserves ambiguity for downstream validation. If multiple valid types
-        match (e.g., a type and one of its ancestors), all are returned. Validation
-        can then flag undecidability or conflicts.
-
-        Args:
-            query_uri: RDF URI of the query being classified.
-            features: Set of feature names extracted from the query.
-
-        Returns:
-            Set of question type names that match without conflicts (possibly empty).
+        FIX issue 3 (partial): pre-compute depth (longest path to a root) for
+        every type once, rather than recomputing it as a local dict inside
+        classify_query on every call.
         """
-        # Step 1: Find all types whose required features are satisfied
-        candidates = []
-        
-        for type_name, defn in self.type_definitions.items():
-            # All required features must be present (subset check)
-            if defn.required_features <= features:
-                candidates.append(type_name)
-        
-        if not candidates:
-            return set()
-        
-        # Step 2: Apply disjointness filtering
-        # Remove types that are disjoint with ANY other candidate
-        valid_types = []
-        for type_name in candidates:
-            defn = self.type_definitions[type_name]
-            # Check if this type conflicts with any other candidate
-            conflicts = False
-            for other_type in candidates:
-                if other_type != type_name and other_type in defn.disjoint_with:
-                    conflicts = True
-                    break
-            if not conflicts:
-                valid_types.append(type_name)
-        
-        return set(valid_types) if valid_types else set()
+        cache: Dict[str, int] = {}
 
-    def _validate_sparql(self, sparql_text: str, short_uri: str) -> bool:
+        def _depth(n: str) -> int:
+            if n in cache:
+                return cache[n]
+            parents = self.type_definitions[n].parent_types
+            if not parents:
+                cache[n] = 0
+                return 0
+            max_parent = max(
+                (1 + _depth(p) for p in parents if p in self.type_definitions),
+                default=0,
+            )
+            cache[n] = max_parent
+            return max_parent
+
+        for name in self.type_definitions:
+            _depth(name)
+
+        return cache
+
+    # ------------------------------------------------------------------
+    # Feature extraction from queries
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _detect_features_from_algebra(algebra_node: CompValue) -> Set[str]:
         """
-        Validate SPARQL syntax using rdflib's built-in parser.
-        Logs an error if the syntax is invalid.
+        Recursively walk a rdflib SPARQL algebra tree and return the set of
+        LSQ feature names that can be determined unambiguously from the
+        algebra structure.
 
-        Returns:
-            True if valid, False if invalid.
+        Node name → LSQ feature mapping:
+          ToMultiSet { p: Project { … } }  → SubQuery
+            rdflib wraps every inline SELECT in ToMultiSet(Project(…)).
+            A bare GROUP / BGP inside ToMultiSet is NOT a subquery.
+          Filter (expr != TrueFilter)       → Filter
+            TrueFilter is a synthetic no-op rdflib inserts for OPTIONAL
+            blocks; it does not correspond to a user-written FILTER.
+          Extend                            → Bind
+            rdflib compiles BIND(?expr AS ?var) into Extend nodes.
+          LeftJoin                          → Optional
+            rdflib compiles OPTIONAL { … } into LeftJoin nodes.
+
+        Only CompValue nodes are visited; all other value types are ignored.
+        A seen-set guards against cycles.
+        """
+        found: Set[str] = set()
+        seen: Set[int] = set()
+
+        def _walk(node: CompValue) -> None:
+            if not isinstance(node, CompValue):
+                return
+            node_id = id(node)
+            if node_id in seen:
+                return
+            seen.add(node_id)
+
+            name = node.name
+
+            if name == "ToMultiSet":
+                inner = node.get("p")
+                if isinstance(inner, CompValue) and inner.name == "Project":
+                    found.add("SubQuery")
+            elif name == "Filter":
+                expr = node.get("expr")
+                if isinstance(expr, CompValue) and expr.name != "TrueFilter":
+                    found.add("Filter")
+            elif name == "Extend":
+                found.add("Bind")
+            elif name == "LeftJoin":
+                found.add("Optional")
+
+            for value in node.values():
+                if isinstance(value, CompValue):
+                    _walk(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, CompValue):
+                            _walk(item)
+
+        _walk(algebra_node)
+        return found
+
+    @staticmethod
+    def _count_from_algebra(algebra_node: CompValue) -> Tuple[int, int, int]:
+        """
+        Walk the algebra tree and return (bgp_count, tp_count, proj_var_count).
+
+        bgp_count      — number of distinct BGP nodes in the tree (including
+                         those inside subqueries, matching LSQ's own counting).
+        tp_count       — total number of triple patterns across all BGP nodes.
+        proj_var_count — number of variables in the top-level SELECT projection
+                         (the PV list on the root SelectQuery node).
+
+        Only CompValue nodes are visited; a seen-set guards against cycles.
+        """
+        bgp_count = 0
+        tp_count = 0
+        seen: Set[int] = set()
+
+        def _walk(node: CompValue) -> None:
+            nonlocal bgp_count, tp_count
+            if not isinstance(node, CompValue):
+                return
+            node_id = id(node)
+            if node_id in seen:
+                return
+            seen.add(node_id)
+
+            if node.name == "BGP":
+                bgp_count += 1
+                triples = node.get("triples") or []
+                tp_count += len(triples)
+
+            for value in node.values():
+                if isinstance(value, CompValue):
+                    _walk(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, CompValue):
+                            _walk(item)
+
+        _walk(algebra_node)
+
+        # Projection variable count lives on the root SelectQuery node directly
+        pv = algebra_node.get("PV") or []
+        proj_var_count = len(pv)
+
+        return bgp_count, tp_count, proj_var_count
+
+    def _check_count_annotations(
+        self,
+        query_graph: Graph,
+        query_uri: URIRef,
+        algebra_node: CompValue,
+        short_uri: str,
+    ) -> List[str]:
+        """
+        Compare the numeric count annotations declared in the LSQ
+        StructuralFeatures node (projectVarCount, bgpCount, tpCount) against
+        the values computed from the algebra tree.
+
+        Returns a list of warning strings for any mismatch found.
+        Emits each warning via the logger as well.
+
+        LSQ properties checked:
+          lsqv:projectVarCount  — top-level projected variable count
+          lsqv:bgpCount         — number of BGP nodes in the query
+          lsqv:tpCount          — total triple pattern count across all BGPs
+        """
+        warnings: List[str] = []
+
+        # Read declared counts from the StructuralFeatures bnode
+        declared: Dict[str, Optional[int]] = {
+            "projectVarCount": None,
+            "bgpCount": None,
+            "tpCount": None,
+        }
+        for sf in query_graph.objects(query_uri, LSQV.hasStructuralFeatures):
+            for prop_local, lsqv_prop in (
+                ("projectVarCount", LSQV.projectVarCount),
+                ("bgpCount",        LSQV.bgpCount),
+                ("tpCount",         LSQV.tpCount),
+            ):
+                for val in query_graph.objects(sf, lsqv_prop):
+                    try:
+                        declared[prop_local] = int(val)
+                    except (ValueError, TypeError):
+                        pass
+
+        # Nothing declared — nothing to check
+        if all(v is None for v in declared.values()):
+            return warnings
+
+        actual_bgp, actual_tp, actual_pv = self._count_from_algebra(algebra_node)
+        actual: Dict[str, int] = {
+            "projectVarCount": actual_pv,
+            "bgpCount":        actual_bgp,
+            "tpCount":         actual_tp,
+        }
+
+        for prop, declared_val in declared.items():
+            if declared_val is None:
+                continue
+            actual_val = actual[prop]
+            if declared_val != actual_val:
+                msg = (
+                    f"lsqv:{prop} declared={declared_val} but "
+                    f"algebra yields {actual_val}"
+                )
+                warnings.append(msg)
+                self.logger.warning(f"Query {short_uri!r}: {msg}")
+            else:
+                self.logger.debug(
+                    f"Query {short_uri!r}: lsqv:{prop} = {declared_val} ✓"
+                )
+
+        return warnings
+
+    def _check_sparql_syntax(self, text: str, short_uri: str) -> bool:
+        """
+        Check SPARQL syntax and log errors. Returns False if invalid.
+
+        Renamed from _validate_sparql to _check_sparql_syntax to clarify
+        that this is a diagnostic check, not a gate: feature extraction
+        proceeds regardless of the return value.
         """
         try:
-            _sparql_parser.parseQuery(sparql_text)
+            _sparql_parser.parseQuery(text)
             return True
-        except Exception as e:
-            self.logger.error(f"Query {short_uri!r}: invalid SPARQL syntax — {e}")
+        except Exception as exc:
+            self.logger.error(f"Query {short_uri!r}: invalid SPARQL — {exc}")
             return False
 
-    def extract_features(self, query_graph: Graph, query_uri: URIRef) -> Set[str]:
+    def extract_features(
+        self, query_graph: Graph, query_uri: URIRef
+    ) -> Tuple[Set[str], List[str]]:
         """
-        Extract structural features from a query in LSQ format.
-        Also validates SPARQL syntax via rdflib parser and detects pure-aggregate
-        queries (Aggregators present, no GroupBy, no unbound projected variables),
-        removing spurious lsqv:Distinct from the feature set in that case.
+        Extract LSQ structural features for a query.
 
-        Args:
-            query_graph: RDF graph containing the query.
-            query_uri: URI of the lsqv:Query resource.
+        Also strips spurious lsqv:Distinct that arises from COUNT(DISTINCT ...)
+        inside a pure-aggregate query (no GROUP BY, no bare projected variables).
+        In that case DISTINCT is an implementation detail of the aggregate
+        expression, not a SELECT DISTINCT at the query level.
+
+        After extraction, the SPARQL text is compiled into a rdflib algebra
+        tree via _detect_features_from_algebra. Structural features found in
+        the algebra but absent from the declared LSQ feature set are collected
+        as warnings and returned alongside the feature set. The declared LSQ
+        features remain authoritative — warnings flag annotation gaps only.
 
         Returns:
-            Set of feature names (e.g., {'Select', 'Distinct', 'TriplePattern'}).
+            (features, warnings) where warnings is a list of human-readable
+            strings describing each LSQ annotation gap found.
         """
-        features_set = set()
         short_uri = str(query_uri).split("/")[-1]
+        features: Set[str] = set()
+        warnings: List[str] = []
 
-        # Get structural features resource via lsqv:hasStructuralFeatures
-        for sf_uri in query_graph.objects(query_uri, LSQV.hasStructuralFeatures):
-            # Get all features from lsqv:usesFeature
-            for feature_uri in query_graph.objects(sf_uri, LSQV.usesFeature):
-                # Map URI back to feature name
-                feature_name = self._feature_uri_to_name(feature_uri)
-                if feature_name:
-                    features_set.add(feature_name)
+        for sf in query_graph.objects(query_uri, LSQV.hasStructuralFeatures):
+            for feat_uri in query_graph.objects(sf, LSQV.usesFeature):
+                name = self._uri_to_local(feat_uri)
+                if name:
+                    features.add(name)
 
-        # Validate SPARQL syntax and detect pure-aggregate queries
-        for sparql_text in query_graph.objects(query_uri, LSQV.text):
-            text = str(sparql_text)
-            self._validate_sparql(text, short_uri)
+        # Syntax check, pure-aggregate Distinct stripping, and algebra-based
+        # structural feature gap detection.
+        for sparql_lit in query_graph.objects(query_uri, LSQV.text):
+            text = str(sparql_lit)
+            syntax_ok = self._check_sparql_syntax(text, short_uri)
 
-            # Pure-aggregate detection: Aggregators present, no GroupBy, only
-            # aggregate expressions in projection (no bare variables).
-            # In this case lsqv:Distinct was fired by COUNT(DISTINCT ...) inside
-            # the aggregate, not by SELECT DISTINCT — strip it to avoid false
-            # List matches.
+            if not syntax_ok:
+                continue  # can't build algebra from invalid SPARQL
+
+            try:
+                parsed = _sparql_parser.parseQuery(text)
+                algebra = _sparql_algebra.translateQuery(parsed)
+            except Exception as exc:
+                self.logger.error(f"Query {short_uri!r}: algebra translation failed — {exc}")
+                continue
+
+            # Pure-aggregate Distinct stripping
             if (
-                "Aggregators" in features_set
-                and "GroupBy" not in features_set
-                and "Distinct" in features_set
+                "Aggregators" in features
+                and "GroupBy" not in features
+                and "Distinct" in features
             ):
                 try:
-                    parsed = _sparql_parser.parseQuery(text)
-                    # parsed[1] is the SelectQuery/AskQuery body
-                    select_clause = parsed[1].get("projection", [])
-                    # A pure-aggregate projection has no bare variables —
-                    # every projected item carries an expression (the aggregate).
+                    projection = parsed[1].get("projection", [])
                     has_bare_var = any(
                         item.get("var") is not None and item.get("evar") is None
-                        for item in select_clause
+                        for item in projection
                         if hasattr(item, "get")
                     )
                     if not has_bare_var:
                         self.logger.debug(
-                            f"Query {short_uri!r}: removing spurious Distinct "
-                            f"(COUNT(DISTINCT ...) inside aggregate, no bare variables)"
+                            f"Query {short_uri!r}: stripping spurious Distinct "
+                            f"(COUNT(DISTINCT ...) inside aggregate, no bare vars)"
                         )
-                        features_set.discard("Distinct")
+                        features.discard("Distinct")
                 except Exception:
-                    pass  # parser already logged the error above; leave features unchanged
+                    pass  # leave features unchanged if projection walk fails
 
-        return features_set
+            # Algebra-based structural feature gap detection.
+            # We compare what the algebra tree actually contains against what
+            # LSQ declared. Each missing feature is a likely annotation gap.
+            # The declared LSQ feature set remains authoritative — we only warn.
+            implied = self._detect_features_from_algebra(algebra.algebra)
+            for feat_name in sorted(implied):
+                if feat_name not in features:
+                    msg = (
+                        f"algebra contains '{feat_name}' node but it is absent "
+                        f"from declared LSQ features — possible annotation gap"
+                    )
+                    warnings.append(msg)
+                    self.logger.warning(f"Query {short_uri!r}: {msg}")
+
+            # Numeric count annotation checks (projectVarCount, bgpCount, tpCount).
+            # These are verified exactly against the algebra — any mismatch is a
+            # definite LSQ annotation error rather than a heuristic gap.
+            warnings.extend(
+                self._check_count_annotations(
+                    query_graph, query_uri, algebra.algebra, short_uri
+                )
+            )
+
+        return features, warnings
+
+    # ------------------------------------------------------------------
+    # Classification
+    # ------------------------------------------------------------------
+
+    def _ancestors(self, name: str) -> Set[str]:
+        """
+        FIX issue 3: return the strict ancestor set of a type — i.e. all
+        types reachable via parent_types — NOT including the type itself.
+
+        The original implementation added `name` to `visited` immediately,
+        causing it to return the node as its own ancestor. The a == b guard
+        in classify_query masked the bug but the semantics were wrong.
+        """
+        result: Set[str] = set()
+
+        def _visit(n: str) -> None:
+            for parent in self.type_definitions[n].parent_types:
+                if parent in self.type_definitions and parent not in result:
+                    result.add(parent)
+                    _visit(parent)
+
+        _visit(name)
+        return result
+
+    def classify_query(self, query_uri: URIRef, features: Set[str]) -> Set[str]:
+        """
+        Classify a query given its feature set.
+
+        Algorithm:
+        1. Collect candidate types whose all_requirements are satisfied by features
+           (uses FeatureRequirement.satisfied_by, which correctly handles union alternatives)
+        2. Among candidates, prefer the most specific type(s):
+           remove any candidate that is a strict ancestor of another candidate
+        3. Resolve remaining disjointness conflicts by preferring the type with
+           more specific feature requirements (larger required_features set)
+        4. Return the resulting set (empty = unclassifiable)
+        """
+        # Step 1: candidates whose requirements are all satisfied
+        candidates: List[str] = [
+            name for name, defn in self.type_definitions.items()
+            if defn.matches(features)
+        ]
+
+        if not candidates:
+            return set()
+
+        candidate_set = set(candidates)
+
+        # Step 2: remove any candidate that is a strict ancestor of another
+        # candidate. Uses the fixed _ancestors() which no longer includes self.
+        pruned: Set[str] = set(candidate_set)
+        for a in list(candidate_set):
+            for b in candidate_set:
+                if a == b:
+                    continue
+                if a in self._ancestors(b):
+                    pruned.discard(a)
+
+        if not pruned:
+            return set()
+
+        # Step 3: resolve disjointness conservatively
+        pruned_list = sorted(pruned)
+        resolved: Set[str] = set(pruned)
+        for a in pruned_list:
+            for b in pruned_list:
+                if a == b:
+                    continue
+                if a in self.type_definitions[b].disjoint_with:
+                    len_a = len(self.type_definitions[a].required_features)
+                    len_b = len(self.type_definitions[b].required_features)
+                    if len_a < len_b:
+                        resolved.discard(a)
+                    elif len_b < len_a:
+                        resolved.discard(b)
+
+        if not resolved:
+            return set()
+
+        # Step 4: prefer the deepest (most specific) type in the subclass tree
+        # using the pre-built depth cache (FIX issue 3).
+        max_depth = max(self._depth_cache.get(n, 0) for n in resolved)
+        most_specific = {n for n in resolved if self._depth_cache.get(n, 0) == max_depth}
+
+        return most_specific
+
+    # ------------------------------------------------------------------
+    # File-level classification
+    # ------------------------------------------------------------------
 
     def classify_queries_from_file(
         self, query_file: Path
-    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str]]]:
+    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]]:
         """
-        Classify all queries in an LSQ-format Turtle file.
-
-        Args:
-            query_file: Path to Turtle file containing lsqv:Query resources.
+        Classify all lsqv:Query resources in a Turtle file.
 
         Returns:
-            Dict mapping query URI → (matching_types_set, features_set, label).
-            matching_types_set contains all valid types that satisfy constraints and don't conflict.
+            Dict mapping query URI string →
+                (matched_types, features, rdfs:label or None, warnings)
+            where warnings is the list of LSQ annotation-gap messages
+            collected by extract_features for that query.
         """
-        query_graph = Graph()
+        g = Graph()
         try:
-            query_graph.parse(str(query_file), format="turtle")
-            self.logger.info(f"Loaded {len(query_graph)} triples from {query_file}")
-        except Exception as e:
-            self.logger.error(f"Failed to parse query file {query_file}: {e}")
+            g.parse(str(query_file), format="turtle")
+            self.logger.info(f"Loaded {len(g)} triples from {query_file}")
+        except Exception as exc:
+            self.logger.error(f"Failed to parse {query_file}: {exc}")
             raise
 
-        results = {}
-        query_uris = list(query_graph.subjects(RDF.type, LSQV.Query))
+        query_uris = list(g.subjects(RDF.type, LSQV.Query))
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
-        # Find all lsqv:Query resources
-        for query_uri in query_uris:
-            features = self.extract_features(query_graph, query_uri)
-            qtypes = self.classify_query(query_uri, features)
+        results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]] = {}
+        for uri in query_uris:
+            has_text = any(True for _ in g.objects(uri, LSQV.text))
+            if not has_text:
+                short = str(uri).split("/")[-1]
+                self.logger.info(f"Skipping {short!r}: no lsqv:text present")
+                continue
 
-            query_label = None
-            for label in query_graph.objects(query_uri, RDFS.label):
-                query_label = str(label)
+            features, warnings = self.extract_features(g, uri)
+            qtypes = self.classify_query(uri, features)
+
+            label: Optional[str] = None
+            for lit in g.objects(uri, RDFS.label):
+                label = str(lit)
                 break
 
-            # Log classification result
-            short_uri = str(query_uri).split("/")[-1]
+            short = str(uri).split("/")[-1]
             if qtypes:
-                self.logger.debug(f"Query {short_uri}: classified as {', '.join(sorted(qtypes))}")
+                self.logger.debug(f"Query {short}: → {', '.join(sorted(qtypes))}")
             else:
-                self.logger.warning(f"Query {short_uri}: unclassifiable (features: {', '.join(sorted(features)) if features else 'none'})")
+                self.logger.warning(
+                    f"Query {short}: unclassifiable "
+                    f"(features: {', '.join(sorted(features)) or 'none'})"
+                )
 
-            # Store result with humanized label
-            results[str(query_uri)] = (qtypes, features, query_label)
+            results[str(uri)] = (qtypes, features, label, warnings)
 
         return results
 
-    def _is_valid_hierarchy(self, type_names: Set[str]) -> bool:
-        """
-        Check if a set of matching types forms a valid class hierarchy.
-        Valid if one type is an ancestor of all others (transitive subClassOf).
-        
-        Args:
-            type_names: Set of matched type names.
-        
-        Returns:
-            True if types form a valid hierarchy, False if there are conflicts.
-        """
-        if len(type_names) <= 1:
-            return True
-        
-        # Build ancestry for each type
-        def _get_ancestors(type_name: str) -> Set[str]:
-            ancestors = set()
-            visited = set()
-            
-            def visit(tname: str):
-                if tname in visited:
-                    return
-                visited.add(tname)
-                if tname in self.type_definitions:
-                    for parent in self.type_definitions[tname].parent_types:
-                        ancestors.add(parent)
-                        visit(parent)
-            
-            visit(type_name)
-            return ancestors
-        
-        # Check if types form a chain: for each type, all other types should be 
-        # either ancestors or descendants (transitive subclass relationship)
-        for t1 in type_names:
-            ancestors_t1 = _get_ancestors(t1)
-            for t2 in type_names:
-                if t1 == t2:
-                    continue
-                # t2 must be an ancestor of t1 OR t1 must be an ancestor of t2
-                ancestors_t2 = _get_ancestors(t2)
-                if not (t2 in ancestors_t1 or t1 in ancestors_t2):
-                    # t1 and t2 are not in hierarchy—ambiguous
-                    return False
-        
-        return True
-
-    def _find_most_specific(self, type_names: Set[str]) -> str:
-        """
-        Find the most specific (deepest in hierarchy) type from a set.
-        Prefers the type with the most required features.
-        """
-        return max(
-            type_names,
-            key=lambda t: len(self.type_definitions[t].required_features)
-        )
+    # ------------------------------------------------------------------
+    # RDF output
+    # ------------------------------------------------------------------
 
     def generate_type_assertions(
-        self, query_file: Path, results: Dict[str, Tuple[Set[str], Set[str], Optional[str]]]
+        self,
+        query_file: Path,
+        results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]],
     ) -> Graph:
-        """
-        Generate RDF assertions adding question type classes to query resources.
+        """Return a copy of the query graph enriched with rdf:type assertions."""
+        out = Graph()
+        out.parse(str(query_file), format="turtle")
+        out.bind("lsqv", LSQV)
+        out.bind("qat", QAT)
+        out.bind("qa", QA)
 
-        Args:
-            query_file: Path to original query file.
-            results: Dict mapping query URI → (matching_types_set, features_set, label).
+        count = 0
+        for uri_str, (qtypes, _, _label, _warnings) in results.items():
+            for qtype in qtypes:
+                type_uri = self.type_uris.get(qtype)
+                if type_uri:
+                    out.add((URIRef(uri_str), RDF.type, type_uri))
+                    count += 1
 
-        Returns:
-            RDF Graph with added rdf:type assertions.
-        """
-        output_graph = Graph()
-        output_graph.parse(str(query_file), format="turtle")
-        
-        # Bind namespaces to prefixes for proper output formatting
-        output_graph.bind("lsqv", LSQV)
-        output_graph.bind("qat", QAT)
-        output_graph.bind("qa", QA)
-        output_graph.bind("rdf", RDF)
-        output_graph.bind("rdfs", RDFS)
-        output_graph.bind("owl", OWL)
+        self.logger.info(f"Added {count} type assertions across {len(results)} queries")
+        return out
 
-        # Add type assertions for all matching types
-        assertions_added = 0
-        for query_uri_str, (qtypes, features, label) in results.items():
-            if qtypes:
-                query_uri = URIRef(query_uri_str)
-                for qtype in qtypes:
-                    type_uri = self.type_uris.get(qtype)
-                    if type_uri:
-                        output_graph.add((query_uri, RDF.type, type_uri))
-                        assertions_added += 1
-        
-        self.logger.info(f"Added {assertions_added} type assertions to {len(results)} queries")
-        return output_graph
+    # ------------------------------------------------------------------
+    # Reporting
+    # ------------------------------------------------------------------
 
-    def print_results(self, results: Dict[str, Tuple[Set[str], Set[str], Optional[str]]]):
-        """Pretty-print classification results with validation reporting."""
-        print("\n" + "=" * 80)
+    def print_results(
+        self, results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]]
+    ) -> None:
+        """Pretty-print classification results to stdout."""
+        W = 80
+        print("\n" + "=" * W)
         print("Question Type Classification Results")
-        print("=" * 80 + "\n")
-        
-        # Print ontology rules
-        print("📖 Extracted ontology rules:")
-        print("-" * 80)
-        for type_name in sorted(self.type_definitions.keys()):
-            defn = self.type_definitions[type_name]
-            features_str = ", ".join(sorted(defn.required_features)) if defn.required_features else "(none)"
-            disjoint_str = ", ".join(sorted(defn.disjoint_with)) if defn.disjoint_with else "(none)"
-            print(f"  {type_name:20s} | Features: {features_str:40s} | Disjoint: {disjoint_str}")
+        print("=" * W + "\n")
+
+        # Ontology rules summary
+        print("Extracted ontology rules:")
+        print("-" * W)
+        for name in sorted(self.type_definitions):
+            defn = self.type_definitions[name]
+            print(f"  {name}")
+            for req in defn.all_requirements:
+                if req.required:
+                    print(f"    required:     {sorted(req.required)}")
+                if req.alternatives:
+                    print(f"    alternatives: {sorted(req.alternatives)} (any one)")
+            d = ", ".join(sorted(defn.disjoint_with)) or "(none)"
+            print(f"    disjoint: {d}")
         print()
 
-        # Categorize results
-        unique = {}
-        hierarchical = []
-        ambiguous = []
-        unclassifiable = []
+        classified: Dict[str, List] = {}
+        ambiguous: List = []
+        unclassifiable: List = []
+        # queries_with_warnings: list of (short_name, label, warnings)
+        queries_with_warnings: List[Tuple[str, Optional[str], List[str]]] = []
 
-        for uri_str, (qtypes, features, label) in results.items():
+        for uri_str, (qtypes, features, label, warnings) in results.items():
+            short = uri_str.split("/")[-1]
+            if warnings:
+                queries_with_warnings.append((short, label, warnings))
             if not qtypes:
-                unclassifiable.append((uri_str, features, label))
+                unclassifiable.append((short, features, label))
             elif len(qtypes) == 1:
-                qtype = list(qtypes)[0]
-                if qtype not in unique:
-                    unique[qtype] = []
-                unique[qtype].append((uri_str, features, label))
+                qtype = next(iter(qtypes))
+                classified.setdefault(qtype, []).append((short, features, label))
             else:
-                # Multiple matches: check if they form a valid hierarchy
-                if self._is_valid_hierarchy(qtypes):
-                    # Valid hierarchy: parent + child(ren) matched
-                    most_specific = self._find_most_specific(qtypes)
-                    ancestors = [t for t in qtypes if t != most_specific]
-                    hierarchical.append((uri_str, most_specific, ancestors, features, label))
-                else:
-                    # Real ambiguity: non-hierarchical siblings or conflicts
-                    ambiguous.append((uri_str, qtypes, features, label))
+                ambiguous.append((short, qtypes, features, label))
 
-        # Print uniquely classified
-        print("✓ Uniquely classified queries:")
-        print("-" * 80)
-        unique_count = 0
-        for qtype in sorted(self.type_definitions.keys()):
-            if qtype in unique:
-                print(f"\n  {qtype}")
-                for uri, features, label in unique[qtype]:
-                    unique_count += 1
-                    short_uri = uri.split("/")[-1] if "/" in uri else uri
-                    print(f"    {short_uri:20s} | {label or '(no label)'}")
-                    print(f"    {' ' * 20} | Matched: {', '.join(sorted(features))}")
+        # Classified
+        print("✓ Classified queries:")
+        print("-" * W)
+        for qtype in sorted(self.type_definitions):
+            for short, features, label in classified.get(qtype, []):
+                print(f"  [{qtype}] {short} — {label or '(no label)'}")
+                print(f"  {'':5s} features: {', '.join(sorted(features))}")
 
-        # Print hierarchical classifications
-        if hierarchical:
-            print(f"\n✓ Valid hierarchical classifications ({len(hierarchical)}):")
-            print("-" * 80)
-            for uri, most_specific, ancestors, features, label in hierarchical:
-                short_uri = uri.split("/")[-1] if "/" in uri else uri
-                ancestors_str = " ← ".join([most_specific] + sorted(ancestors))
-                print(f"  {short_uri:20s} | {label or '(no label)'}")
-                print(f"  {' ' * 20} | Hierarchy: {ancestors_str}")
-                print(f"  {' ' * 20} | Features: {', '.join(sorted(features))}")
-            unique_count += len(hierarchical)
-
-        # Print ambiguous cases (real undecidability)
+        # Ambiguous
         if ambiguous:
-            print(f"\n⚠️  Ambiguous/Undecidable queries ({len(ambiguous)}):")
-            print("-" * 80)
-            for uri, qtypes, features, label in ambiguous:
-                short_uri = uri.split("/")[-1] if "/" in uri else uri
-                types_str = ", ".join(sorted(qtypes))
-                print(f"  {short_uri:20s} | {label or '(no label)'}")
-                print(f"  {' ' * 20} | Conflicting types: {types_str}")
-                print(f"  {' ' * 20} | Features: {', '.join(sorted(features))}")
+            print(f"\n⚠  Ambiguous ({len(ambiguous)}):")
+            print("-" * W)
+            for short, qtypes, features, label in ambiguous:
+                print(f"  {short} — {label or '(no label)'}")
+                print(f"  {'':5s} conflicting types: {', '.join(sorted(qtypes))}")
+                print(f"  {'':5s} features: {', '.join(sorted(features))}")
                 self.logger.warning(
-                    f"Ambiguous query {short_uri!r}: conflicting types [{types_str}]"
-                    f" — features: {', '.join(sorted(features))}"
+                    f"Ambiguous {short!r}: types={sorted(qtypes)} features={sorted(features)}"
                 )
 
-        # Print unclassifiable
+        # Unclassifiable
         if unclassifiable:
-            print(f"\n❌ Unclassifiable queries ({len(unclassifiable)}):")
-            print("-" * 80)
-            for uri, features, label in unclassifiable:
-                short_uri = uri.split("/")[-1] if "/" in uri else uri
-                print(f"  {short_uri:20s} | {label or '(no label)'}")
-                print(f"  {' ' * 20} | Features: {', '.join(sorted(features))}")
+            print(f"\n✗ Unclassifiable ({len(unclassifiable)}):")
+            print("-" * W)
+            for short, features, label in unclassifiable:
+                print(f"  {short} — {label or '(no label)'}")
+                print(f"  {'':5s} features: {', '.join(sorted(features)) or 'none'}")
                 self.logger.error(
-                    f"Unclassifiable query {short_uri!r}: no matching type"
-                    f" — features: {', '.join(sorted(features)) if features else 'none'}"
+                    f"Unclassifiable {short!r}: features={sorted(features)}"
                 )
 
-        print("\n" + "=" * 80 + "\n")
+        # LSQ annotation warnings
+        if queries_with_warnings:
+            print(f"\n△  LSQ annotation warnings ({len(queries_with_warnings)} quer"
+                  f"{'y' if len(queries_with_warnings) == 1 else 'ies'}):")
+            print("-" * W)
+            for short, label, warnings in queries_with_warnings:
+                print(f"  {short} — {label or '(no label)'}")
+                for w in warnings:
+                    print(f"  {'':5s}· {w}")
 
-        # Summary with validation info
+        # Summary
         total = len(results)
-        ambig_count = len(ambiguous)
-        unclass_count = len(unclassifiable)
-        
-        print(f"Summary:")
-        print(f"  Total queries: {total}")
-        print(f"  Valid classifications: {unique_count} ({100*unique_count//total if total else 0}%)")
-        if unique_count > 0:
-            unique_only = len([1 for u in unique.values() for _ in u])
-            hier_only = len(hierarchical)
-            print(f"    - Unique: {unique_only}")
-            print(f"    - Hierarchical: {hier_only}")
-        print(f"  Ambiguous/Conflicting: {ambig_count} ({100*ambig_count//total if total else 0}%)")
-        print(f"  Unclassifiable: {unclass_count} ({100*unclass_count//total if total else 0}%)")
-        print()
+        n_ok = sum(len(v) for v in classified.values())
+        n_amb = len(ambiguous)
+        n_unc = len(unclassifiable)
+        n_warn = len(queries_with_warnings)
+        pct = lambda n: f"{100 * n // total if total else 0}%"
 
-        # Log validation summary
+        print("\n" + "=" * W)
+        print(f"Total: {total}  |  Classified: {n_ok} ({pct(n_ok)})  |  "
+              f"Ambiguous: {n_amb} ({pct(n_amb)})  |  Unclassifiable: {n_unc} ({pct(n_unc)})  |  "
+              f"LSQ warnings: {n_warn} ({pct(n_warn)})")
+        print("=" * W + "\n")
+
         self.logger.info(
-            f"Validation complete — {total} queries: "
-            f"{unique_count} classified ({100*unique_count//total if total else 0}%), "
-            f"{ambig_count} ambiguous, "
-            f"{unclass_count} unclassifiable"
+            f"Done — {total} queries: {n_ok} classified, {n_amb} ambiguous, "
+            f"{n_unc} unclassifiable, {n_warn} with LSQ annotation warnings"
         )
-        if ambig_count == 0 and unclass_count == 0:
-            self.logger.info("Validation passed: no problems detected")
+        if n_amb == 0 and n_unc == 0 and n_warn == 0:
+            self.logger.info("All queries classified cleanly.")
         else:
-            if ambig_count > 0:
-                self.logger.warning(f"Validation issue: {ambig_count} ambiguous/conflicting quer{'y' if ambig_count == 1 else 'ies'} require manual review")
-            if unclass_count > 0:
-                self.logger.error(f"Validation issue: {unclass_count} quer{'y' if unclass_count == 1 else 'ies'} could not be classified")
+            if n_amb:
+                self.logger.warning(f"{n_amb} ambiguous quer{'y' if n_amb == 1 else 'ies'} need review")
+            if n_unc:
+                self.logger.error(f"{n_unc} quer{'y' if n_unc == 1 else 'ies'} could not be classified")
+            if n_warn:
+                self.logger.warning(f"{n_warn} quer{'y' if n_warn == 1 else 'ies'} have LSQ annotation gaps")
 
+
+# ---------------------------------------------------------------------------
+# Logging setup
+# ---------------------------------------------------------------------------
 
 def setup_logging(log_file: Optional[Path] = None, verbose: bool = False) -> logging.Logger:
-    """
-    Set up logging configuration.
-    
-    Args:
-        log_file: Optional path to log file. If provided, logs to both console and file.
-        verbose: If True, use DEBUG level; otherwise use INFO level.
-    
-    Returns:
-        Configured logger instance.
-    """
     logger = logging.getLogger("classify_questions")
     level = logging.DEBUG if verbose else logging.INFO
     logger.setLevel(level)
-    
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(level)
-    console_formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-    
-    # File handler (if requested)
+
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(level)
+    ch.setFormatter(fmt)
+    logger.addHandler(ch)
+
     if log_file:
-        file_handler = logging.FileHandler(log_file, mode="w")
-        file_handler.setLevel(logging.DEBUG)  # Always log DEBUG to file
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
-        )
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
-    
+        fh = logging.FileHandler(log_file, mode="w")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(fmt)
+        logger.addHandler(fh)
+
     return logger
 
 
-def main():
-    """Main entry point."""
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Classify SPARQL queries by question type using LSQ features.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Classify queries and print results
   python classify_questions.py \\
     --query-file graphs/ck25/ck25-queries.ttl \\
     --ontology graphs/qa-types.ttl
 
-  # Classify and save output with type assertions and log file
   python classify_questions.py \\
     --query-file graphs/ck25/ck25-queries.ttl \\
     --ontology graphs/qa-types.ttl \\
@@ -699,98 +970,44 @@ Examples:
     --log-file .temp/classification.log
         """,
     )
-
-    parser.add_argument(
-        "--query-file",
-        type=Path,
-        required=True,
-        help="Path to LSQ query file (Turtle format).",
-    )
-    parser.add_argument(
-        "--ontology",
-        type=Path,
-        required=True,
-        help="Path to qa-types.ttl ontology.",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        help="Optional output file for classified queries (adds rdf:type assertions).",
-    )
-    parser.add_argument(
-        "--log-file",
-        type=Path,
-        default=None,
-        help="Optional log file to record messages, warnings, and errors (default: log to console only).",
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose (DEBUG) output.",
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Print extracted ontology rules before classification.",
-    )
-
+    parser.add_argument("--query-file", type=Path, required=True,
+                        help="LSQ query file (Turtle).")
+    parser.add_argument("--ontology", type=Path, required=True,
+                        help="qa-types.ttl ontology file.")
+    parser.add_argument("--output", type=Path, default=None,
+                        help="Output Turtle file with added rdf:type assertions.")
+    parser.add_argument("--log-file", type=Path, default=None,
+                        help="Log file path (default: console only).")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Enable DEBUG output.")
+    parser.add_argument("--debug", action="store_true",
+                        help="Print extracted ontology rules before classifying.")
     args = parser.parse_args()
-    
-    # Set up logging
-    logger = setup_logging(log_file=args.log_file, verbose=args.verbose)
-    
-    logger.info("Starting question type classification...")
-    logger.info(f"Query file: {args.query_file}")
-    logger.info(f"Ontology file: {args.ontology}")
-    if args.output:
-        logger.info(f"Output file: {args.output}")
-    if args.log_file:
-        logger.info(f"Log file: {args.log_file}")
 
-    # Validate inputs
-    if not args.query_file.exists():
-        logger.error(f"Query file not found: {args.query_file}")
-        sys.exit(1)
-    if not args.ontology.exists():
-        logger.error(f"Ontology file not found: {args.ontology}")
-        sys.exit(1)
+    logger = setup_logging(log_file=args.log_file, verbose=args.verbose)
+
+    for label, path in [("Query file", args.query_file), ("Ontology", args.ontology)]:
+        if not path.exists():
+            logger.error(f"{label} not found: {path}")
+            sys.exit(1)
 
     try:
         classifier = QuestionTypeClassifier(args.ontology, logger=logger)
-        
-        # Debug: print extracted rules
+
         if args.debug:
-            logger.info("\n📖 Extracted Ontology Rules:")
-            logger.info("=" * 80)
-            for type_name in sorted(classifier.type_definitions.keys()):
-                defn = classifier.type_definitions[type_name]
-                features_str = ", ".join(sorted(defn.required_features)) if defn.required_features else "(none)"
-                disjoint_str = ", ".join(sorted(defn.disjoint_with)) if defn.disjoint_with else "(none)"
-                logger.info(f"  {type_name:20s}")
-                logger.info(f"    Features: {features_str}")
-                logger.info(f"    Disjoint with: {disjoint_str}")
-            logger.info("=" * 80 + "\n")
+            for name, defn in sorted(classifier.type_definitions.items()):
+                logger.info(repr(defn))
 
-        logger.info(f"Classifying queries from {args.query_file}...")
         results = classifier.classify_queries_from_file(args.query_file)
-
-        # Display results
         classifier.print_results(results)
 
-        # Save output if requested
         if args.output:
-            logger.info(f"Writing classified queries to {args.output}...")
-            output_graph = classifier.generate_type_assertions(args.query_file, results)
-            output_graph.serialize(destination=str(args.output), format="turtle")
-            # Count total type assertions
-            total_assertions = sum(len(qtypes) for qtypes, _, _ in results.values() if qtypes)
-            logger.info(f"✓ Saved {len(results)} queries with {total_assertions} total type assertions.")
-        
-        logger.info("Classification completed successfully.")
-    
-    except Exception as e:
-        logger.exception(f"Error during classification: {e}")
+            out_graph = classifier.generate_type_assertions(args.query_file, results)
+            out_graph.serialize(destination=str(args.output), format="turtle")
+            logger.info(f"Saved classified queries to {args.output}")
+
+    except Exception as exc:
+        logger.exception(f"Fatal error: {exc}")
         sys.exit(1)
 
 

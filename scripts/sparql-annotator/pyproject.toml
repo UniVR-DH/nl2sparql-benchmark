@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparql-annotator"
+version = "0.2.0"
+description = "Annotate SPARQL queries extracting operator and structural features"
+authors = [ { name = "nl2s-bench" } ]
+dependencies = [
+    "rdflib>=6.0",
+    "pyparsing>=3.0",
+    "click>=8.0"
+]
