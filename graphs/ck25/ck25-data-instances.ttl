@@ -27108,14 +27108,14 @@ dbpedia:Vietnam
     a dbo:Country ;
     rdfs:label "Vietnam"@en .
 
-prodi:empl-Frau.IrmalindaÄò.Becker@company.org
+<http://ld.company.org/prod-instances/empl-Frau.Irmalinda%E2%80%9A%C3%84%C3%B2.Becker%40company.org>
     a pv:Manager ;
     rdfs:label "Frau Irmalinda" .
 
-prodi:empl-Lukas.Gerver@company.org
+<http://ld.company.org/prod-instances/empl-Lukas.Gerver%40company.org>
     a pv:Manager ;
     rdfs:label "Lukas Gerver" .
 
-prodi:empl-Ida.Halle@company.org
+<http://ld.company.org/prod-instances/empl-Ida.Halle%40company.org>
     a pv:Manager ;
     rdfs:label "Ida Halle" .

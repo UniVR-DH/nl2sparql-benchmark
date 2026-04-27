@@ -55,47 +55,127 @@ Vendored vocabulary resources that the benchmark relies on:
 - `sp.ttl` the SP vocabulary, used for representing SPARQL query structures.
 - `sparql-service-description.ttl` the SPARQL Service Description vocabulary, used for describing SPARQL endpoints.
 
----
+### Modeling Guidance
 
-## Modeling Guidance
 Use `GUIDELINE.md` as the source of truth for query encoding patterns, LSQ feature usage, and compact summary-profile conventions.
 
+---
+
 ## QA Types Ontology (`graphs/qa-types.ttl`)
+
 The benchmark uses a dedicated ontology for question typing in `graphs/qa-types.ttl` with prefix `qat:` (`https://w3id.org/univr-qa/qatypes#`).
 
 ### Purpose
-- Provide a machine-readable taxonomy of NL question types.
-- Link each type to expected answer shape (`qat:hasAnswerType` with Qanary `qa:AnswerType`).
-- Define structural constraints using LSQ features through:
-  - `lsqv:hasStructuralFeatures`
-  - `lsqv:usesFeature`
 
-### Core Classes
+* Provide a machine-readable taxonomy of NL question types.
+* Link each type to expected answer shape (`qat:hasAnswerType` with Qanary `qa:AnswerType` classes).
+* Constrain question types via LSQ structural features using:
+
+  * `lsqv:hasStructuralFeatures`
+  * `lsqv:usesFeature`
+
+* Complement typing with an orthogonal diagnostic layer for linguistic and semantic issues aligned with Qanary/Open Annotation.
+
+### Core Classes  for Question Types
 
 ```text
 qat:QuestionType
-├── qat:Factoid
-│   └── qat:RankedList
-├── qat:AggregateFactoid
-|   ├── qat:AggregateList
-│   └── qat:Comparative
-├── qat:EnumerationQuestion
-│   └── qat:AggregateList (also subclass of qat:AggregateFactoid)
-└── qat:Confirmation
+├── qat:Confirmation
+└── qat:Factoid
+    ├── qat:Aggregation
+    │   ├── qat:Comparative
+    │   └── qat:AggregateEnumeration
+    ├── qat:Enumeration
+    │   ├── qat:Comparative (overlaps via subclasses)
+    │   └── qat:AggregateEnumeration (overlaps via subclasses)
+    ├── qat:RankedListing
+    │   └── qat:LimitedRankedListing
+    ├── qat:Sampling
+    └── qat:CounterFactualIdentification
 ```
 
-Note: `qat:AggregateList` has multiple inheritance — it is a subclass of both
-`qat:EnumerationQuestion` and `qat:AggregateFactoid`. It appears under
-`EnumerationQuestion` in the tree above because the enumeration semantics
-(returning a set of groups) is its primary classification; the aggregation
-semantics is inherited to express the computational requirement.
+#### Notes on Modeling
 
-> **Disjointness and Ambiguity**
-> The ontology encodes selected `owl:disjointWith` relations for incompatible sibling
-> classes. Not all classes are pairwise disjoint by design — `qat:AggregateList`
-> intentionally sits at the intersection of enumeration and aggregation semantics
-> through multiple inheritance. The classifier handles this by preferring the most
-> specific matching type in the hierarchy.
+* **Multiple inheritance**
+
+  * `qat:Comparative` ⊑ `qat:Aggregation` ⊓ `qat:Enumeration`
+  * `qat:AggregateEnumeration` ⊑ `qat:Aggregation` ⊓ `qat:Enumeration`
+
+* **Answer types**
+
+  * Modeled as classes (subclasses of `qa:AnswerType`) :
+
+    * `qat:BooleanAnswer`
+    * `qat:SingleEntityAnswer`
+    * `qat:EntityListAnswer`
+    * `qat:SampledListAnswer`
+    * `qat:RankedListAnswer`
+    * `qat:ScalarAnswer`
+    * Hybrid types:
+
+      * `qat:RankedEntityAnswer` ⊑ `qat:ScalarAnswer` ⊓ `qat:EntityListAnswer`
+      * `qat:AggregateListAnswer` ⊑ `qat:ScalarAnswer` ⊓ `qat:EntityListAnswer`
+
+* **Structural grounding**
+
+  * Question types are not LSQ feature instances; instead they are constrained via nested OWL restrictions over `lsqv:hasStructuralFeatures / lsqv:usesFeature`.
+
+* **Disjointness**
+
+  * `qat:Factoid` ⊥ `qat:Confirmation`
+  * No global pairwise disjointness: overlap is intentional where semantics intersect (e.g., aggregation + enumeration).
+
+* **Diagnostic layer (orthogonal)**
+
+  * `qat:LinguisticIssue` and `qat:SemanticIssue` (disjoint)
+  * Subclasses capture error categories (e.g., `qat:EntityLinkingAmbiguity`, `qat:AggregationUnderspecification`, etc.)
+  * Designed for annotation, not classification of question type.
+
+### Core Classes for the Diagnostic Layer
+
+In addition to question typing, the ontology defines an **orthogonal diagnostic layer** for capturing errors and ambiguities in natural language questions. These are modeled as subclasses of `qa:AnnotationQuestion` and are intended to be attached to questions via the Qanary/Open Annotation pattern (`oa:hasTarget` / `oa:hasBody`).
+
+This layer does **not** affect the question type classification; it complements it by explaining *why* a question may be difficult to interpret or translate into SPARQL.
+
+```text
+qat:LinguisticIssue
+├── qat:OrthographicNoise
+├── qat:SyntacticDistortion
+├── qat:LexicalGroundingMismatch
+├── qat:AbbreviationAmbiguity
+└── qat:DiscourseReferenceFailure
+
+qat:SemanticIssue
+├── qat:EntityLinkingAmbiguity
+├── qat:EntityAttributeMismatch
+├── qat:ImplicitRelationInference
+├── qat:AggregationUnderspecification
+├── qat:LogicalFormAmbiguity
+├── qat:VaguePredicateGrounding
+└── qat:SchemaCoverageMismatch
+```
+
+####  Notes on Modeling
+
+* **Disjointness**
+
+  * `qat:LinguisticIssue` ⊥ `qat:SemanticIssue`
+
+* **Linguistic issues**
+
+  * Capture problems at the surface form level (spelling, syntax, lexical choice, discourse).
+  * Typically arise *before* schema grounding.
+
+* **Semantic issues**
+
+  * Capture mismatches between intended meaning and the underlying RDF/schema/query structure.
+  * Often manifest during entity linking, relation construction, or query formulation.
+
+* **Usage pattern**
+
+  * Instances annotate a question independently of its `qat:QuestionType`.
+  * Multiple issues may be attached to the same question.
+
 
 ---
 

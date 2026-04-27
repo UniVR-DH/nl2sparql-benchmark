@@ -18,7 +18,7 @@ PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT ?employee ?email WHERE { ?employee a pv:Employee ; pv:email ?email }
 """ ;
 
-  schema:target <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
 ex:case_1_9549048a
   a sh:SPARQLExecutable,
