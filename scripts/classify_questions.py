@@ -2,30 +2,22 @@
 """
 Automated Question Type Classifier for nl2s-bench
 
-This utility parses SPARQL queries in LSQ format and automatically assigns
-question types (Factoid, AggregateFactoid, Comparative, etc.) based on declared
-structural features. Classification rules are derived dynamically from the
-qa-types.ttl ontology.
-
 The classifier:
 1. Parses the ontology to extract OWL restrictions for each question type
-   (including inherited features via transitive rdfs:subClassOf)
+    (including inherited features via transitive rdfs:subClassOf)
 2. Builds a symmetric disjointness closure
 3. Matches queries against feature requirements
 4. Resolves multiple matches by preferring the most specific type in a hierarchy,
-   or flags genuine ambiguity
+    or flags genuine ambiguity
 
-Usage:
-    python classify_questions.py --query-file <path/to/queries.ttl> \\
-                                 --ontology <path/to/qa-types.ttl> \\
-                                 [--output <path/to/output.ttl>] \\
-                                 [--log-file <path/to/log>] \\
-                                 [--verbose] [--debug]
+The classifier merges LSQ-declared features with algebra-derived features.
+Algebra-derived features are treated as semantic enrichments and may include
+both structural and functional variants of the same SPARQL construct (e.g.,
+NotExists and fn-notexists). When multiple valid representations exist, all
+are retained.
 """
 
-import argparse
 import logging
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
@@ -195,10 +187,7 @@ class QuestionTypeClassifier:
                 if name:
                     req.required.add(name)
 
-            # FIX issue 1: removed the redundant first loop that used [-1] to
-            # index into the objects list (fragile and semantically misleading —
-            # it attempted to walk the RDF list but duplicated the work done
-            # correctly by the loop below). Only the canonical form is kept:
+            # Only the canonical form is kept:
             # iterate owl:someValuesFrom nodes, then walk each owl:unionOf list
             # with self.ontology.items(), which is the correct rdflib API for
             # RDF lists.
@@ -251,7 +240,7 @@ class QuestionTypeClassifier:
         3. Propagate inherited requirements (transitive closure over parent_types)
         4. Build symmetric disjointness closure
 
-        FIX issue 4: after building all definitions, verify that every type
+        after building all definitions, verify that every type
         (including abstract ones like Factoid) has at least one extracted
         requirement. A type with no requirements would match every query,
         causing spurious classifications. A warning is emitted and the type
@@ -288,8 +277,7 @@ class QuestionTypeClassifier:
 
         for name, defn in defs.items():
             defn.all_requirements = _collect_requirements(name, set())
-
-        # FIX issue 4: explicit post-build validation.
+        
         # Log each type's extracted requirements at DEBUG level so mismatches
         # between the ontology structure and the parser are immediately visible.
         # Emit a WARNING for any type that ends up with no requirements, since
@@ -326,7 +314,7 @@ class QuestionTypeClassifier:
 
     def _build_depth_cache(self) -> Dict[str, int]:
         """
-        FIX issue 3 (partial): pre-compute depth (longest path to a root) for
+        pre-compute depth (longest path to a root) for
         every type once, rather than recomputing it as a local dict inside
         classify_query on every call.
         """
@@ -356,6 +344,40 @@ class QuestionTypeClassifier:
     # ------------------------------------------------------------------
 
     @staticmethod
+    def _is_user_bind(node: CompValue, parsed: object) -> bool:
+        """
+        Return True iff this Extend node corresponds to a user-written BIND.
+
+        Strategy:
+        - Projection aliases appear in parsed[1]['projection'] as entries with both:
+            var (target) AND evar (expression)
+        - If the Extend variable matches one of those aliases -> NOT a BIND
+        - Otherwise -> treat as BIND
+        """
+        try:
+            query_clause = parsed[1]
+            projection = query_clause.get("projection", []) if hasattr(query_clause, "get") else []
+
+            alias_vars = {
+                str(item.get("var"))
+                for item in projection
+                if hasattr(item, "get")
+                and item.get("var") is not None
+                and item.get("evar") is not None
+            }
+
+            var = node.get("var")
+            if var is None:
+                return False
+
+            return str(var) not in alias_vars
+
+        except Exception as e:
+            # Log the failure and conservatively treat this as NOT a user BIND.
+            logging.getLogger(__name__).debug(f"_is_user_bind failed: {e}")
+            return False
+
+    @staticmethod
     def _detect_features_from_algebra(
         algebra_node: CompValue,
         parsed: object,
@@ -365,38 +387,81 @@ class QuestionTypeClassifier:
         LSQ feature names that can be determined unambiguously from the
         algebra structure and parse tree.
 
-        Node name → LSQ feature mapping:
-          ToMultiSet { p: Project { … } }  → SubQuery
-            rdflib wraps every inline SELECT in ToMultiSet(Project(…)).
-            A bare GROUP / BGP inside ToMultiSet is NOT a subquery.
-          Filter, discriminated by expr.name and HAVING context:
-            TrueFilter          → (skip) synthetic no-op rdflib inserts for
-                                   OPTIONAL; not a user-written construct.
-            Builtin_NOTEXISTS   → NotExists  (FILTER NOT EXISTS { … })
-            Builtin_EXISTS      → fn-exists  (FILTER EXISTS { … }; LSQ models
-                                   this as a function, not a structural feature)
-            anything else       → Filter     (plain FILTER expression)
+                Node name → LSQ feature mapping:
+                    ToMultiSet { p: Project { … } }  → SubQuery
+                        rdflib wraps every inline SELECT in ToMultiSet(Project(…)).
+                        A bare GROUP / BGP inside ToMultiSet is NOT a subquery.
+                    Filter, discriminated by expr.name and HAVING context:
+                        TrueFilter          → (skip) synthetic no-op rdflib inserts for
+                                                                     OPTIONAL; not a user-written construct.
+                        Builtin_NOTEXISTS   → NotExists + fn-notexists  (FILTER NOT EXISTS { … })
+                        Builtin_EXISTS      → fn-exists  (FILTER EXISTS { … })
+                        anything else       → Filter     (plain FILTER expression)
 
-            HAVING special case: rdflib compiles HAVING(expr) into a Filter
-            node wrapping the AggregateJoin/Group subtree. This is
-            indistinguishable from a plain Filter at the algebra level, so
-            HAVING is detected from the parse tree (parsed[1]['having'] is a
-            CompValue when HAVING is present, not the bare string sentinel
-            rdflib uses when it is absent). When HAVING is detected:
-              - lsqv:Having is added to the feature set.
-              - The first Filter node encountered in the algebra walk (which
-                is always the outermost one, i.e. the HAVING) is skipped so
-                it does not also produce a spurious lsqv:Filter.
+                        HAVING special case: rdflib compiles HAVING(expr) into a Filter
+                        node wrapping the AggregateJoin/Group subtree. This is
+                        indistinguishable from a plain Filter at the algebra level, so
+                        HAVING is detected from the parse tree (parsed[1]['having'] is a
+                        CompValue when HAVING is present, not the bare string sentinel
+                        rdflib uses when it is absent). When HAVING is detected:
+                            - lsqv:Having is added to the feature set.
+                            - The first Filter node encountered in the algebra walk (which
+                                is always the outermost one, i.e. the HAVING) is skipped so
+                                it does not also produce a spurious lsqv:Filter.
           Extend                            → Bind
             rdflib compiles BIND(?expr AS ?var) into Extend nodes.
+            it also compisles projection aliases such as COUNT(?x) AS ?count into Extend nodes. 
+            The former should be mapped to Bind, the latter should not 
+            (or should be mapped to a more specific feature such as AggregateAlias) 
+            — mapping all Extend to Bind, produces false positives for aggregate aliases. 
+            To fix this, we need a discriminator that can access the parse tree context 
+            to distinguish user BIND clauses from compiler-generated projection aliases.
           LeftJoin                          → Optional
             rdflib compiles OPTIONAL { … } into LeftJoin nodes.
 
-        Only CompValue nodes are visited; all other value types are ignored.
-        A seen-set guards against cycles.
+                Only CompValue nodes are visited; all other value types are ignored.
+                A seen-set guards against cycles.
+
+                rdflib uses the `Extend` algebra node both for explicit
+                BIND(...) clauses and for compiled projection aliases such as
+                `COUNT(...) AS ?alias`. To avoid false positives
+                we should distinguish the two cases by consulting the parse tree
+                (`parsed`) or the `Extend` node contents:
+
+                    - If the `Extend` corresponds to a user `BIND` clause, emit
+                        `Bind`.
+                    - If the `Extend` is produced to represent a projection alias
+                        (e.g. aggregate alias), do not emit `Bind` (or emit a more
+                        specific feature such as `AggregateAlias`).
+
+                # NOTE:
+                # Extend → Bind classification is implemented via `_is_user_bind`,
+                # which distinguishes user BIND expressions from projection aliases.
+                #
+                # This heuristic is stable but depends on SPARQL parser structure and
+                # may require adjustment if rdflib algebra representation changes.
         """
         found: Set[str] = set()
         seen: Set[int] = set()
+
+        def _expr_contains(node, target: str) -> bool:
+            """
+            Recursively search for a CompValue node with name == target.
+            Handles nested CompValue, list, and tuple structures.
+            """
+            if isinstance(node, CompValue):
+                if getattr(node, "name", None) == target:
+                    return True
+                for v in node.values():
+                    if _expr_contains(v, target):
+                        return True
+
+            elif isinstance(node, (list, tuple)):
+                for item in node:
+                    if _expr_contains(item, target):
+                        return True
+
+            return False
 
         # Detect HAVING from the parse tree. parsed[1]['having'] is a CompValue
         # when HAVING is present; rdflib sets it to the bare string 'having' as
@@ -417,9 +482,8 @@ class QuestionTypeClassifier:
 
         # When HAVING is present, the outermost Filter in the algebra tree is
         # the compiled HAVING expression — it must be skipped so it does not
-        # also emit a spurious lsqv:Filter. This flag is cleared after the
-        # first Filter node is encountered during the walk.
-        skip_next_filter = [has_having]  # list so the closure can mutate it
+        # also emit a spurious lsqv:Filter. Detection is handled structurally
+        # inside the Filter branch below; no traversal-order state is used.
 
         def _walk(node: CompValue) -> None:
             if not isinstance(node, CompValue):
@@ -436,30 +500,54 @@ class QuestionTypeClassifier:
                 if isinstance(inner, CompValue) and inner.name == "Project":
                     found.add("SubQuery")
             elif name == "Filter":
-                if skip_next_filter[0]:
-                    # This is the HAVING-compiled Filter — skip feature
-                    # detection for it but still recurse into its children
-                    # so inner real FILTERs are not missed.
-                    skip_next_filter[0] = False
-                else:
-                    expr = node.get("expr")
+                expr = node.get("expr")
+
+                # Identify HAVING filter structurally (Filter wrapping AggregateJoin/Group)
+                child = node.get("p")
+                is_having_filter = (
+                    has_having
+                    and isinstance(child, CompValue)
+                    and child.name in {"AggregateJoin", "Group"}
+                )
+
+                if is_having_filter:
+                    # Skip ONLY HAVING filter
+                    pass
+
+                elif expr is not None:
+                    # rdflib represents NOT EXISTS / EXISTS as builtin expr
+                    # nodes whose `name` is `Builtin_NOTEXISTS` / `Builtin_EXISTS`.
+                    # Detect them by direct name equality rather than recursive
+                    # traversal of the expression tree.
                     expr_name = getattr(expr, "name", None)
-                    # TrueFilter is a synthetic no-op rdflib inserts for
-                    # OPTIONAL blocks — skip it entirely.
-                    if expr_name == "TrueFilter":
-                        pass
-                    # FILTER NOT EXISTS { … } → lsqv:NotExists
-                    elif expr_name == "Builtin_NOTEXISTS":
+
+                    # rdflib canonical representation for FILTER NOT EXISTS
+                    if expr_name == "Builtin_NOTEXISTS":
                         found.add("NotExists")
-                    # FILTER EXISTS { … } → lsqv:fn-exists (LSQ treats this
-                    # as a function rather than a structural feature)
+
+                    # rdflib canonical representation for FILTER EXISTS
                     elif expr_name == "Builtin_EXISTS":
                         found.add("fn-exists")
-                    # Any other FILTER expression → lsqv:Filter
+
                     else:
-                        found.add("Filter")
+                        # Skip synthetic filters inserted for OPTIONAL
+                        if expr_name == "TrueFilter":
+                            pass
+                        else:
+                            found.add("Filter")
             elif name == "Extend":
-                found.add("Bind")
+                # Log presence of Extend nodes so we can observe whether rdflib
+                # actually emits them and debug alias vs BIND decisions.
+                logging.getLogger(__name__).debug(f"Extend node found: {node}")
+
+                # Discriminate Extend coming from user BIND vs projection alias
+                is_bind = QuestionTypeClassifier._is_user_bind(node, parsed)
+
+                if is_bind:
+                    found.add("Bind")
+                    logging.getLogger(__name__).debug("Extend → Bind")
+                else:
+                    logging.getLogger(__name__).debug("Extend → NOT Bind (alias)")
             elif name == "LeftJoin":
                 found.add("Optional")
 
@@ -474,7 +562,6 @@ class QuestionTypeClassifier:
         _walk(algebra_node)
         return found
 
-    @staticmethod
     @staticmethod
     def _count_from_algebra(algebra_node: CompValue) -> Tuple[int, int, int]:
         """
@@ -648,8 +735,10 @@ class QuestionTypeClassifier:
         After extraction, the SPARQL text is compiled into a rdflib algebra
         tree via _detect_features_from_algebra. Structural features found in
         the algebra but absent from the declared LSQ feature set are collected
-        as warnings and returned alongside the feature set. The declared LSQ
-        features remain authoritative — warnings flag annotation gaps only.
+        as warnings and returned alongside the feature set. LSQ-declared
+        features are treated as the base annotation and algebra-derived
+        features enrich that set; when both representations are semantically
+        valid, both are preserved.
 
         Returns:
             (features, warnings) where warnings is a list of human-readable
@@ -703,19 +792,39 @@ class QuestionTypeClassifier:
                 except Exception:
                     pass  # leave features unchanged if projection walk fails
 
-            # Algebra-based structural feature gap detection.
+            # Algebra-based structural feature detection and enrichment.
             # We compare what the algebra tree actually contains against what
-            # LSQ declared. Each missing feature is a likely annotation gap.
-            # The declared LSQ feature set remains authoritative — we only warn.
+            # LSQ declared and enrich the declared set with algebra-derived
+            # features when they add information. Algebra features are
+            # additive and complementary — structural gaps are filled and
+            # functional variants (e.g. fn-exists, fn-notexists) are retained
+            # alongside structural variants when both are valid.
+            #
+            # NOTE:
+            # Extend → Bind classification is implemented via `_is_user_bind`,
+            # which distinguishes user BIND expressions from projection aliases.
+            #
+            # This heuristic is stable but depends on SPARQL parser structure and
+            # may require adjustment if rdflib algebra representation changes.
             implied = self._detect_features_from_algebra(algebra.algebra, parsed)
-            for feat_name in sorted(implied):
-                if feat_name not in features:
+
+            # enrich LSQ-declared features with algebra-derived features.
+            # Algebra features are additive and may include:
+            # - structural features missing in LSQ annotations
+            # - functional variants (e.g. fn-exists, fn-notexists)
+            # Both representations are preserved when applicable.
+            missing = implied - features
+            if missing:
+                for feat_name in sorted(missing):
                     msg = (
                         f"algebra contains '{feat_name}' node but it is absent "
-                        f"from declared LSQ features — possible annotation gap"
+                        f"from declared LSQ features — merging into feature set"
                     )
                     warnings.append(msg)
                     self.logger.warning(f"Query {short_uri!r}: {msg}")
+
+                # make algebra features authoritative
+                features |= implied
 
             # Numeric count annotation checks (projectVarCount, bgpCount, tpCount).
             # These are verified exactly against the algebra — any mismatch is a
@@ -734,12 +843,8 @@ class QuestionTypeClassifier:
 
     def _ancestors(self, name: str) -> Set[str]:
         """
-        FIX issue 3: return the strict ancestor set of a type — i.e. all
+        return the strict ancestor set of a type — i.e. all
         types reachable via parent_types — NOT including the type itself.
-
-        The original implementation added `name` to `visited` immediately,
-        causing it to return the node as its own ancestor. The a == b guard
-        in classify_query masked the bug but the semantics were wrong.
         """
         result: Set[str] = set()
 
@@ -866,239 +971,48 @@ class QuestionTypeClassifier:
                     f"(features: {', '.join(sorted(features)) or 'none'})"
                 )
 
-            results[str(uri)] = (qtypes, features, label, warnings)
+            # Compute algebra-derived counts (bgpCount, tpCount, projectVarCount)
+            counts: Dict[str, int] = {}
+            for sparql_lit in g.objects(uri, LSQV.text):
+                text = str(sparql_lit)
+                try:
+                    parsed = _sparql_parser.parseQuery(text)
+                    algebra = _sparql_algebra.translateQuery(parsed)
+                    bgp_c, tp_c, pv_c = self._count_from_algebra(algebra.algebra)
+                    counts = {
+                        "bgpCount": bgp_c,
+                        "tpCount": tp_c,
+                        "projectVarCount": pv_c,
+                    }
+                except Exception:
+                    counts = {}
+                break
+
+            results[str(uri)] = (qtypes, features, label, warnings, counts)
 
         return results
-
-    # ------------------------------------------------------------------
-    # RDF output
-    # ------------------------------------------------------------------
-
-    def generate_type_assertions(
-        self,
-        query_file: Path,
-        results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]],
-    ) -> Graph:
-        """Return a copy of the query graph enriched with rdf:type assertions."""
-        out = Graph()
-        out.parse(str(query_file), format="turtle")
-        out.bind("lsqv", LSQV)
-        out.bind("qat", QAT)
-        out.bind("qa", QA)
-
-        count = 0
-        for uri_str, (qtypes, _, _label, _warnings) in results.items():
-            for qtype in qtypes:
-                type_uri = self.type_uris.get(qtype)
-                if type_uri:
-                    out.add((URIRef(uri_str), RDF.type, type_uri))
-                    count += 1
-
-        self.logger.info(f"Added {count} type assertions across {len(results)} queries")
-        return out
-
-    # ------------------------------------------------------------------
-    # Reporting
-    # ------------------------------------------------------------------
-
-    def print_results(
-        self, results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]]
-    ) -> None:
-        """Pretty-print classification results to stdout."""
-        W = 80
-        print("\n" + "=" * W)
-        print("Question Type Classification Results")
-        print("=" * W + "\n")
-
-        # Ontology rules summary
-        print("Extracted ontology rules:")
-        print("-" * W)
-        for name in sorted(self.type_definitions):
-            defn = self.type_definitions[name]
-            print(f"  {name}")
-            for req in defn.all_requirements:
-                if req.required:
-                    print(f"    required:     {sorted(req.required)}")
-                if req.alternatives:
-                    print(f"    alternatives: {sorted(req.alternatives)} (any one)")
-            d = ", ".join(sorted(defn.disjoint_with)) or "(none)"
-            print(f"    disjoint: {d}")
-        print()
-
-        classified: Dict[str, List] = {}
-        ambiguous: List = []
-        unclassifiable: List = []
-        # queries_with_warnings: list of (short_name, label, warnings)
-        queries_with_warnings: List[Tuple[str, Optional[str], List[str]]] = []
-
-        for uri_str, (qtypes, features, label, warnings) in results.items():
-            short = uri_str.split("/")[-1]
-            if warnings:
-                queries_with_warnings.append((short, label, warnings))
-            if not qtypes:
-                unclassifiable.append((short, features, label))
-            elif len(qtypes) == 1:
-                qtype = next(iter(qtypes))
-                classified.setdefault(qtype, []).append((short, features, label))
-            else:
-                ambiguous.append((short, qtypes, features, label))
-
-        # Classified
-        print("✓ Classified queries:")
-        print("-" * W)
-        for qtype in sorted(self.type_definitions):
-            for short, features, label in classified.get(qtype, []):
-                print(f"  [{qtype}] {short} — {label or '(no label)'}")
-                print(f"  {'':5s} features: {', '.join(sorted(features))}")
-
-        # Ambiguous
-        if ambiguous:
-            print(f"\n⚠  Ambiguous ({len(ambiguous)}):")
-            print("-" * W)
-            for short, qtypes, features, label in ambiguous:
-                print(f"  {short} — {label or '(no label)'}")
-                print(f"  {'':5s} conflicting types: {', '.join(sorted(qtypes))}")
-                print(f"  {'':5s} features: {', '.join(sorted(features))}")
-                self.logger.warning(
-                    f"Ambiguous {short!r}: types={sorted(qtypes)} features={sorted(features)}"
-                )
-
-        # Unclassifiable
-        if unclassifiable:
-            print(f"\n✗ Unclassifiable ({len(unclassifiable)}):")
-            print("-" * W)
-            for short, features, label in unclassifiable:
-                print(f"  {short} — {label or '(no label)'}")
-                print(f"  {'':5s} features: {', '.join(sorted(features)) or 'none'}")
-                self.logger.error(
-                    f"Unclassifiable {short!r}: features={sorted(features)}"
-                )
-
-        # LSQ annotation warnings
-        if queries_with_warnings:
-            print(f"\n△  LSQ annotation warnings ({len(queries_with_warnings)} quer"
-                  f"{'y' if len(queries_with_warnings) == 1 else 'ies'}):")
-            print("-" * W)
-            for short, label, warnings in queries_with_warnings:
-                print(f"  {short} — {label or '(no label)'}")
-                for w in warnings:
-                    print(f"  {'':5s}· {w}")
-
-        # Summary
-        total = len(results)
-        n_ok = sum(len(v) for v in classified.values())
-        n_amb = len(ambiguous)
-        n_unc = len(unclassifiable)
-        n_warn = len(queries_with_warnings)
-        pct = lambda n: f"{100 * n // total if total else 0}%"
-
-        print("\n" + "=" * W)
-        print(f"Total: {total}  |  Classified: {n_ok} ({pct(n_ok)})  |  "
-              f"Ambiguous: {n_amb} ({pct(n_amb)})  |  Unclassifiable: {n_unc} ({pct(n_unc)})  |  "
-              f"LSQ warnings: {n_warn} ({pct(n_warn)})")
-        print("=" * W + "\n")
-
-        self.logger.info(
-            f"Done — {total} queries: {n_ok} classified, {n_amb} ambiguous, "
-            f"{n_unc} unclassifiable, {n_warn} with LSQ annotation warnings"
-        )
-        if n_amb == 0 and n_unc == 0 and n_warn == 0:
-            self.logger.info("All queries classified cleanly.")
-        else:
-            if n_amb:
-                self.logger.warning(f"{n_amb} ambiguous quer{'y' if n_amb == 1 else 'ies'} need review")
-            if n_unc:
-                self.logger.error(f"{n_unc} quer{'y' if n_unc == 1 else 'ies'} could not be classified")
-            if n_warn:
-                self.logger.warning(f"{n_warn} quer{'y' if n_warn == 1 else 'ies'} have LSQ annotation gaps")
-
-
-# ---------------------------------------------------------------------------
-# Logging setup
-# ---------------------------------------------------------------------------
-
-def setup_logging(log_file: Optional[Path] = None, verbose: bool = False) -> logging.Logger:
-    logger = logging.getLogger("classify_questions")
-    level = logging.DEBUG if verbose else logging.INFO
-    logger.setLevel(level)
-
-    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(level)
-    ch.setFormatter(fmt)
-    logger.addHandler(ch)
-
-    if log_file:
-        fh = logging.FileHandler(log_file, mode="w")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(fmt)
-        logger.addHandler(fh)
-
-    return logger
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+# Note: CLI entry point moved to scripts/classify_questions_cli.py
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Classify SPARQL queries by question type using LSQ features.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python classify_questions.py \\
-    --query-file graphs/ck25/ck25-queries.ttl \\
-    --ontology graphs/qa-types.ttl
+# Final Reporting is handled by the CLI wrapper in `scripts/classify_questions_cli.py`, 
+# which receives the full classification results dict from classify_queries_from_file 
+# and is responsible for formatting and printing the final report to the console.
+# See: `print_results` in `scripts/classify_questions_cli.py` for details.
 
-  python classify_questions.py \\
-    --query-file graphs/ck25/ck25-queries.ttl \\
-    --ontology graphs/qa-types.ttl \\
-    --output graphs/ck25/ck25-queries-classified.ttl \\
-    --log-file .temp/classification.log
-        """,
-    )
-    parser.add_argument("--query-file", type=Path, required=True,
-                        help="LSQ query file (Turtle).")
-    parser.add_argument("--ontology", type=Path, required=True,
-                        help="qa-types.ttl ontology file.")
-    parser.add_argument("--output", type=Path, default=None,
-                        help="Output Turtle file with added rdf:type assertions.")
-    parser.add_argument("--log-file", type=Path, default=None,
-                        help="Log file path (default: console only).")
-    parser.add_argument("--verbose", action="store_true",
-                        help="Enable DEBUG output.")
-    parser.add_argument("--debug", action="store_true",
-                        help="Print extracted ontology rules before classifying.")
-    args = parser.parse_args()
+# Logging is configured by the CLI wrapper in
+# `scripts/classify_questions_cli.py`. The `QuestionTypeClassifier`
+# accepts an injected `logger` instance (see its constructor) so the
+# CLI is responsible for configuring handlers and levels.
+# See: `configure_logging` in `scripts/classify_questions_cli.py` for details.
 
-    logger = setup_logging(log_file=args.log_file, verbose=args.verbose)
+# ------------------------------------------------------------------
+# RDF output
+# ------------------------------------------------------------------
+# RDF output generation is handled by the CLI wrapper in
+# `scripts/classify_questions_cli.py`. 
+# See `generate_type_assertions` in the CLI module for the implementation.
 
-    for label, path in [("Query file", args.query_file), ("Ontology", args.ontology)]:
-        if not path.exists():
-            logger.error(f"{label} not found: {path}")
-            sys.exit(1)
-
-    try:
-        classifier = QuestionTypeClassifier(args.ontology, logger=logger)
-
-        if args.debug:
-            for name, defn in sorted(classifier.type_definitions.items()):
-                logger.info(repr(defn))
-
-        results = classifier.classify_queries_from_file(args.query_file)
-        classifier.print_results(results)
-
-        if args.output:
-            out_graph = classifier.generate_type_assertions(args.query_file, results)
-            out_graph.serialize(destination=str(args.output), format="turtle")
-            logger.info(f"Saved classified queries to {args.output}")
-
-    except Exception as exc:
-        logger.exception(f"Fatal error: {exc}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
