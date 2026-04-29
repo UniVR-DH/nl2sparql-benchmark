@@ -15,6 +15,29 @@ Algebra-derived features are treated as semantic enrichments and may include
 both structural and functional variants of the same SPARQL construct (e.g.,
 NotExists and fn-notexists). When multiple valid representations exist, all
 are retained.
+
+Known limitations / design notes
+---------------------------------
+1. _ancestors() has no explicit cycle guard.
+   The method relies on parent_types being acyclic (i.e. the subclass hierarchy
+   is a DAG). A cycle in the ontology would cause infinite recursion and a
+   RecursionError. In practice ontology subclass hierarchies are always DAGs,
+   but a defensive visited-set could be added cheaply if untrusted ontologies
+   are ever loaded.
+
+2. classify_queries_from_file() re-parses and re-translates each query's SPARQL
+   text a second time (after extract_features already did so) purely to compute
+   the algebra-derived counts dict.  This is redundant work.  A future
+   refactor could have extract_features() cache and return the algebra object
+   so classify_queries_from_file() can reuse it directly.
+
+3. The HAVING-filter detection in _detect_features_from_algebra uses a
+   parse-tree flag (has_having) combined with a structural check on the Filter
+   node's immediate child.  The structural check requires the Filter's direct
+   child to be AggregateJoin or Group.  In practice rdflib always places HAVING
+   as the outermost Filter over AggregateJoin, so this holds, but it is a
+   coupling to rdflib's internal algebra representation that could break across
+   rdflib versions.
 """
 
 import logging
@@ -24,6 +47,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from rdflib import Graph, Namespace, URIRef, RDF, RDFS, Literal
 from rdflib.namespace import OWL
+from rdflib.term import Variable as _Variable
 import rdflib.plugins.sparql.parser as _sparql_parser
 import rdflib.plugins.sparql.algebra as _sparql_algebra
 from rdflib.plugins.sparql.parserutils import CompValue
@@ -126,8 +150,6 @@ class QuestionTypeClassifier:
             name: defn.uri for name, defn in self.type_definitions.items()
         }
 
-        # FIX issue 3: depth cache built once after type definitions are finalised,
-        # rather than being recomputed as a local dict on every classify_query call.
         self._depth_cache: Dict[str, int] = self._build_depth_cache()
 
     # ------------------------------------------------------------------
@@ -240,7 +262,7 @@ class QuestionTypeClassifier:
         3. Propagate inherited requirements (transitive closure over parent_types)
         4. Build symmetric disjointness closure
 
-        after building all definitions, verify that every type
+        After building all definitions, verify that every type
         (including abstract ones like Factoid) has at least one extracted
         requirement. A type with no requirements would match every query,
         causing spurious classifications. A warning is emitted and the type
@@ -277,7 +299,7 @@ class QuestionTypeClassifier:
 
         for name, defn in defs.items():
             defn.all_requirements = _collect_requirements(name, set())
-        
+
         # Log each type's extracted requirements at DEBUG level so mismatches
         # between the ontology structure and the parser are immediately visible.
         # Emit a WARNING for any type that ends up with no requirements, since
@@ -314,9 +336,12 @@ class QuestionTypeClassifier:
 
     def _build_depth_cache(self) -> Dict[str, int]:
         """
-        pre-compute depth (longest path to a root) for
-        every type once, rather than recomputing it as a local dict inside
-        classify_query on every call.
+        Pre-compute depth (longest path to a root) for every type once, rather
+        than recomputing it as a local dict inside classify_query on every call.
+
+        Note: assumes the parent_types graph is acyclic (i.e. a valid subclass
+        DAG). A cycle would cause infinite recursion here. See module-level
+        limitation note 1.
         """
         cache: Dict[str, int] = {}
 
@@ -348,26 +373,47 @@ class QuestionTypeClassifier:
         """
         Return True iff this Extend node corresponds to a user-written BIND.
 
-        Strategy:
-        - Projection aliases appear in parsed[1]['projection'] as entries with both:
-            var (target) AND evar (expression)
-        - If the Extend variable matches one of those aliases -> NOT a BIND
-        - Otherwise -> treat as BIND
+        rdflib emits Extend nodes for two distinct cases:
+          1. User-written BIND(?expr AS ?var)       → should emit lsqv:Bind
+          2. Projection alias (e.g. COUNT(...) AS ?result) → must NOT emit lsqv:Bind
+
+        The two cases produce structurally different entries in the parse tree's
+        projection list:
+
+          Real projected variable  → keys=['var'],        var=Variable(...),
+                                     evar and expr are bare string sentinels
+          Projection alias         → keys=['expr', 'evar'], evar=Variable(...),
+                                     var is the bare string sentinel 'var'
+
+        The correct discriminator is therefore whether `evar` is a real rdflib
+        Variable instance (alias) versus the string sentinel 'evar' (plain var).
+
+        If the Extend target variable matches any alias → NOT a BIND.
+        Otherwise → treat as BIND.
+
+        Note: this method is the *fallback* path in _detect_features_from_algebra.
+        It is reached only when the primary structural check (child is AggregateJoin
+        or Group) has already been bypassed — i.e. for Extend nodes whose immediate
+        subtree (after unwrapping any Filter nodes) is not an aggregate node.
+        For aggregate aliases whose Extend wraps *another* Extend before reaching
+        AggregateJoin (rdflib's multi-aggregate nesting), the primary check fires
+        on the inner Extend; this method handles the outer one.
         """
         try:
             query_clause = parsed[1]
             projection = query_clause.get("projection", []) if hasattr(query_clause, "get") else []
 
+            # Collect alias target names: entries where evar is a real Variable,
+            # not the string sentinel 'evar' that pyparsing uses for absent keys.
             alias_vars = {
-                str(item.get("var"))
+                str(item.get("evar"))
                 for item in projection
                 if hasattr(item, "get")
-                and item.get("var") is not None
-                and item.get("evar") is not None
+                and isinstance(item.get("evar"), _Variable)
             }
 
             var = node.get("var")
-            if var is None:
+            if not isinstance(var, _Variable):
                 return False
 
             return str(var) not in alias_vars
@@ -387,59 +433,60 @@ class QuestionTypeClassifier:
         LSQ feature names that can be determined unambiguously from the
         algebra structure and parse tree.
 
-                Node name → LSQ feature mapping:
-                    ToMultiSet { p: Project { … } }  → SubQuery
-                        rdflib wraps every inline SELECT in ToMultiSet(Project(…)).
-                        A bare GROUP / BGP inside ToMultiSet is NOT a subquery.
-                    Filter, discriminated by expr.name and HAVING context:
-                        TrueFilter          → (skip) synthetic no-op rdflib inserts for
-                                                                     OPTIONAL; not a user-written construct.
-                        Builtin_NOTEXISTS   → NotExists + fn-notexists  (FILTER NOT EXISTS { … })
-                        Builtin_EXISTS      → fn-exists  (FILTER EXISTS { … })
-                        anything else       → Filter     (plain FILTER expression)
+        Node name → LSQ feature mapping
+        --------------------------------
+        ToMultiSet { p: Project { … } }  → SubQuery
+            rdflib wraps every inline SELECT in ToMultiSet(Project(…)).
+            A bare GROUP / BGP inside ToMultiSet is NOT a subquery.
 
-                        HAVING special case: rdflib compiles HAVING(expr) into a Filter
-                        node wrapping the AggregateJoin/Group subtree. This is
-                        indistinguishable from a plain Filter at the algebra level, so
-                        HAVING is detected from the parse tree (parsed[1]['having'] is a
-                        CompValue when HAVING is present, not the bare string sentinel
-                        rdflib uses when it is absent). When HAVING is detected:
-                            - lsqv:Having is added to the feature set.
-                            - The first Filter node encountered in the algebra walk (which
-                                is always the outermost one, i.e. the HAVING) is skipped so
-                                it does not also produce a spurious lsqv:Filter.
-          Extend                            → Bind
-            rdflib compiles BIND(?expr AS ?var) into Extend nodes.
-            it also compisles projection aliases such as COUNT(?x) AS ?count into Extend nodes. 
-            The former should be mapped to Bind, the latter should not 
-            (or should be mapped to a more specific feature such as AggregateAlias) 
-            — mapping all Extend to Bind, produces false positives for aggregate aliases. 
-            To fix this, we need a discriminator that can access the parse tree context 
-            to distinguish user BIND clauses from compiler-generated projection aliases.
-          LeftJoin                          → Optional
+        Filter, discriminated by expr.name and HAVING context:
+            TrueFilter          → (skip) synthetic no-op rdflib inserts for
+                                  OPTIONAL; not a user-written construct.
+            Builtin_NOTEXISTS   → NotExists  (FILTER NOT EXISTS { … })
+            Builtin_EXISTS      → fn-exists  (FILTER EXISTS { … })
+            anything else       → Filter     (plain FILTER expression)
+
+            HAVING special case: rdflib compiles HAVING(expr) into a Filter
+            node wrapping the AggregateJoin/Group subtree. HAVING is detected
+            from the parse tree (parsed[1]['having'] is a CompValue when
+            present). When detected:
+                - lsqv:Having is added to the feature set.
+                - The outermost Filter (the HAVING) is skipped so it does
+                  not also produce a spurious lsqv:Filter.
+
+        Extend → Bind (user-written) or skipped (projection alias)
+            rdflib compiles BIND(?expr AS ?var) and projection aliases such
+            as COUNT(?x) AS ?count both into Extend nodes.
+
+            Classification strategy (two layers):
+
+            Layer 1 — structural child check (primary, fast):
+                After unwrapping any Filter nodes between this Extend and its
+                aggregate subtree, if the immediate child is AggregateJoin or
+                Group, this Extend is an aggregate alias.  In that case Bind is
+                NOT emitted.  Crucially, execution does NOT return early — it
+                falls through to the normal recursion loop so that any real
+                BIND nodes nested *inside* the aggregate subtree (e.g. a BIND
+                used in a GROUP BY expression) are still visited and correctly
+                classified.
+
+                rdflib's algebra for multiple aggregates nests Extend nodes:
+                    Extend(alias_n) → Extend(alias_n-1) → … → AggregateJoin
+                Only the innermost Extend sees AggregateJoin as its direct
+                child; outer Extend nodes see another Extend.  Those outer
+                nodes therefore bypass Layer 1 and are handled by Layer 2.
+
+            Layer 2 — parse-tree alias check (fallback, _is_user_bind):
+                Inspects the SELECT projection list.  Projection aliases have
+                evar=Variable(...); plain projected variables have the string
+                sentinel 'evar'.  An Extend whose target variable appears as
+                a projection alias is NOT a BIND; otherwise it is.
+
+        LeftJoin → Optional
             rdflib compiles OPTIONAL { … } into LeftJoin nodes.
 
-                Only CompValue nodes are visited; all other value types are ignored.
-                A seen-set guards against cycles.
-
-                rdflib uses the `Extend` algebra node both for explicit
-                BIND(...) clauses and for compiled projection aliases such as
-                `COUNT(...) AS ?alias`. To avoid false positives
-                we should distinguish the two cases by consulting the parse tree
-                (`parsed`) or the `Extend` node contents:
-
-                    - If the `Extend` corresponds to a user `BIND` clause, emit
-                        `Bind`.
-                    - If the `Extend` is produced to represent a projection alias
-                        (e.g. aggregate alias), do not emit `Bind` (or emit a more
-                        specific feature such as `AggregateAlias`).
-
-                # NOTE:
-                # Extend → Bind classification is implemented via `_is_user_bind`,
-                # which distinguishes user BIND expressions from projection aliases.
-                #
-                # This heuristic is stable but depends on SPARQL parser structure and
-                # may require adjustment if rdflib algebra representation changes.
+        Only CompValue nodes are visited; all other value types are ignored.
+        A seen-set guards against cycles.
         """
         found: Set[str] = set()
         seen: Set[int] = set()
@@ -455,22 +502,15 @@ class QuestionTypeClassifier:
                 for v in node.values():
                     if _expr_contains(v, target):
                         return True
-
             elif isinstance(node, (list, tuple)):
                 for item in node:
                     if _expr_contains(item, target):
                         return True
-
             return False
 
         # Detect HAVING from the parse tree. parsed[1]['having'] is a CompValue
         # when HAVING is present; rdflib sets it to the bare string 'having' as
         # a sentinel when it is absent.
-        # Note: parsed is a pyparsing.ParseResults (a list subclass). We must
-        # access parsed[1] directly on the ParseResults object — not via a
-        # list/tuple isinstance guard — because pyparsing overrides __getitem__
-        # to return a CompValue proxy. Using list.__getitem__ (triggered by an
-        # isinstance check) bypasses that proxy and returns a plain dict instead.
         try:
             query_clause = parsed[1]
             having_node = query_clause.get("having") if hasattr(query_clause, "get") else None
@@ -479,11 +519,6 @@ class QuestionTypeClassifier:
             has_having = False
         if has_having:
             found.add("Having")
-
-        # When HAVING is present, the outermost Filter in the algebra tree is
-        # the compiled HAVING expression — it must be skipped so it does not
-        # also emit a spurious lsqv:Filter. Detection is handled structurally
-        # inside the Filter branch below; no traversal-order state is used.
 
         def _walk(node: CompValue) -> None:
             if not isinstance(node, CompValue):
@@ -499,6 +534,7 @@ class QuestionTypeClassifier:
                 inner = node.get("p")
                 if isinstance(inner, CompValue) and inner.name == "Project":
                     found.add("SubQuery")
+
             elif name == "Filter":
                 expr = node.get("expr")
 
@@ -511,43 +547,66 @@ class QuestionTypeClassifier:
                 )
 
                 if is_having_filter:
-                    # Skip ONLY HAVING filter
-                    pass
+                    pass  # skip — already recorded as Having above
 
                 elif expr is not None:
-                    # rdflib represents NOT EXISTS / EXISTS as builtin expr
-                    # nodes whose `name` is `Builtin_NOTEXISTS` / `Builtin_EXISTS`.
-                    # Detect them by direct name equality rather than recursive
-                    # traversal of the expression tree.
                     expr_name = getattr(expr, "name", None)
 
-                    # rdflib canonical representation for FILTER NOT EXISTS
                     if expr_name == "Builtin_NOTEXISTS":
                         found.add("NotExists")
-
-                    # rdflib canonical representation for FILTER EXISTS
                     elif expr_name == "Builtin_EXISTS":
                         found.add("fn-exists")
-
+                    elif expr_name == "TrueFilter":
+                        pass  # synthetic filter for OPTIONAL, not user-written
                     else:
-                        # Skip synthetic filters inserted for OPTIONAL
-                        if expr_name == "TrueFilter":
-                            pass
-                        else:
-                            found.add("Filter")
+                        found.add("Filter")
+
             elif name == "Extend":
-                # Log presence of Extend nodes so we can observe whether rdflib
-                # actually emits them and debug alias vs BIND decisions.
                 logging.getLogger(__name__).debug(f"Extend node found: {node}")
 
-                # Discriminate Extend coming from user BIND vs projection alias
-                is_bind = QuestionTypeClassifier._is_user_bind(node, parsed)
+                child = node.get("p")
 
-                if is_bind:
-                    found.add("Bind")
-                    logging.getLogger(__name__).debug("Extend → Bind")
+                # STEP 1: unwrap Filter nodes that sit between this Extend and
+                # the aggregate subtree (rdflib places the HAVING Filter between
+                # the outermost Extend and AggregateJoin when HAVING is present).
+                while isinstance(child, CompValue) and child.name == "Filter":
+                    logging.getLogger(__name__).debug("Unwrapping Filter node under Extend")
+                    child = child.get("p")
+
+                # STEP 2: structural child check — primary path for aggregate aliases.
+                # When the immediate child (after Filter unwrapping) is AggregateJoin
+                # or Group, this Extend is an aggregate alias; do NOT emit Bind.
+                #
+                # Important: do NOT `return` here.  rdflib nests multiple aggregate
+                # aliases as a chain of Extend nodes (outermost alias → inner alias
+                # → … → AggregateJoin).  Only the innermost Extend in the chain has
+                # AggregateJoin as its direct child; outer aliases have another Extend.
+                # Those outer Extend nodes fall through to _is_user_bind (Step 3),
+                # which correctly identifies them as aliases via the projection list.
+                #
+                # Additionally, `return` would skip the recursion loop below and
+                # prevent visiting genuine BIND nodes that appear inside the aggregate
+                # subtree (e.g. BIND used in a GROUP BY expression compiled inside
+                # AggregateJoin → Group → Extend(BGP)).  Falling through ensures
+                # the full subtree is always visited.
+                if isinstance(child, CompValue) and child.name in {"AggregateJoin", "Group"}:
+                    logging.getLogger(__name__).debug(
+                        "Extend → innermost aggregation alias (NOT Bind); "
+                        "continuing recursion into subtree"
+                    )
+                    # Fall through to the recursion loop — do NOT return.
+
                 else:
-                    logging.getLogger(__name__).debug("Extend → NOT Bind (alias)")
+                    # STEP 3: fallback parse-tree alias check for outer aggregate
+                    # Extend nodes (multi-aggregate chains) and for real user BINDs.
+                    is_bind = QuestionTypeClassifier._is_user_bind(node, parsed)
+
+                    if is_bind:
+                        found.add("Bind")
+                        logging.getLogger(__name__).debug("Extend → Bind")
+                    else:
+                        logging.getLogger(__name__).debug("Extend → NOT Bind (aggregate alias)")
+
             elif name == "LeftJoin":
                 found.add("Optional")
 
@@ -612,10 +671,6 @@ class QuestionTypeClassifier:
         _walk(algebra_node)
 
         # Projection variable count is only meaningful for SELECT queries.
-        # For ASK, CONSTRUCT and DESCRIBE, rdflib still populates PV on the
-        # root node (with pattern variables for ASK, template variables for
-        # CONSTRUCT) — none of which represent a SELECT projection. Return 0
-        # for any non-SELECT root so _check_count_annotations skips the check.
         if algebra_node.name == "SelectQuery":
             pv = algebra_node.get("PV") or []
             proj_var_count = len(pv)
@@ -675,11 +730,6 @@ class QuestionTypeClassifier:
             "tpCount":         actual_tp,
         }
 
-        # projectVarCount is only meaningful for SELECT queries. For ASK /
-        # CONSTRUCT / DESCRIBE, _count_from_algebra returns 0 to avoid the
-        # misleading PV rdflib populates on non-SELECT roots. Skip the check
-        # entirely for those query types so a declared value never triggers
-        # a false mismatch.
         is_select = algebra_node.name == "SelectQuery"
 
         for prop, declared_val in declared.items():
@@ -710,8 +760,7 @@ class QuestionTypeClassifier:
         """
         Check SPARQL syntax and log errors. Returns False if invalid.
 
-        Renamed from _validate_sparql to _check_sparql_syntax to clarify
-        that this is a diagnostic check, not a gate: feature extraction
+        This is a diagnostic check, not a gate: feature extraction
         proceeds regardless of the return value.
         """
         try:
@@ -779,7 +828,8 @@ class QuestionTypeClassifier:
                 try:
                     projection = parsed[1].get("projection", [])
                     has_bare_var = any(
-                        item.get("var") is not None and item.get("evar") is None
+                        isinstance(item.get("var"), _Variable)
+                        and not isinstance(item.get("evar"), _Variable)
                         for item in projection
                         if hasattr(item, "get")
                     )
@@ -793,22 +843,9 @@ class QuestionTypeClassifier:
                     pass  # leave features unchanged if projection walk fails
 
             # Algebra-based structural feature detection and enrichment.
-            # We compare what the algebra tree actually contains against what
-            # LSQ declared and enrich the declared set with algebra-derived
-            # features when they add information. Algebra features are
-            # additive and complementary — structural gaps are filled and
-            # functional variants (e.g. fn-exists, fn-notexists) are retained
-            # alongside structural variants when both are valid.
-            #
-            # NOTE:
-            # Extend → Bind classification is implemented via `_is_user_bind`,
-            # which distinguishes user BIND expressions from projection aliases.
-            #
-            # This heuristic is stable but depends on SPARQL parser structure and
-            # may require adjustment if rdflib algebra representation changes.
             implied = self._detect_features_from_algebra(algebra.algebra, parsed)
 
-            # enrich LSQ-declared features with algebra-derived features.
+            # Enrich LSQ-declared features with algebra-derived features.
             # Algebra features are additive and may include:
             # - structural features missing in LSQ annotations
             # - functional variants (e.g. fn-exists, fn-notexists)
@@ -823,12 +860,9 @@ class QuestionTypeClassifier:
                     warnings.append(msg)
                     self.logger.warning(f"Query {short_uri!r}: {msg}")
 
-                # make algebra features authoritative
                 features |= implied
 
             # Numeric count annotation checks (projectVarCount, bgpCount, tpCount).
-            # These are verified exactly against the algebra — any mismatch is a
-            # definite LSQ annotation error rather than a heuristic gap.
             warnings.extend(
                 self._check_count_annotations(
                     query_graph, query_uri, algebra.algebra, short_uri
@@ -843,8 +877,10 @@ class QuestionTypeClassifier:
 
     def _ancestors(self, name: str) -> Set[str]:
         """
-        return the strict ancestor set of a type — i.e. all
-        types reachable via parent_types — NOT including the type itself.
+        Return the strict ancestor set of a type — i.e. all types reachable
+        via parent_types — NOT including the type itself.
+
+        Note: no explicit cycle guard. See module-level limitation note 1.
         """
         result: Set[str] = set()
 
@@ -881,8 +917,7 @@ class QuestionTypeClassifier:
 
         candidate_set = set(candidates)
 
-        # Step 2: remove any candidate that is a strict ancestor of another
-        # candidate. Uses the fixed _ancestors() which no longer includes self.
+        # Step 2: remove any candidate that is a strict ancestor of another candidate.
         pruned: Set[str] = set(candidate_set)
         for a in list(candidate_set):
             for b in candidate_set:
@@ -912,8 +947,7 @@ class QuestionTypeClassifier:
         if not resolved:
             return set()
 
-        # Step 4: prefer the deepest (most specific) type in the subclass tree
-        # using the pre-built depth cache (FIX issue 3).
+        # Step 4: prefer the deepest (most specific) type in the subclass tree.
         max_depth = max(self._depth_cache.get(n, 0) for n in resolved)
         most_specific = {n for n in resolved if self._depth_cache.get(n, 0) == max_depth}
 
@@ -925,15 +959,23 @@ class QuestionTypeClassifier:
 
     def classify_queries_from_file(
         self, query_file: Path
-    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]]:
+    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
         """
         Classify all lsqv:Query resources in a Turtle file.
 
         Returns:
             Dict mapping query URI string →
-                (matched_types, features, rdfs:label or None, warnings)
+                (matched_types, features, rdfs:label or None, warnings, counts)
             where warnings is the list of LSQ annotation-gap messages
-            collected by extract_features for that query.
+            collected by extract_features for that query, and counts is a dict
+            of algebra-derived numeric annotations (bgpCount, tpCount,
+            projectVarCount).
+
+        Note: the SPARQL text for each query is parsed and compiled twice —
+        once inside extract_features and once here to compute the counts dict.
+        This is redundant work. A future refactor could return the algebra
+        object from extract_features so it can be reused here. See module-level
+        limitation note 2.
         """
         g = Graph()
         try:
@@ -946,7 +988,7 @@ class QuestionTypeClassifier:
         query_uris = list(g.subjects(RDF.type, LSQV.Query))
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
-        results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str]]] = {}
+        results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]] = {}
         for uri in query_uris:
             has_text = any(True for _ in g.objects(uri, LSQV.text))
             if not has_text:
@@ -971,7 +1013,8 @@ class QuestionTypeClassifier:
                     f"(features: {', '.join(sorted(features)) or 'none'})"
                 )
 
-            # Compute algebra-derived counts (bgpCount, tpCount, projectVarCount)
+            # Compute algebra-derived counts (bgpCount, tpCount, projectVarCount).
+            # TODO: avoid re-parsing by caching the algebra in extract_features.
             counts: Dict[str, int] = {}
             for sparql_lit in g.objects(uri, LSQV.text):
                 text = str(sparql_lit)
@@ -998,8 +1041,8 @@ class QuestionTypeClassifier:
 # ---------------------------------------------------------------------------
 # Note: CLI entry point moved to scripts/classify_questions_cli.py
 
-# Final Reporting is handled by the CLI wrapper in `scripts/classify_questions_cli.py`, 
-# which receives the full classification results dict from classify_queries_from_file 
+# Final Reporting is handled by the CLI wrapper in `scripts/classify_questions_cli.py`,
+# which receives the full classification results dict from classify_queries_from_file
 # and is responsible for formatting and printing the final report to the console.
 # See: `print_results` in `scripts/classify_questions_cli.py` for details.
 
@@ -1013,6 +1056,5 @@ class QuestionTypeClassifier:
 # RDF output
 # ------------------------------------------------------------------
 # RDF output generation is handled by the CLI wrapper in
-# `scripts/classify_questions_cli.py`. 
+# `scripts/classify_questions_cli.py`.
 # See `generate_type_assertions` in the CLI module for the implementation.
-
