@@ -110,10 +110,11 @@ def print_results(
     queries_with_warnings: List[Tuple[str, Optional[str], List[str]]] = []
 
     # Aggregate count stats
+    # total_bgp / total_tp — sum of algebra-derived values across all queries
+    # n_counts             — queries for which algebra-derived counts are available
+    # Correction tracking (how many were wrong) happens in generate_type_assertions_cli.
     total_bgp = 0
     total_tp = 0
-    updated_bgp = 0
-    updated_tp = 0
     n_counts = 0
 
     for uri_str, (qtypes, features, label, warnings, counts) in results.items():
@@ -128,15 +129,10 @@ def print_results(
         else:
             ambiguous.append((short, qtypes, features, label, counts))
 
-        # aggregate counts if present
         if counts:
             n_counts += 1
             total_bgp += counts.get("bgpCount", 0)
             total_tp += counts.get("tpCount", 0)
-            if "bgpCount" in counts:
-                updated_bgp += 1
-            if "tpCount" in counts:
-                updated_tp += 1
 
     # Classified
     print("✓ Classified queries:")
@@ -194,7 +190,7 @@ def print_results(
     print(
         f"Total: {total} | Classified: {n_ok} ({pct(n_ok)}) | "
         f"Ambiguous: {n_amb} ({pct(n_amb)}) | Unclassifiable: {n_unc} ({pct(n_unc)}) | "
-        f"LSQ warnings: {n_warn} ({pct(n_warn)}) | Queries with counts: {n_counts}"
+        f"\nLSQ warnings: {n_warn} ({pct(n_warn)}) | Queries with counts: {n_counts}"
     )
     print(f"Total BGP count: {total_bgp}")
     print(f"Total TP count: {total_tp}")
@@ -244,44 +240,61 @@ def generate_type_assertions_cli(
                 out.add((URIRef(uri_str), RDF.type, type_uri))
                 count += 1
 
-        # --- Remove old feature structures ---
+        # --- Read declared counts from existing sf bnode(s) BEFORE removal ---
+        # Keys: "bgpCount", "tpCount", "projectVarCount"
+        declared_counts: Dict[str, int] = {}
+        for sf in out.objects(uri, LSQV.hasStructuralFeatures):
+            for prop_local in ("bgpCount", "tpCount", "projectVarCount"):
+                for val in out.objects(sf, LSQV[prop_local]):
+                    try:
+                        declared_counts[prop_local] = int(val)
+                    except (ValueError, TypeError):
+                        pass
+
+        # --- Remove old feature structures (including count literals on sf bnode) ---
         for sf in list(out.objects(uri, LSQV.hasStructuralFeatures)):
-            # remove nested usesFeature triples (flat or nested with owl:hasValue)
+            for prop_local in ("bgpCount", "tpCount", "projectVarCount"):
+                for val in list(out.objects(sf, LSQV[prop_local])):
+                    out.remove((sf, LSQV[prop_local], val))
+            # Remove usesFeature triples (flat or nested with owl:hasValue)
             for uses in list(out.objects(sf, LSQV.usesFeature)):
                 for val in list(out.objects(uses, OWL.hasValue)):
                     out.remove((uses, OWL.hasValue, val))
                 out.remove((sf, LSQV.usesFeature, uses))
             out.remove((uri, LSQV.hasStructuralFeatures, sf))
 
-        # --- Rebuild features from classifier output ---
-        # Emits: lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Feat1, lsqv:Feat2 ]
-        if features:
-            sf_node = BNode()
-            out.add((uri, LSQV.hasStructuralFeatures, sf_node))
-            for feat in sorted(features):
+        # --- Rebuild structural-features bnode with features AND counts ---
+        # Emits: lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Feat1, lsqv:Feat2 ;
+        #                                     lsqv:bgpCount N ; lsqv:tpCount N ; ... ]
+        sf_node = BNode()
+        out.add((uri, LSQV.hasStructuralFeatures, sf_node))
+
+        for feat in sorted(features):
+            feat_uri = None
+            try:
+                feat_uri = classifier.ontology.namespace_manager.expand_curie(f"lsqv:{feat}")
+            except Exception:
                 feat_uri = None
-                try:
-                    feat_uri = classifier.ontology.namespace_manager.expand_curie(f"lsqv:{feat}")
-                except Exception:
-                    feat_uri = None
-                if feat_uri:
-                    out.add((sf_node, LSQV.usesFeature, URIRef(feat_uri)))
+            if feat_uri:
+                out.add((sf_node, LSQV.usesFeature, URIRef(feat_uri)))
 
-        # Preserve existing count behavior (use set to replace existing values)
-        for key, value in counts.items():
-            out.set((uri, LSQV[key], Literal(value)))
-
-            if key == "bgpCount":
-                updated_bgp += 1
-            elif key == "tpCount":
-                updated_tp += 1
-            elif key == "projectVarCount":
-                updated_pv += 1
+        # Write algebra-derived counts onto the sf bnode; track only real corrections
+        # (value was absent or differed from what the algebra computed).
+        for key, new_value in counts.items():
+            out.add((sf_node, LSQV[key], Literal(new_value)))
+            old_value = declared_counts.get(key)
+            if old_value is None or old_value != new_value:
+                if key == "bgpCount":
+                    updated_bgp += 1
+                elif key == "tpCount":
+                    updated_tp += 1
+                elif key == "projectVarCount":
+                    updated_pv += 1
 
     logger.info(f"Added {count} type assertions across {len(results)} queries")
     logger.info(
-        f"Counts updated → bgpCount={updated_bgp}, "
-        f"tpCount={updated_tp}, projectVarCount={updated_pv}"
+        f"Counts corrected (absent or mismatched) → "
+        f"bgpCount={updated_bgp}, tpCount={updated_tp}, projectVarCount={updated_pv}"
     )
     return out
 
