@@ -35,7 +35,7 @@ import logging
 import sys
 from typing import Optional, Dict, Tuple, Set, List
 
-from classify_questions import QuestionTypeClassifier, LSQV, QAT, QA
+from classifier import QuestionTypeClassifier, LSQV, QAT, QA
 from rdflib import Graph, URIRef, Literal, BNode
 from rdflib.namespace import RDF, OWL
 
