@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sparql-annotator"
-version = "0.2.0"
+version = "0.2.6"
 description = "Annotate SPARQL queries extracting operator and structural features"
 authors = [ { name = "nl2s-bench" } ]
 dependencies = [
@@ -12,3 +12,10 @@ dependencies = [
     "pyparsing>=3.0",
     "click>=8.0"
 ]
+
+[project.scripts]
+sparql-annotator = "sparql_annotator.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sparql_annotator*"]
