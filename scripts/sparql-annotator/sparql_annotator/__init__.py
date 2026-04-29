@@ -1,5 +1,8 @@
-"""sparql_annotator package entry points."""
 from .annotator import Annotator
-from .model import QueryRecord, Annotation, OperatorSet
+from .model import QueryRecord, Annotation, OperatorSet, FeatureRequirement, QuestionTypeDefinition
+from .classifier import QuestionTypeClassifier
 
-__all__ = ["Annotator", "QueryRecord", "Annotation", "OperatorSet"]
+__all__ = [
+    "Annotator", "QueryRecord", "Annotation", "OperatorSet",
+    "FeatureRequirement", "QuestionTypeDefinition", "QuestionTypeClassifier",
+]

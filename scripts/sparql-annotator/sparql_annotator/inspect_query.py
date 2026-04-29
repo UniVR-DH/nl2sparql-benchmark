@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""
+Inspect a single query from a TTL file: print its text, parse tree, algebra tree,
+and declared LSQ features.
+
+Usage:
+    python -m sparql_annotator.inspect_query <query-file.ttl> <query-id-or-uri>
+
+    # or via the CLI entry point:
+    sparql-annotator inspect --query-file <file.ttl> --query-id <id>
+
+The query ID can be a full URI or just the local part (e.g. "30").
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Optional
+
+import click
+from rdflib import Graph, Namespace, URIRef
+from rdflib.namespace import RDFS, RDF
+from rdflib.plugins.sparql.parserutils import CompValue
+import rdflib.plugins.sparql.parser as _parser
+import rdflib.plugins.sparql.algebra as _algebra
+
+from .namespaces import LSQV
+
+
+def _find_uri(g: Graph, query_id: str) -> Optional[URIRef]:
+    for uri in g.subjects(RDF.type, LSQV.Query):
+        s = str(uri)
+        if s == query_id or s.split("/")[-1] == query_id or query_id in s:
+            return uri
+    return None
+
+
+def _print_tree(node, indent: int = 0, label: str = "") -> None:
+    prefix = "  " * indent
+    if not isinstance(node, CompValue):
+        if label:
+            click.echo(f"{prefix}{label}: {repr(node)[:120]}")
+        return
+    header = f"{label}: " if label else ""
+    click.echo(f"{prefix}{header}[{node.name}]")
+    for k, v in node.items():
+        if k.startswith("_"):
+            continue
+        if isinstance(v, CompValue):
+            _print_tree(v, indent + 1, k)
+        elif isinstance(v, list):
+            for i, item in enumerate(v):
+                if isinstance(item, CompValue):
+                    _print_tree(item, indent + 1, f"{k}[{i}]")
+                else:
+                    click.echo(f"{'  '*(indent+1)}{k}[{i}]: {repr(item)[:80]}")
+        else:
+            val = repr(v)
+            if len(val) > 100:
+                val = val[:97] + "..."
+            click.echo(f"{'  '*(indent+1)}.{k} = {val}")
+
+
+def inspect_query(query_file: Path, query_id: str) -> None:
+    g = Graph()
+    g.parse(str(query_file), format="turtle")
+
+    uri = _find_uri(g, query_id)
+    if uri is None:
+        raise click.ClickException(f"No query matching {query_id!r} in {query_file}")
+
+    label = g.value(uri, RDFS.label)
+    text_lit = g.value(uri, LSQV.text)
+
+    click.echo(f"URI:   {uri}")
+    click.echo(f"Label: {label}")
+    click.echo()
+
+    if text_lit is None:
+        raise click.ClickException("No lsqv:text found for this query.")
+
+    text = str(text_lit)
+    W = 72
+    click.echo("=" * W)
+    click.echo("SPARQL TEXT")
+    click.echo("=" * W)
+    click.echo(text)
+
+    click.echo("=" * W)
+    click.echo("PARSE TREE (syntax)")
+    click.echo("=" * W)
+    try:
+        parsed = _parser.parseQuery(text)
+        _print_tree(parsed[1], label="Query")
+    except Exception as exc:
+        raise click.ClickException(f"Parse error: {exc}")
+
+    click.echo("=" * W)
+    click.echo("ALGEBRA TREE")
+    click.echo("=" * W)
+    try:
+        alg = _algebra.translateQuery(parsed)
+        _print_tree(alg.algebra)
+    except Exception as exc:
+        raise click.ClickException(f"Algebra error: {exc}")
+
+    click.echo("=" * W)
+    click.echo("DECLARED LSQ FEATURES")
+    click.echo("=" * W)
+    for sf in g.objects(uri, LSQV.hasStructuralFeatures):
+        for feat in g.objects(sf, LSQV.usesFeature):
+            click.echo(f"  {str(feat).split('#')[-1]}")
+
+
+@click.command("inspect")
+@click.option("--query-file", required=True, type=click.Path(exists=True, path_type=Path),
+              help="LSQ query file (Turtle).")
+@click.option("--query-id", required=True, help="Query URI or local ID (e.g. '30').")
+def inspect_cmd(query_file: Path, query_id: str) -> None:
+    """Print SPARQL text, parse tree, algebra tree, and LSQ features for one query."""
+    inspect_query(query_file, query_id)
