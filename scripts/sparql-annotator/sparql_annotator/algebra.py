@@ -64,8 +64,38 @@ def _walk_algebra(node: CompValue):
 # Structural metrics
 # ---------------------------------------------------------------------------
 
+def _count_triples_block(node: CompValue) -> Tuple[int, int]:
+    """Recursively count BGPs and triple patterns inside a parse-tree node
+    (GroupGraphPatternSub / TriplesBlock) that rdflib does not translate to algebra.
+    Returns (bgp_count, tp_count).
+    """
+    if not isinstance(node, CompValue):
+        return 0, 0
+    bgps = 0
+    tps = 0
+    if node.name == "TriplesBlock":
+        bgps += 1
+        tps += len(node.get("triples") or [])
+    for v in node.values():
+        if isinstance(v, CompValue):
+            b, t = _count_triples_block(v)
+            bgps += b
+            tps += t
+        elif isinstance(v, list):
+            for item in v:
+                if isinstance(item, CompValue):
+                    b, t = _count_triples_block(item)
+                    bgps += b
+                    tps += t
+    return bgps, tps
+
+
 def compute_metrics(algebra_node: CompValue) -> Tuple[int, int, int]:
     """Return (bgp_count, tp_count, project_var_count) from an algebra tree.
+
+    Counts BGPs in the main algebra tree AND inside FILTER NOT EXISTS /
+    FILTER EXISTS inner patterns (which rdflib keeps as parse-tree nodes,
+    not algebra BGP nodes), per the SPARQL 1.1 spec (§18.1–18.2).
 
     project_var_count is 0 for non-SELECT queries (ASK/CONSTRUCT/DESCRIBE).
     """
@@ -81,6 +111,14 @@ def compute_metrics(algebra_node: CompValue) -> Tuple[int, int, int]:
         if node.name == "BGP":
             bgp_count += 1
             tp_count += len(node.get("triples") or [])
+        elif node.name in {"Builtin_NOTEXISTS", "Builtin_EXISTS"}:
+            # Inner pattern is kept as a parse-tree node (GroupGraphPatternSub)
+            # rather than translated to algebra — count its TriplesBlocks explicitly.
+            graph = node.get("graph")
+            if graph is not None:
+                b, t = _count_triples_block(graph)
+                bgp_count += b
+                tp_count += t
 
     if algebra_node.name == "SelectQuery":
         project_var_count = len(algebra_node.get("PV") or [])
