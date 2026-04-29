@@ -187,12 +187,18 @@ def detect_features_from_algebra(
         elif name == "Filter":
             expr = node.get("expr")
 
-            # Identify HAVING filter structurally (Filter wrapping AggregateJoin/Group)
+            # Identify HAVING filter structurally (Filter wrapping AggregateJoin/Group).
+            # Unwrap Extend nodes between this Filter and the aggregate root —
+            # rdflib places the HAVING Filter above inner Extend aliases when
+            # there are multiple aggregate projections.
             child = node.get("p")
+            _c = child
+            while isinstance(_c, CompValue) and _c.name == "Extend":
+                _c = _c.get("p")
             is_having_filter = (
                 has_having
-                and isinstance(child, CompValue)
-                and child.name in {"AggregateJoin", "Group"}
+                and isinstance(_c, CompValue)
+                and _c.name in {"AggregateJoin", "Group"}
             )
 
             if is_having_filter:
@@ -218,8 +224,8 @@ def detect_features_from_algebra(
             # STEP 1: unwrap Filter nodes that sit between this Extend and
             # the aggregate subtree (rdflib places the HAVING Filter between
             # the outermost Extend and AggregateJoin when HAVING is present).
-            while isinstance(child, CompValue) and child.name == "Filter":
-                _log.debug("Unwrapping Filter node under Extend")
+            while isinstance(child, CompValue) and child.name in {"Filter", "Extend"}:
+                _log.debug(f"Unwrapping {child.name} node under Extend")
                 child = child.get("p")
 
             # STEP 2: structural child check — primary path for aggregate aliases.
