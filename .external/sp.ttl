@@ -1,855 +1,770 @@
-BASE   <http://spinrdf.org/sp>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX sp: <http://spinrdf.org/sp#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX spin: <http://spinrdf.org/spin#>
-PREFIX spl: <http://spinrdf.org/spl#>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sp: <http://spinrdf.org/sp#> .
+
+<http://spinrdf.org/sp>
+  a owl:Ontology ;
+  owl:versionInfo "1.5.1" ;
+  rdfs:label "SPIN SPARQL Syntax" ;
+  rdfs:comment "An RDF schema to syntactically represent SPARQL queries and update commands as RDF triples." .
+
+sp:GroupConcat
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "GROUP_CONCAT" ;
+  rdfs:comment "Represents GROUP_CONCAT aggregations." .
+
+sp:Aggregation
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Aggregation" ;
+  rdfs:comment "Base class of aggregation types (not part of the SPARQL 1.0 standard but supported by ARQ and other engines)." .
+
+sp:Command
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Command" ;
+  rdfs:comment "A shared superclass for sp:Query and sp:Update that can be used to specify that the range of property can be either one." .
+
+sp:SystemClass
+  a rdfs:Class ;
+  rdfs:subClassOf rdfs:Resource ;
+  rdfs:label "SP System class" ;
+  rdfs:comment "An \"artificial\" root class that groups all SP classes. This makes them look much less overwhelming in UI tools. Typical end users don't need to see those classes anyway." .
+
+sp:Drop
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Drop" ;
+  rdfs:comment "An Update operation that removes a specified graph from the Graph Store. Must specify the graph using sp:graphIRI, or sp:default, sp:named or sp:all. May have the SILENT flag, encoded using sp:silent." .
+
+sp:Update
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Command ;
+  rdfs:label "Update" ;
+  rdfs:comment "Abstract base class to group the various SPARQL UPDATE commands." .
+
+sp:Ask
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Query ;
+  rdfs:label "Ask" ;
+  rdfs:comment "An ASK query that returns true if the condition in the body is met by at least one result set." .
+
+sp:Query
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Command ;
+  rdfs:label "Query" ;
+  rdfs:comment "Abstract base class of the various types of supported queries. Common to all types of queries is that they can have a body (\"WHERE clause\")." .
+
+sp:Modify
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Modify" ;
+  rdfs:comment "Represents a MODIFY (part of SPARQL UPDATE language). The graph IRIs are stored in sp:graphIRI. The template patterns are stored in sp:deletePattern and sp:insertPattern. The WHERE clause is represented using sp:where." .
+
+sp:Values
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Element ;
+  rdfs:label "Values" ;
+  rdfs:comment "A VALUES element. sp:varNames points to an rdf:List of strings for the variables, sp:values to an rdf:List of rdf:Lists with nodes for each variable, in the order defined by the variables list." .
+
+sp:Element
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Element" ;
+  rdfs:comment "An abstract base class for all pattern elements." .
+
+sp:Asc
+  a rdfs:Class ;
+  rdfs:subClassOf sp:OrderByCondition ;
+  rdfs:label "Asc" ;
+  rdfs:comment "Marker to indicate ascending order." .
+
+sp:OrderByCondition
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Order by condition" ;
+  rdfs:comment "An abstract base class for ascending or descending order conditions. Instances of this class (typically bnodes) must have a value for expression to point to the actual values." .
+
+sp:Count
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "COUNT" ;
+  rdfs:comment "Counts the number of times a variable is used. The variable is stored in the variable property. This might be left blank to indicate COUNT(*)." .
+
+sp:Bind
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Element ;
+  rdfs:label "Bind" ;
+  rdfs:comment "A BIND element." .
+
+sp:Variable
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Variable" ;
+  rdfs:comment "A variable mentioned in a Triple or expression. Variables are often blank nodes with the variable name stored in ts:name. Variables can also be supplied with a URI in which case the system will attempt to reuse the same variable instance across multiple query definitions." .
+
+sp:SeqPath
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Path ;
+  rdfs:label "Seq path" ;
+  rdfs:comment "A sequence of multiple paths." .
+
+sp:Path
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Path" ;
+  rdfs:comment "The base class of SPARQL property path expressions. Paths are used by sp:TriplePath triple paths." .
+
+sp:Sum
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "SUM" ;
+  rdfs:comment "Represents sum aggregations, e.g. SELECT SUM(?varName)..." .
+
+sp:Minus
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Minus" ;
+  rdfs:comment "A MINUS element group." .
+
+sp:ElementGroup
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Element ;
+  rdfs:label "Element group" ;
+  rdfs:comment "Abstract base class of group patterns." .
+
+sp:Load
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Load" ;
+  rdfs:comment "A LOAD Update operation. The document to load is specified using sp:document, and the (optional) target graph using sp:into." .
+
+sp:Max
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "MAX" ;
+  rdfs:comment "Represents MAX aggregations." .
+
+sp:Desc
+  a rdfs:Class ;
+  rdfs:subClassOf sp:OrderByCondition ;
+  rdfs:label "Desc" ;
+  rdfs:comment "Marker to indicate descending order." .
+
+sp:Construct
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Query ;
+  rdfs:label "Construct" ;
+  rdfs:comment "A CONSTRUCT-type query that can be used to construct new triples from template triples (head) that use variable bindings from the match patterns (body)." .
+
+sp:Create
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Create" ;
+  rdfs:comment "An Update operation that creates a new empty graph with a name specified by sp:graphIRI. May have sp:silent set to true." .
+
+sp:Triple
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Tuple ;
+  rdfs:label "Triple" ;
+  rdfs:comment "A base class for TriplePattern and TripleTemplate. This basically specifies that subject, predicate and object must be present." .
+
+sp:Tuple
+  a rdfs:Class ;
+  rdfs:subClassOf sp:SystemClass ;
+  rdfs:label "Tuple" ;
+  rdfs:comment "Abstract base class for things that have subject and object." .
+
+sp:Exists
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Exists" ;
+  rdfs:comment "An EXISTS element group." .
+
+sp:ReversePath
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Path ;
+  rdfs:label "Reverse path" ;
+  rdfs:comment "A path with reversed direction." .
+
+sp:Service
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Service" ;
+  rdfs:comment "A SERVICE call that matches a nested sub-pattern against a SPARQL end point specified by a URI." .
+
+sp:SubQuery
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Element ;
+  rdfs:label "Sub query" ;
+  rdfs:comment "A nested SELECT query inside of an element list. The query is stored in sp:query." .
+
+sp:Sample
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "SAMPLE" ;
+  rdfs:comment "Represents SAMPLE aggregations" .
+
+sp:Add
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:seeAlso <https://www.w3.org/TR/sparql11-update/#add> ;
+  rdfs:label "Add" ;
+  rdfs:comment "A SPARQL UPDATE ADD operation. Uses sp:source and sp:target to represent \"from\" and \"to\" graphs, respectively. Also sp:silent may be true." .
+
+sp:Select
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Query ;
+  rdfs:label "Select query" ;
+  rdfs:comment "A SELECT-type query that returns variable bindings as its result." .
+
+sp:ReverseLinkPath
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Path ;
+  rdfs:label "Reverse link path" .
+
+sp:Avg
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "AVG" ;
+  rdfs:comment "Represents AVG aggregations." .
+
+sp:Min
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Aggregation ;
+  rdfs:label "MIN" ;
+  rdfs:comment "Represents MIN aggregations." .
+
+sp:TriplePattern
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Triple>, sp:Element ;
+  rdfs:label "Triple pattern" ;
+  rdfs:comment "A triple pattern used in the body of a query." .
+
+sp:AltPath
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Path ;
+  rdfs:label "Alt path" ;
+  rdfs:comment "An alternative path with the union of sp:path1 and sp:path2." .
+
+sp:DeleteData
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Delete data" ;
+  rdfs:comment "An Update operation to delete specific triples. The graph triples are represented using sp:data, which points to an rdf:List of sp:Triples or sp:NamedGraphs." .
+
+sp:Optional
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Optional" ;
+  rdfs:comment "An optional element in a query." .
+
+sp:ModPath
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Path ;
+  rdfs:label "Mod path" ;
+  rdfs:comment "A modified path such as rdfs:subClassOf*." .
+
+sp:Filter
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Element ;
+  rdfs:label "Filter" ;
+  rdfs:comment "A constraint element that evaluates a given expression to true or false." .
+
+sp:DeleteWhere
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Delete where" ;
+  rdfs:comment "An Update operation where the triples matched by the WHERE clause (sp:where) will be the triples deleted." .
+
+sp:InsertData
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Insert data" ;
+  rdfs:comment "An Update operation to insert specific triples. The graph triples are represented using sp:data, which points to an rdf:List of sp:Triples or sp:NamedGraphs." .
+
+sp:Union
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Union" ;
+  rdfs:comment "A UNION group." .
+
+sp:TripleTemplate
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Triple ;
+  rdfs:label "Triple template" ;
+  rdfs:comment "A prototypical triple used as template in the head of a Construct query. May contain variables." .
+
+sp:TriplePath
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Tuple>, sp:Element ;
+  rdfs:label "Triple path" ;
+  rdfs:comment "Similar to a TriplePattern, but with a path expression as its predicate. For example, this can be used to express transitive sub-class relationships (?subClass rdfs:subClassOf* ?superClass)." .
+
+sp:ElementList
+  a rdfs:Class ;
+  rdfs:subClassOf rdf:List, sp:ElementGroup ;
+  rdfs:label "Element list" ;
+  rdfs:comment "A list of Elements. This class is never instantiated directly as SPIN will use plain rdf:Lists to store element lists." .
+
+sp:NotExists
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Not exists" ;
+  rdfs:comment "A NOT EXISTS element group." .
+
+sp:Describe
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Query ;
+  rdfs:label "Describe" ;
+  rdfs:comment "A DESCRIBE-type Query." .
+
+sp:Clear
+  a rdfs:Class ;
+  rdfs:subClassOf sp:Update ;
+  rdfs:label "Clear" ;
+  rdfs:comment "An Update operation that removes all triples from a specified graph. Must specify the graph using sp:graphIRI, or sp:default, sp:named or sp:all. May have the SILENT flag, encoded using sp:silent." .
+
+sp:NamedGraph
+  a rdfs:Class ;
+  rdfs:subClassOf sp:ElementGroup ;
+  rdfs:label "Named graph" ;
+  rdfs:comment "A named Graph element such as GRAPH <uri> {...}." .
+
+sp:text
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:string ;
+  rdfs:label "text" ;
+  rdfs:comment "Can be attached to sp:Queries to store a textual representation of the query. This can be useful for tools that do not have a complete SPIN Syntax parser available." .
+
+sp:systemProperty
+  a rdf:Property ;
+  rdfs:label "SP system property" ;
+  rdfs:comment "An abstract base proprerty that groups together the SP system properties. Users typically don't need to see them anyway." .
+
+sp:orderBy
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "order by" ;
+  rdfs:domain sp:Query ;
+  rdfs:comment "Links a query with an ORDER BY clause where the values are rdf:List containing OrderByConditions or expressions. While the domain of this property is sp:Query, only Describe and Select queries can have values of it." .
+
+sp:silent
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:label "silent" .
+
+sp:modMin
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:integer ;
+  rdfs:label "mod min" ;
+  rdfs:domain sp:ModPath .
+
+sp:elements
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:ElementList ;
+  rdfs:label "elements" ;
+  rdfs:comment "Points to an ElementList, for example in an Optional element." .
+
+sp:subject
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "subject" ;
+  rdfs:domain sp:Tuple ;
+  rdfs:comment "A resource or Variable describing the subject of a triple." .
+
+sp:insertPattern
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "insert pattern" ;
+  rdfs:domain sp:Modify ;
+  rdfs:comment "Points to a list of sp:TripleTemplates or sp:NamedGraphs in a modify command." .
+
+sp:path1
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Path ;
+  rdfs:label "path1" ;
+  rdfs:comment "The first child path of a property path. Used by sp:AltPath and sp:SeqPath." .
+
+sp:arg3
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:arg ;
+  rdfs:label "arg3" ;
+  rdfs:comment "The third argument of a function call." .
+
+sp:arg
+  a rdf:Property ;
+  rdfs:label "arg" ;
+  rdfs:comment "Abstract superproperty for the enumerated arg1, arg2 etc." .
+
+sp:object
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:label "object" ;
+  rdfs:domain sp:Tuple ;
+  rdfs:comment "An RDF Node or Variable describing the object of a triple." .
+
+sp:templates
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "templates" ;
+  rdfs:domain sp:Construct ;
+  rdfs:comment "Points to a list of TripleTemplates that form the head of a Construct query." .
+
+sp:node
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:label "node" ;
+  rdfs:domain sp:ReverseLinkPath .
+
+sp:variable
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Variable ;
+  rdfs:label "variable" ;
+  rdfs:domain sp:Bind ;
+  rdfs:comment "The variable of a Bind element." .
+
+sp:groupBy
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "group by" ;
+  rdfs:domain sp:Select ;
+  rdfs:comment "Points from a Query to the list of GROUP BY expressions." .
+
+sp:from
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "from" ;
+  rdfs:domain sp:Query ;
+  rdfs:comment "Specifies an RDF Dataset used by a Query (FROM syntax in SPARQL). Values of this property must be URI resources." .
+
+sp:resultVariables
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "result variables" ;
+  rdfs:domain sp:Select ;
+  rdfs:comment "An rdf:List of variables that are returned by a Select query." .
+
+sp:named
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:label "named" ;
+  rdfs:comment "Used in DROP and CLEAR." .
+
+sp:path2
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Path ;
+  rdfs:label "path2" ;
+  rdfs:comment "The second child path of a property path. Used by sp:AltPath and sp:SeqPath." .
+
+sp:arg2
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:arg ;
+  rdfs:label "arg2" ;
+  rdfs:comment "The second argument of a function call." .
+
+sp:separator
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:string ;
+  rdfs:label "separator" ;
+  rdfs:domain sp:GroupConcat ;
+  rdfs:comment "Stores the separator=\"...\" value of a GROUP_CONCAT (sp:GroupConcat) aggregation." .
+
+sp:using
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "using" ;
+  rdfs:domain sp:Modify .
+
+sp:modMax
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:integer ;
+  rdfs:label "mod max" ;
+  rdfs:domain sp:ModPath .
+
+sp:query
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Query ;
+  rdfs:label "query" ;
+  rdfs:domain sp:SubQuery ;
+  rdfs:comment "Links a SubQuery resource with the nested Query." .
+
+sp:graphIRI
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "graph IRI" ;
+  rdfs:comment "Points to graph names (IRIs) in various sp:Update operations." .
+
+sp:document
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "document" ;
+  rdfs:domain sp:Load ;
+  rdfs:comment "The URI of the document to load using a LOAD Update operation." .
+
+sp:deletePattern
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "delete pattern" ;
+  rdfs:domain sp:Update ;
+  rdfs:comment "Points to a list of sp:TripleTemplates and sp:NamedGraphs in a modify operation." .
+
+sp:path
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Path ;
+  rdfs:label "path" ;
+  rdfs:domain sp:TriplePath ;
+  rdfs:comment "Points from a TriplePath to its path." .
+
+sp:target
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:label "target" .
+
+sp:where
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:ElementList ;
+  rdfs:label "where" ;
+  rdfs:comment "The WHERE clause of a Query." .
+
+sp:expression
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:label "expression" ;
+  rdfs:comment "Points to an expression, for example in a Filter or Assignment." .
+
+sp:usingNamed
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "using named" ;
+  rdfs:domain sp:Modify .
+
+sp:source
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:label "source" .
+
+sp:all
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:label "all" ;
+  rdfs:comment "Used in DROP and CLEAR." .
+
+sp:values
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Values ;
+  rdfs:label "values" ;
+  rdfs:domain sp:Query ;
+  rdfs:comment "The VALUES block at the end of a query. The object may just be an untyped blank node, i.e. the sp:Values type triple is optional." .
+
+sp:arg5
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:arg ;
+  rdfs:label "arg5" ;
+  rdfs:comment "The fifth argument of a function call. Further arguments are not common in SPARQL, therefore no sp:arg6, etc are defined here. However, they can be created if needed." .
+
+sp:default
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:label "default" ;
+  rdfs:comment "Used in DROP and CLEAR." .
+
+sp:fromNamed
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "from named" ;
+  rdfs:domain sp:Query ;
+  rdfs:comment "Specifies a named RDF Dataset used by a Query (FROM NAMED syntax in SPARQL). Values of this property must be URI resources." .
+
+sp:arg1
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:arg ;
+  rdfs:label "arg1" ;
+  rdfs:comment "The first argument of a function call." .
+
+sp:distinct
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:label "distinct" ;
+  rdfs:domain sp:Select ;
+  rdfs:comment "A marker property to indicate that a Select query is of type SELECT DISTINCT." .
+
+sp:into
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "into" ;
+  rdfs:domain sp:Load ;
+  rdfs:comment "The (optional) target of a LOAD Update operation." .
+
+sp:having
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "having" ;
+  rdfs:domain sp:Select ;
+  rdfs:comment "Points from a SELECT query to a list of HAVING expressions." .
+
+sp:varName
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:string ;
+  rdfs:label "varName" ;
+  rdfs:domain sp:Variable ;
+  rdfs:comment "The name of a Variable." .
+
+sp:as
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range sp:Variable ;
+  rdfs:label "as" ;
+  rdfs:comment "Points to a Variable used in an AS statement such as COUNT aggregates." .
+
+sp:graphNameNode
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "graph name node" ;
+  rdfs:domain sp:NamedGraph ;
+  rdfs:comment "The name (URI or Variable) of a NamedGraph." .
+
+sp:subPath
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:label "sub path" ;
+  rdfs:comment "The child path of a property path expression. This is used by ReversePath and ModPath." .
+
+sp:offset
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:long ;
+  rdfs:label "offset" ;
+  rdfs:domain sp:Query ;
+  rdfs:comment "The OFFSET solution modifier of a Query." .
+
+sp:varNames
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "var names" ;
+  rdfs:domain sp:Values ;
+  rdfs:comment "The names of the variables (xsd:strings) of the variables declared for a VALUES element." .
+
+sp:bindings
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "bindings" ;
+  rdfs:domain sp:Values ;
+  rdfs:comment "The actual bindings of a sp:Values element." .
+
+sp:arg4
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:arg ;
+  rdfs:label "arg4" ;
+  rdfs:comment "The forth argument of a function call." .
+
+sp:serviceURI
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "service URI" ;
+  rdfs:domain sp:Service ;
+  rdfs:comment "Used by sp:Service to specify the URI of the SPARQL end point to invoke. Must point to a URI node." .
+
+sp:predicate
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "predicate" ;
+  rdfs:domain sp:Triple ;
+  rdfs:comment "A resource or Variable describing the predicate of a triple." .
+
+sp:resultNodes
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdf:List ;
+  rdfs:label "result nodes" ;
+  rdfs:domain sp:Describe ;
+  rdfs:comment "Contains the result nodes (URI resources or Variables) of a Describe query." .
+
+sp:with
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range rdfs:Resource ;
+  rdfs:label "with" ;
+  rdfs:domain sp:Modify .
+
+sp:reduced
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:label "reduced" ;
+  rdfs:domain sp:Select ;
+  rdfs:comment "A property with true to indicate that a Select query has a REDUCED flag." .
+
+sp:limit
+  a rdf:Property ;
+  rdfs:subPropertyOf sp:systemProperty ;
+  rdfs:range xsd:long ;
+  rdfs:label "limit" ;
+  rdfs:domain sp:Query ;
+  rdfs:comment "The LIMIT solution modifier of a Query." .
+
+sp:Let
+  a owl:DeprecatedClass, rdfs:Class ;
+  rdfs:subClassOf sp:Bind ;
+  rdfs:label "Let" ;
+  rdfs:comment """Deprecated: use sp:Bind instead.
+
+A variable assignment (LET (?<varName> := <expression>)). Not part of the SPARQL 1.0 standard, but (for example) ARQ.""" .
+
+sp:Insert
+  a owl:DeprecatedClass, rdfs:Class ;
+  rdfs:subClassOf sp:Modify ;
+  rdfs:label "Insert" ;
+  rdfs:comment """Deprecated - use sp:Modify instead.
+
+Represents a INSERT INTO (part of SPARQL UPDATE language). The graph IRIs are stored in sp:graphIRI. The template patterns to delete are stored in sp:insertPattern. The WHERE clause is represented using sp:where.""" .
+
+sp:Delete
+  a owl:DeprecatedClass, rdfs:Class ;
+  rdfs:subClassOf sp:Modify ;
+  rdfs:label "Delete" ;
+  rdfs:comment """Deprecated - use sp:Modify instead.
+
+Represents a DELETE FROM (part of SPARQL UPDATE language). The graph IRIs are stored in sp:graphIRI. The template patterns to delete are stored in sp:deletePattern. The WHERE clause is represented using sp:where.""" .
 
-<>      rdf:type         owl:Ontology;
-        owl:versionInfo  "1.5.1";
-        rdfs:label       "SPIN SPARQL Syntax";
-        rdfs:comment     "An RDF schema to syntactically represent SPARQL queries and update commands as RDF triples." .
-
-sp:GroupConcat  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:GroupConcat  rdfs:label  "GROUP_CONCAT";
-        rdfs:comment  "Represents GROUP_CONCAT aggregations." .
-
-sp:Command  rdf:type     rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:Command  rdfs:label  "Command";
-        rdfs:comment  "A shared superclass for sp:Query and sp:Update that can be used to specify that the range of property can be either one." .
-
-sp:Drop  rdf:type        rdfs:Class;
-        rdfs:subClassOf  sp:Update .
-
-sp:Update  rdf:type  rdfs:Class .
-
-sp:Drop  rdfs:label   "Drop";
-        rdfs:comment  "An Update operation that removes a specified graph from the Graph Store. Must specify the graph using sp:graphIRI, or sp:default, sp:named or sp:all. May have the SILENT flag, encoded using sp:silent." .
-
-sp:Ask  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:Query .
-
-sp:Query  rdf:type  rdfs:Class .
-
-sp:Ask  rdfs:label    "Ask";
-        rdfs:comment  "An ASK query that returns true if the condition in the body is met by at least one result set." .
-
-sp:Modify  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Update .
-
-sp:Update  rdf:type  rdfs:Class .
-
-sp:Modify  rdfs:label  "Modify";
-        rdfs:comment  "Represents a MODIFY (part of SPARQL UPDATE language). The graph IRIs are stored in sp:graphIRI. The template patterns are stored in sp:deletePattern and sp:insertPattern. The WHERE clause is represented using sp:where." .
-
-sp:Values  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Element .
-
-sp:Element  rdf:type  rdfs:Class .
-
-sp:Values  rdfs:label  "Values";
-        rdfs:comment  "A VALUES element. sp:varNames points to an rdf:List of strings for the variables, sp:values to an rdf:List of rdf:Lists with nodes for each variable, in the order defined by the variables list." .
-
-sp:Asc  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:OrderByCondition .
-
-sp:OrderByCondition  rdf:type  rdfs:Class .
-
-sp:Asc  rdfs:label    "Asc";
-        rdfs:comment  "Marker to indicate ascending order." .
-
-sp:Count  rdf:type       rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:Count  rdfs:label  "COUNT";
-        rdfs:comment  "Counts the number of times a variable is used. The variable is stored in the variable property. This might be left blank to indicate COUNT(*)." .
-
-sp:Bind  rdf:type        rdfs:Class;
-        rdfs:subClassOf  sp:Element .
-
-sp:Element  rdf:type  rdfs:Class .
-
-sp:Bind  rdfs:label   "Bind";
-        rdfs:comment  "A BIND element." .
-
-sp:Variable  rdf:type    rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:Variable  rdfs:label  "Variable";
-        rdfs:comment  "A variable mentioned in a Triple or expression. Variables are often blank nodes with the variable name stored in ts:name. Variables can also be supplied with a URI in which case the system will attempt to reuse the same variable instance across multiple query definitions." .
-
-sp:SeqPath  rdf:type     rdfs:Class;
-        rdfs:subClassOf  sp:Path .
-
-sp:Path  rdf:type  rdfs:Class .
-
-sp:SeqPath  rdfs:label  "Seq path";
-        rdfs:comment  "A sequence of multiple paths." .
-
-sp:Sum  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:Sum  rdfs:label    "SUM";
-        rdfs:comment  "Represents sum aggregations, e.g. SELECT SUM(?varName)..." .
-
-sp:Minus  rdf:type       rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup .
-
-sp:ElementGroup  rdf:type  rdfs:Class .
-
-sp:Minus  rdfs:label  "Minus";
-        rdfs:comment  "A MINUS element group." .
-
-sp:Load  rdf:type        rdfs:Class;
-        rdfs:subClassOf  sp:Update .
-
-sp:Update  rdf:type  rdfs:Class .
-
-sp:Load  rdfs:label   "Load";
-        rdfs:comment  "A LOAD Update operation. The document to load is specified using sp:document, and the (optional) target graph using sp:into." .
-
-sp:Max  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:Max  rdfs:label    "MAX";
-        rdfs:comment  "Represents MAX aggregations." .
-
-sp:Element  rdf:type     rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:Element  rdfs:label  "Element";
-        rdfs:comment  "An abstract base class for all pattern elements." .
-
-sp:Update  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Command;
-        rdfs:label       "Update";
-        rdfs:comment     "Abstract base class to group the various SPARQL UPDATE commands." .
-
-sp:Desc  rdf:type        rdfs:Class;
-        rdfs:subClassOf  sp:OrderByCondition .
-
-sp:OrderByCondition  rdf:type  rdfs:Class .
-
-sp:Desc  rdfs:label   "Desc";
-        rdfs:comment  "Marker to indicate descending order." .
-
-sp:Path  rdf:type        rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:Path  rdfs:label   "Path";
-        rdfs:comment  "The base class of SPARQL property path expressions. Paths are used by sp:TriplePath triple paths." .
-
-sp:Construct  rdf:type   rdfs:Class;
-        rdfs:subClassOf  sp:Query .
-
-sp:Query  rdf:type  rdfs:Class .
-
-sp:Construct  rdfs:label  "Construct";
-        rdfs:comment  "A CONSTRUCT-type query that can be used to construct new triples from template triples (head) that use variable bindings from the match patterns (body)." .
-
-sp:Create  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Update;
-        rdfs:label       "Create";
-        rdfs:comment     "An Update operation that creates a new empty graph with a name specified by sp:graphIRI. May have sp:silent set to true." .
-
-sp:Triple  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Tuple .
-
-sp:Tuple  rdf:type  rdfs:Class .
-
-sp:Triple  rdfs:label  "Triple";
-        rdfs:comment  "A base class for TriplePattern and TripleTemplate. This basically specifies that subject, predicate and object must be present." .
-
-sp:Exists  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup .
-
-sp:ElementGroup  rdf:type  rdfs:Class .
-
-sp:Exists  rdfs:label  "Exists";
-        rdfs:comment  "An EXISTS element group." .
-
-sp:ReversePath  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Path;
-        rdfs:label       "Reverse path";
-        rdfs:comment     "A path with reversed direction." .
-
-sp:Service  rdf:type     rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup .
-
-sp:ElementGroup  rdf:type  rdfs:Class .
-
-sp:Service  rdfs:label  "Service";
-        rdfs:comment  "A SERVICE call that matches a nested sub-pattern against a SPARQL end point specified by a URI." .
-
-sp:OrderByCondition  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:OrderByCondition  rdfs:label  "Order by condition";
-        rdfs:comment  "An abstract base class for ascending or descending order conditions. Instances of this class (typically bnodes) must have a value for expression to point to the actual values." .
-
-sp:Query  rdf:type       rdfs:Class;
-        rdfs:subClassOf  sp:Command;
-        rdfs:label       "Query";
-        rdfs:comment     "Abstract base class of the various types of supported queries. Common to all types of queries is that they can have a body (\"WHERE clause\")." .
-
-sp:SubQuery  rdf:type    rdfs:Class;
-        rdfs:subClassOf  sp:Element;
-        rdfs:label       "Sub query";
-        rdfs:comment     "A nested SELECT query inside of an element list. The query is stored in sp:query." .
-
-sp:Sample  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:Sample  rdfs:label  "SAMPLE";
-        rdfs:comment  "Represents SAMPLE aggregations" .
-
-sp:Add  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:Update;
-        rdfs:seeAlso     <https://www.w3.org/TR/sparql11-update/#add>;
-        rdfs:label       "Add";
-        rdfs:comment     "A SPARQL UPDATE ADD operation. Uses sp:source and sp:target to represent \"from\" and \"to\" graphs, respectively. Also sp:silent may be true." .
-
-sp:Select  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Query;
-        rdfs:label       "Select query";
-        rdfs:comment     "A SELECT-type query that returns variable bindings as its result." .
-
-sp:ReverseLinkPath  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Path;
-        rdfs:label       "Reverse link path" .
-
-sp:Avg  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:Avg  rdfs:label    "AVG";
-        rdfs:comment  "Represents AVG aggregations." .
-
-sp:Min  rdf:type         rdfs:Class;
-        rdfs:subClassOf  sp:Aggregation .
-
-sp:Aggregation  rdf:type  rdfs:Class .
-
-sp:Min  rdfs:label    "MIN";
-        rdfs:comment  "Represents MIN aggregations." .
-
-sp:TriplePattern  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Triple;
-        rdfs:subClassOf  sp:Element;
-        rdfs:label       "Triple pattern";
-        rdfs:comment     "A triple pattern used in the body of a query." .
-
-sp:ElementGroup  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Element;
-        rdfs:label       "Element group";
-        rdfs:comment     "Abstract base class of group patterns." .
-
-sp:AltPath  rdf:type     rdfs:Class;
-        rdfs:subClassOf  sp:Path;
-        rdfs:label       "Alt path";
-        rdfs:comment     "An alternative path with the union of sp:path1 and sp:path2." .
-
-sp:DeleteData  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Update;
-        rdfs:label       "Delete data";
-        rdfs:comment     "An Update operation to delete specific triples. The graph triples are represented using sp:data, which points to an rdf:List of sp:Triples or sp:NamedGraphs." .
-
-sp:Optional  rdf:type    rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup;
-        rdfs:label       "Optional";
-        rdfs:comment     "An optional element in a query." .
-
-sp:ModPath  rdf:type     rdfs:Class;
-        rdfs:subClassOf  sp:Path;
-        rdfs:label       "Mod path";
-        rdfs:comment     "A modified path such as rdfs:subClassOf*." .
-
-sp:Filter  rdf:type      rdfs:Class;
-        rdfs:subClassOf  sp:Element;
-        rdfs:label       "Filter";
-        rdfs:comment     "A constraint element that evaluates a given expression to true or false." .
-
-sp:Tuple  rdf:type       rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:Tuple  rdfs:label  "Tuple";
-        rdfs:comment  "Abstract base class for things that have subject and object." .
-
-sp:DeleteWhere  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Update;
-        rdfs:label       "Delete where";
-        rdfs:comment     "An Update operation where the triples matched by the WHERE clause (sp:where) will be the triples deleted." .
-
-sp:Aggregation  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:SystemClass .
-
-sp:SystemClass  rdf:type  rdfs:Class .
-
-sp:Aggregation  rdfs:label  "Aggregation";
-        rdfs:comment  "Base class of aggregation types (not part of the SPARQL 1.0 standard but supported by ARQ and other engines)." .
-
-sp:InsertData  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Update;
-        rdfs:label       "Insert data";
-        rdfs:comment     "An Update operation to insert specific triples. The graph triples are represented using sp:data, which points to an rdf:List of sp:Triples or sp:NamedGraphs." .
-
-sp:Union  rdf:type       rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup;
-        rdfs:label       "Union";
-        rdfs:comment     "A UNION group." .
-
-sp:TripleTemplate  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Triple;
-        rdfs:label       "Triple template";
-        rdfs:comment     "A prototypical triple used as template in the head of a Construct query. May contain variables." .
-
-sp:TriplePath  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:Tuple;
-        rdfs:subClassOf  sp:Element;
-        rdfs:label       "Triple path";
-        rdfs:comment     "Similar to a TriplePattern, but with a path expression as its predicate. For example, this can be used to express transitive sub-class relationships (?subClass rdfs:subClassOf* ?superClass)." .
-
-sp:ElementList  rdf:type  rdfs:Class;
-        rdfs:subClassOf  rdf:List;
-        rdfs:subClassOf  sp:ElementGroup;
-        rdfs:label       "Element list";
-        rdfs:comment     "A list of Elements. This class is never instantiated directly as SPIN will use plain rdf:Lists to store element lists." .
-
-sp:NotExists  rdf:type   rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup;
-        rdfs:label       "Not exists";
-        rdfs:comment     "A NOT EXISTS element group." .
-
-sp:Describe  rdf:type    rdfs:Class;
-        rdfs:subClassOf  sp:Query;
-        rdfs:label       "Describe";
-        rdfs:comment     "A DESCRIBE-type Query." .
-
-sp:Clear  rdf:type       rdfs:Class;
-        rdfs:subClassOf  sp:Update;
-        rdfs:label       "Clear";
-        rdfs:comment     "An Update operation that removes all triples from a specified graph. Must specify the graph using sp:graphIRI, or sp:default, sp:named or sp:all. May have the SILENT flag, encoded using sp:silent." .
-
-sp:SystemClass  rdf:type  rdfs:Class;
-        rdfs:subClassOf  rdfs:Resource;
-        rdfs:label       "SP System class";
-        rdfs:comment     "An \"artificial\" root class that groups all SP classes. This makes them look much less overwhelming in UI tools. Typical end users don't need to see those classes anyway." .
-
-sp:NamedGraph  rdf:type  rdfs:Class;
-        rdfs:subClassOf  sp:ElementGroup;
-        rdfs:label       "Named graph";
-        rdfs:comment     "A named Graph element such as GRAPH <uri> {...}." .
-
-sp:text  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:text  rdfs:range   xsd:string;
-        rdfs:label    "text";
-        rdfs:comment  "Can be attached to sp:Queries to store a textual representation of the query. This can be useful for tools that do not have a complete SPIN Syntax parser available." .
-
-sp:orderBy  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:orderBy  rdfs:range  rdf:List;
-        rdfs:label    "order by";
-        rdfs:domain   sp:Query;
-        rdfs:comment  "Links a query with an ORDER BY clause where the values are rdf:List containing OrderByConditions or expressions. While the domain of this property is sp:Query, only Describe and Select queries can have values of it." .
-
-sp:silent  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:silent  rdfs:range  xsd:boolean;
-        rdfs:label  "silent" .
-
-sp:modMin  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:modMin  rdfs:range  xsd:integer;
-        rdfs:label   "mod min";
-        rdfs:domain  sp:ModPath .
-
-sp:elements  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:elements  rdfs:range  sp:ElementList;
-        rdfs:label    "elements";
-        rdfs:comment  "Points to an ElementList, for example in an Optional element." .
-
-sp:subject  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:subject  rdfs:range  rdfs:Resource;
-        rdfs:label    "subject";
-        rdfs:domain   sp:Tuple;
-        rdfs:comment  "A resource or Variable describing the subject of a triple." .
-
-sp:insertPattern  rdf:type  rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:insertPattern  rdfs:range  rdf:List;
-        rdfs:label    "insert pattern";
-        rdfs:domain   sp:Modify;
-        rdfs:comment  "Points to a list of sp:TripleTemplates or sp:NamedGraphs in a modify command." .
-
-sp:path1  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:path1  rdfs:range  sp:Path;
-        rdfs:label    "path1";
-        rdfs:comment  "The first child path of a property path. Used by sp:AltPath and sp:SeqPath." .
-
-sp:arg3  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:arg .
-
-sp:arg  rdf:type  rdf:Property .
-
-sp:arg3  rdfs:label   "arg3";
-        rdfs:comment  "The third argument of a function call." .
-
-sp:object  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:object  rdfs:label  "object";
-        rdfs:domain   sp:Tuple;
-        rdfs:comment  "An RDF Node or Variable describing the object of a triple." .
-
-sp:templates  rdf:type      rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:templates  rdfs:range  rdf:List;
-        rdfs:label    "templates";
-        rdfs:domain   sp:Construct;
-        rdfs:comment  "Points to a list of TripleTemplates that form the head of a Construct query." .
-
-sp:node  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:node  rdfs:label  "node";
-        rdfs:domain  sp:ReverseLinkPath .
-
-sp:variable  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:variable  rdfs:range  sp:Variable;
-        rdfs:label    "variable";
-        rdfs:domain   sp:Bind;
-        rdfs:comment  "The variable of a Bind element." .
-
-sp:groupBy  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:groupBy  rdfs:range  rdf:List;
-        rdfs:label    "group by";
-        rdfs:domain   sp:Select;
-        rdfs:comment  "Points from a Query to the list of GROUP BY expressions." .
-
-sp:from  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:from  rdfs:range   rdfs:Resource;
-        rdfs:label    "from";
-        rdfs:domain   sp:Query;
-        rdfs:comment  "Specifies an RDF Dataset used by a Query (FROM syntax in SPARQL). Values of this property must be URI resources." .
-
-sp:resultVariables  rdf:type  rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:resultVariables  rdfs:range  rdf:List;
-        rdfs:label    "result variables";
-        rdfs:domain   sp:Select;
-        rdfs:comment  "An rdf:List of variables that are returned by a Select query." .
-
-sp:named  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:named  rdfs:range  xsd:boolean;
-        rdfs:label    "named";
-        rdfs:comment  "Used in DROP and CLEAR." .
-
-sp:path2  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:path2  rdfs:range  sp:Path;
-        rdfs:label    "path2";
-        rdfs:comment  "The second child path of a property path. Used by sp:AltPath and sp:SeqPath." .
-
-sp:arg2  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:arg .
-
-sp:arg  rdf:type  rdf:Property .
-
-sp:arg2  rdfs:label   "arg2";
-        rdfs:comment  "The second argument of a function call." .
-
-sp:separator  rdf:type      rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:separator  rdfs:range  xsd:string;
-        rdfs:label    "separator";
-        rdfs:domain   sp:GroupConcat;
-        rdfs:comment  "Stores the separator=\"...\" value of a GROUP_CONCAT (sp:GroupConcat) aggregation." .
-
-sp:using  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:using  rdfs:range  rdfs:Resource;
-        rdfs:label   "using";
-        rdfs:domain  sp:Modify .
-
-sp:modMax  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:modMax  rdfs:range  xsd:integer;
-        rdfs:label   "mod max";
-        rdfs:domain  sp:ModPath .
-
-sp:query  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:query  rdfs:range  sp:Query;
-        rdfs:label    "query";
-        rdfs:domain   sp:SubQuery;
-        rdfs:comment  "Links a SubQuery resource with the nested Query." .
-
-sp:graphIRI  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:graphIRI  rdfs:range  rdfs:Resource;
-        rdfs:label    "graph IRI";
-        rdfs:comment  "Points to graph names (IRIs) in various sp:Update operations." .
-
-sp:document  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:document  rdfs:range  rdfs:Resource;
-        rdfs:label    "document";
-        rdfs:domain   sp:Load;
-        rdfs:comment  "The URI of the document to load using a LOAD Update operation." .
-
-sp:deletePattern  rdf:type  rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:deletePattern  rdfs:range  rdf:List;
-        rdfs:label    "delete pattern";
-        rdfs:domain   sp:Update;
-        rdfs:comment  "Points to a list of sp:TripleTemplates and sp:NamedGraphs in a modify operation." .
-
-sp:path  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:path  rdfs:range   sp:Path;
-        rdfs:label    "path";
-        rdfs:domain   sp:TriplePath;
-        rdfs:comment  "Points from a TriplePath to its path." .
-
-sp:target  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:target  rdfs:label  "target" .
-
-sp:where  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:where  rdfs:range  sp:ElementList;
-        rdfs:label    "where";
-        rdfs:comment  "The WHERE clause of a Query." .
-
-sp:expression  rdf:type     rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:expression  rdfs:label  "expression";
-        rdfs:comment  "Points to an expression, for example in a Filter or Assignment." .
-
-sp:usingNamed  rdf:type     rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:usingNamed  rdfs:range  rdfs:Resource;
-        rdfs:label   "using named";
-        rdfs:domain  sp:Modify .
-
-sp:source  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:source  rdfs:label  "source" .
-
-sp:all  rdf:type            rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:all  rdfs:range    xsd:boolean;
-        rdfs:label    "all";
-        rdfs:comment  "Used in DROP and CLEAR." .
-
-sp:values  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:values  rdfs:range  sp:Values;
-        rdfs:label    "values";
-        rdfs:domain   sp:Query;
-        rdfs:comment  "The VALUES block at the end of a query. The object may just be an untyped blank node, i.e. the sp:Values type triple is optional." .
-
-sp:arg5  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:arg .
-
-sp:arg  rdf:type  rdf:Property .
-
-sp:arg5  rdfs:label   "arg5";
-        rdfs:comment  "The fifth argument of a function call. Further arguments are not common in SPARQL, therefore no sp:arg6, etc are defined here. However, they can be created if needed." .
-
-sp:default  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:default  rdfs:range  xsd:boolean;
-        rdfs:label    "default";
-        rdfs:comment  "Used in DROP and CLEAR." .
-
-sp:fromNamed  rdf:type      rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty .
-
-sp:systemProperty  rdf:type  rdf:Property .
-
-sp:fromNamed  rdfs:range  rdfs:Resource;
-        rdfs:label    "from named";
-        rdfs:domain   sp:Query;
-        rdfs:comment  "Specifies a named RDF Dataset used by a Query (FROM NAMED syntax in SPARQL). Values of this property must be URI resources." .
-
-sp:arg1  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:arg .
-
-sp:arg  rdf:type  rdf:Property .
-
-sp:arg1  rdfs:label   "arg1";
-        rdfs:comment  "The first argument of a function call." .
-
-sp:systemProperty  rdf:type  rdf:Property;
-        rdfs:label    "SP system property";
-        rdfs:comment  "An abstract base proprerty that groups together the SP system properties. Users typically don't need to see them anyway." .
-
-sp:distinct  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          xsd:boolean;
-        rdfs:label          "distinct";
-        rdfs:domain         sp:Select;
-        rdfs:comment        "A marker property to indicate that a Select query is of type SELECT DISTINCT." .
-
-sp:into  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdfs:Resource;
-        rdfs:label          "into";
-        rdfs:domain         sp:Load;
-        rdfs:comment        "The (optional) target of a LOAD Update operation." .
-
-sp:having  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdf:List;
-        rdfs:label          "having";
-        rdfs:domain         sp:Select;
-        rdfs:comment        "Points from a SELECT query to a list of HAVING expressions." .
-
-sp:varName  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          xsd:string;
-        rdfs:label          "varName";
-        rdfs:domain         sp:Variable;
-        rdfs:comment        "The name of a Variable." .
-
-sp:as   rdf:type            rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          sp:Variable;
-        rdfs:label          "as";
-        rdfs:comment        "Points to a Variable used in an AS statement such as COUNT aggregates." .
-
-sp:graphNameNode  rdf:type  rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdfs:Resource;
-        rdfs:label          "graph name node";
-        rdfs:domain         sp:NamedGraph;
-        rdfs:comment        "The name (URI or Variable) of a NamedGraph." .
-
-sp:arg  rdf:type      rdf:Property;
-        rdfs:label    "arg";
-        rdfs:comment  "Abstract superproperty for the enumerated arg1, arg2 etc." .
-
-sp:subPath  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:label          "sub path";
-        rdfs:comment        "The child path of a property path expression. This is used by ReversePath and ModPath." .
-
-sp:offset  rdf:type         rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          xsd:long;
-        rdfs:label          "offset";
-        rdfs:domain         sp:Query;
-        rdfs:comment        "The OFFSET solution modifier of a Query." .
-
-sp:varNames  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdf:List;
-        rdfs:label          "var names";
-        rdfs:domain         sp:Values;
-        rdfs:comment        "The names of the variables (xsd:strings) of the variables declared for a VALUES element." .
-
-sp:bindings  rdf:type       rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdf:List;
-        rdfs:label          "bindings";
-        rdfs:domain         sp:Values;
-        rdfs:comment        "The actual bindings of a sp:Values element." .
-
-sp:arg4  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:arg;
-        rdfs:label          "arg4";
-        rdfs:comment        "The forth argument of a function call." .
-
-sp:serviceURI  rdf:type     rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdfs:Resource;
-        rdfs:label          "service URI";
-        rdfs:domain         sp:Service;
-        rdfs:comment        "Used by sp:Service to specify the URI of the SPARQL end point to invoke. Must point to a URI node." .
-
-sp:predicate  rdf:type      rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdfs:Resource;
-        rdfs:label          "predicate";
-        rdfs:domain         sp:Triple;
-        rdfs:comment        "A resource or Variable describing the predicate of a triple." .
-
-sp:resultNodes  rdf:type    rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdf:List;
-        rdfs:label          "result nodes";
-        rdfs:domain         sp:Describe;
-        rdfs:comment        "Contains the result nodes (URI resources or Variables) of a Describe query." .
-
-sp:with  rdf:type           rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          rdfs:Resource;
-        rdfs:label          "with";
-        rdfs:domain         sp:Modify .
-
-sp:reduced  rdf:type        rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          xsd:boolean;
-        rdfs:label          "reduced";
-        rdfs:domain         sp:Select;
-        rdfs:comment        "A property with true to indicate that a Select query has a REDUCED flag." .
-
-sp:limit  rdf:type          rdf:Property;
-        rdfs:subPropertyOf  sp:systemProperty;
-        rdfs:range          xsd:long;
-        rdfs:label          "limit";
-        rdfs:domain         sp:Query;
-        rdfs:comment        "The LIMIT solution modifier of a Query." .
-
-sp:Let  rdf:type         owl:DeprecatedClass;
-        rdfs:subClassOf  sp:Bind;
-        rdfs:label       "Let";
-        rdfs:comment     "Deprecated: use sp:Bind instead.\n\nA variable assignment (LET (?<varName> := <expression>)). Not part of the SPARQL 1.0 standard, but (for example) ARQ.";
-        rdf:type         rdfs:Class .
-
-sp:Insert  rdf:type      owl:DeprecatedClass;
-        rdfs:subClassOf  sp:Modify;
-        rdfs:label       "Insert";
-        rdfs:comment     "Deprecated - use sp:Modify instead.\n\nRepresents a INSERT INTO (part of SPARQL UPDATE language). The graph IRIs are stored in sp:graphIRI. The template patterns to delete are stored in sp:insertPattern. The WHERE clause is represented using sp:where.";
-        rdf:type         rdfs:Class .
-
-sp:Delete  rdf:type      owl:DeprecatedClass;
-        rdfs:subClassOf  sp:Modify;
-        rdfs:label       "Delete";
-        rdfs:comment     "Deprecated - use sp:Modify instead.\n\nRepresents a DELETE FROM (part of SPARQL UPDATE language). The graph IRIs are stored in sp:graphIRI. The template patterns to delete are stored in sp:deletePattern. The WHERE clause is represented using sp:where.";
-        rdf:type         rdfs:Class .
