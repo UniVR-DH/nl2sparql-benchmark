@@ -329,14 +329,14 @@ qat:Factoid owl:disjointWith qat:Confirmation .
 # oa:hasBody pointing to the diagnostic issue class or a more specific issue node.
 
 qat:LinguisticIssue rdf:type owl:Class ;
-    rdfs:subClassOf qa:AnnotationQuestion ;
+    rdfs:subClassOf qa:Entity ;
     rdfs:label "Linguistic issue"@en ;
     rdfs:comment "Issues related to linguistic realization of the question, including syntax, lexical choice, ambiguity, and phrasing."@en ;
     rdfs:comment "This layer captures failures in surface form interpretation before or alongside schema grounding."@en ;
     rdfs:seeAlso oa:hasTarget , oa:hasBody .
 
 qat:SemanticIssue rdf:type owl:Class ;
-    rdfs:subClassOf qa:AnnotationQuestion ;
+    rdfs:subClassOf qa:Entity ;
     rdfs:label "Semantic issue"@en ;
     rdfs:comment "Issues related to meaning representation, schema alignment, ontology mapping, and SPARQL structural-semantic correspondence."@en ;
     rdfs:comment "This layer complements lsqv:hasStructuralFeatures analysis by capturing mismatches between intended meaning, RDF modeling, and query structure."@en ;
