@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI wrapper for QuestionTypeClassifier.
+CLI wrapper for QuestionTypeClassifier: classify_questions_cli.py
 This utility parses SPARQL queries in LSQ format and automatically assigns
 question types (Factoid, AggregateFactoid, Comparative, etc.) based on declared
 structural features. Classification rules are derived dynamically from the
