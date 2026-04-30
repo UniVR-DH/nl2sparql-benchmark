@@ -156,6 +156,16 @@ def test_ap06_having_no_flag():
     )
 
 
+def test_ap06_filter_on_subquery_aggregate_no_flag():
+    # FILTER on aggregate result from subquery is valid (not in same scope as aggregate)
+    assert "AP06" not in _codes(
+        """SELECT ?x ?cnt WHERE {
+          { SELECT ?x (COUNT(?y) AS ?cnt) WHERE { ?x <http://x.org/p> ?y } GROUP BY ?x }
+          FILTER(?cnt > 5)
+        }"""
+    )
+
+
 # ---------------------------------------------------------------------------
 # AP07 — alias reference in same SELECT
 # ---------------------------------------------------------------------------
