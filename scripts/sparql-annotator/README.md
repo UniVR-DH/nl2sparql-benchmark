@@ -243,6 +243,12 @@ save_algebra_viz(alg.algebra, ".temp/query.png", fmt="png", show_query=False)
 
 # DOT source only
 save_algebra_viz(alg.algebra, ".temp/query.dot", fmt="dot", sparql_text=text)
+
+# Lower-level: get a graphviz.Digraph object for further customization
+from sparql_annotator.algebra_viz import render_algebra_dot
+dot = render_algebra_dot(alg.algebra, sparql_text=text)
+print(dot.source)          # raw DOT source
+dot.render("query", format="svg", cleanup=True)
 ```
 
 ---
