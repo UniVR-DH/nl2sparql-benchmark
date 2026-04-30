@@ -23,3 +23,8 @@ sparql-annotator = "sparql_annotator.cli:cli"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["sparql_annotator*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
