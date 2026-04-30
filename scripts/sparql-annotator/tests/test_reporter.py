@@ -178,6 +178,9 @@ def test_summary_csv(reports):
     assert rows["total_queries"] == "3"
     assert rows["classified_queries"] == "3"
     assert rows["unclassified_queries"] == "0"
+    # per-AP count rows must be present for all codes
+    for code in ["AP01","AP02","AP03","AP04","AP05","AP06","AP07","AP08","AP09"]:
+        assert f"queries_with_{code}" in rows
 
 
 def test_count_by_question_type_csv(reports):

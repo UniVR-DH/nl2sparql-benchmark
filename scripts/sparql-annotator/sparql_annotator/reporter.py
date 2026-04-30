@@ -336,7 +336,7 @@ class ReportGenerator:
             ("avg_bgp_count", avg(bgp_vals)),
             ("avg_triple_count", avg(tp_vals)),
             ("avg_projected_vars", avg(pv_vals)),
-        ]
+        ] + [(f"queries_with_{code}", ap_counter.get(code, 0)) for code in _ALL_AP_CODES]
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
             w.writerow(["metric", "value"])
