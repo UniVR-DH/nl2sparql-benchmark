@@ -130,6 +130,58 @@ The algebra tree nodes are colour-coded by type (BGP=green, Filter=yellow, LeftJ
 
 ---
 
+### `report` — dataset-level analysis reports
+
+Classifies all queries in a file, detects antipatterns, and writes multiple CSV and/or
+LaTeX report files to an output directory.
+
+```bash
+# CSV only (default)
+$SA report \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --ontology   graphs/qa-types.ttl \
+  --output-dir .temp/reports \
+  --prefix     ck25
+
+# CSV + LaTeX
+$SA report \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --ontology   graphs/qa-types.ttl \
+  --output-dir .temp/reports \
+  --prefix     ck25 \
+  --format     csv,latex
+```
+
+**Options:**
+
+| Flag | Description |
+|---|---|
+| `--query-file` | LSQ Turtle file containing `lsqv:Query` resources (required) |
+| `--ontology` | `qa-types.ttl` ontology file (required) |
+| `--output-dir` | Directory for output files — created if missing (required) |
+| `--prefix` | Filename prefix for all output files (default: `report`) |
+| `--format` | Output format(s): `csv`, `latex`, or `csv,latex` (default: `csv`) |
+
+**Output files** (all prefixed with `<prefix>_`):
+
+| File | Content |
+|---|---|
+| `features.csv` | LSQ feature presence matrix (one row per query, one column per feature) |
+| `operators.csv` | SPARQL operator presence matrix + `query_form` + `filter_functions` |
+| `question_types.csv` | Classification status and assigned `qat:*` types per query |
+| `antipatterns.csv` | AP01–AP09 flags + JSON messages per query |
+| `metrics.csv` | `bgp_count`, `triple_count`, `projected_var_count` per query |
+| `summary.csv` | Aggregate statistics (totals, averages, most-common values) |
+| `count_by_question_type.csv` | Frequency table: queries per question type |
+| `count_by_feature.csv` | Frequency table: queries per LSQ structural feature |
+| `count_by_operator.csv` | Frequency table: queries per SPARQL operator |
+
+LaTeX output (when `--format` includes `latex`): `features.tex`, `operators.tex`,
+`summary.tex`, `antipatterns.tex` — uses `xcolor` + `booktabs`; matrices are
+auto-transposed when the dataset has more than 20 queries.
+
+---
+
 ### `annotate` — generic operator annotation
 
 Annotates queries from TTL, CSV, or JSON files with `OperatorSet` fields.
@@ -340,7 +392,7 @@ when you need the spec-correct count.
 
 ```bash
 cd scripts/sparql-annotator
-uv run pytest              # run tests (158 tests)
+uv run pytest              # run tests (172 tests)
 uv run pytest -x -q        # stop on first failure
 uv run ruff check .        # lint
 uv run ruff format .       # format
