@@ -10,10 +10,16 @@ class Annotator:
         for rec in records:
             is_valid, parsed, err = parse_query(rec.text)
             if not is_valid:
-                ann = Annotation(record=rec, operators=extract_operators(rec.text, None),
-                                 is_valid=False, parse_error=err)
+                ann = Annotation(
+                    record=rec,
+                    operators=extract_operators(rec.text, None),
+                    is_valid=False,
+                    parse_error=err,
+                )
             else:
-                ann = Annotation(record=rec, operators=extract_operators(rec.text, parsed))
+                ann = Annotation(
+                    record=rec, operators=extract_operators(rec.text, parsed)
+                )
             out.append(ann)
         return out
 

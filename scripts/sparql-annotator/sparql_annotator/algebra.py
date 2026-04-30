@@ -31,6 +31,7 @@ _log = logging.getLogger(__name__)
 # Parsing
 # ---------------------------------------------------------------------------
 
+
 def parse_query(text: str) -> Tuple[bool, Optional[Any], Optional[str]]:
     """Attempt to parse a SPARQL query string via rdflib.
 
@@ -46,6 +47,7 @@ def parse_query(text: str) -> Tuple[bool, Optional[Any], Optional[str]]:
 # ---------------------------------------------------------------------------
 # Shared algebra walker
 # ---------------------------------------------------------------------------
+
 
 def _walk_algebra(node: CompValue):
     """Depth-first generator over all CompValue nodes in an algebra tree."""
@@ -64,6 +66,7 @@ def _walk_algebra(node: CompValue):
 # ---------------------------------------------------------------------------
 # Structural metrics
 # ---------------------------------------------------------------------------
+
 
 def _count_triples_block(node: CompValue) -> Tuple[int, int]:
     """Recursively count BGPs and triple patterns inside a parse-tree node
@@ -133,11 +136,14 @@ def compute_metrics(algebra_node: CompValue) -> Tuple[int, int, int]:
 # LSQ feature detection (used by classifier)
 # ---------------------------------------------------------------------------
 
+
 def _is_user_bind(node: CompValue, parsed: object) -> bool:
     """Return True iff this Extend node is a user-written BIND (not a projection alias)."""
     try:
         query_clause = parsed[1]
-        projection = query_clause.get("projection", []) if hasattr(query_clause, "get") else []
+        projection = (
+            query_clause.get("projection", []) if hasattr(query_clause, "get") else []
+        )
         alias_vars = {
             str(item.get("evar"))
             for item in projection
@@ -172,7 +178,9 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
     # Detect HAVING from parse tree
     try:
         query_clause = parsed[1]
-        having_node = query_clause.get("having") if hasattr(query_clause, "get") else None
+        having_node = (
+            query_clause.get("having") if hasattr(query_clause, "get") else None
+        )
         has_having = isinstance(having_node, CompValue)
     except (IndexError, AttributeError):
         has_having = False
@@ -229,7 +237,10 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
                 _log.debug(f"Unwrapping {child.name} under Extend")
                 child = child.get("p")
 
-            if isinstance(child, CompValue) and child.name in {"AggregateJoin", "Group"}:
+            if isinstance(child, CompValue) and child.name in {
+                "AggregateJoin",
+                "Group",
+            }:
                 _log.debug("Extend → aggregate alias (NOT Bind)")
                 # fall through to recurse into subtree
             else:
@@ -258,6 +269,7 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
 # Generic operator extraction (used by annotate pipeline)
 # ---------------------------------------------------------------------------
 
+
 def extract_operators(text: str, parsed: object):
     """Walk the algebra tree and return a populated OperatorSet.
 
@@ -271,10 +283,15 @@ def extract_operators(text: str, parsed: object):
     if parsed is None:
         up = text.upper().lstrip()
         ops.query_form = (
-            "ASK" if up.startswith("ASK") else
-            "CONSTRUCT" if up.startswith("CONSTRUCT") else
-            "DESCRIBE" if up.startswith("DESCRIBE") else
-            "SELECT" if up.startswith("SELECT") else "UNKNOWN"
+            "ASK"
+            if up.startswith("ASK")
+            else "CONSTRUCT"
+            if up.startswith("CONSTRUCT")
+            else "DESCRIBE"
+            if up.startswith("DESCRIBE")
+            else "SELECT"
+            if up.startswith("SELECT")
+            else "UNKNOWN"
         )
         return ops
 
@@ -297,25 +314,56 @@ def extract_operators(text: str, parsed: object):
 
     # FILTER function names that map to Builtin_* nodes
     _FILTER_FUNCS = {
-        "Builtin_REGEX": "REGEX", "Builtin_LANG": "LANG", "Builtin_LANGMATCHES": "LANGMATCHES",
-        "Builtin_DATATYPE": "DATATYPE", "Builtin_BOUND": "BOUND", "Builtin_IRI": "IRI",
-        "Builtin_URI": "URI", "Builtin_BNODE": "BNODE", "Builtin_STR": "STR",
-        "Builtin_STRDT": "STRDT", "Builtin_STRLANG": "STRLANG", "Builtin_STRLEN": "STRLEN",
-        "Builtin_SUBSTR": "SUBSTR", "Builtin_UCASE": "UCASE", "Builtin_LCASE": "LCASE",
-        "Builtin_STRSTARTS": "STRSTARTS", "Builtin_STRENDS": "STRENDS",
-        "Builtin_CONTAINS": "CONTAINS", "Builtin_ENCODE_FOR_URI": "ENCODE_FOR_URI",
-        "Builtin_CONCAT": "CONCAT", "Builtin_REPLACE": "REPLACE",
-        "Builtin_ABS": "ABS", "Builtin_ROUND": "ROUND", "Builtin_CEIL": "CEIL",
-        "Builtin_FLOOR": "FLOOR", "Builtin_RAND": "RAND",
-        "Builtin_NOW": "NOW", "Builtin_YEAR": "YEAR", "Builtin_MONTH": "MONTH",
-        "Builtin_DAY": "DAY", "Builtin_HOURS": "HOURS", "Builtin_MINUTES": "MINUTES",
-        "Builtin_SECONDS": "SECONDS", "Builtin_TIMEZONE": "TIMEZONE", "Builtin_TZ": "TZ",
-        "Builtin_MD5": "MD5", "Builtin_SHA1": "SHA1", "Builtin_SHA256": "SHA256",
-        "Builtin_SHA384": "SHA384", "Builtin_SHA512": "SHA512",
-        "Builtin_isIRI": "isIRI", "Builtin_isURI": "isURI", "Builtin_isLITERAL": "isLITERAL",
-        "Builtin_isNUMERIC": "isNUMERIC", "Builtin_isBLANK": "isBLANK",
-        "Builtin_sameTerm": "sameTerm", "Builtin_IN": "IN", "Builtin_NOT_IN": "NOT_IN",
-        "Builtin_IF": "IF", "Builtin_COALESCE": "COALESCE",
+        "Builtin_REGEX": "REGEX",
+        "Builtin_LANG": "LANG",
+        "Builtin_LANGMATCHES": "LANGMATCHES",
+        "Builtin_DATATYPE": "DATATYPE",
+        "Builtin_BOUND": "BOUND",
+        "Builtin_IRI": "IRI",
+        "Builtin_URI": "URI",
+        "Builtin_BNODE": "BNODE",
+        "Builtin_STR": "STR",
+        "Builtin_STRDT": "STRDT",
+        "Builtin_STRLANG": "STRLANG",
+        "Builtin_STRLEN": "STRLEN",
+        "Builtin_SUBSTR": "SUBSTR",
+        "Builtin_UCASE": "UCASE",
+        "Builtin_LCASE": "LCASE",
+        "Builtin_STRSTARTS": "STRSTARTS",
+        "Builtin_STRENDS": "STRENDS",
+        "Builtin_CONTAINS": "CONTAINS",
+        "Builtin_ENCODE_FOR_URI": "ENCODE_FOR_URI",
+        "Builtin_CONCAT": "CONCAT",
+        "Builtin_REPLACE": "REPLACE",
+        "Builtin_ABS": "ABS",
+        "Builtin_ROUND": "ROUND",
+        "Builtin_CEIL": "CEIL",
+        "Builtin_FLOOR": "FLOOR",
+        "Builtin_RAND": "RAND",
+        "Builtin_NOW": "NOW",
+        "Builtin_YEAR": "YEAR",
+        "Builtin_MONTH": "MONTH",
+        "Builtin_DAY": "DAY",
+        "Builtin_HOURS": "HOURS",
+        "Builtin_MINUTES": "MINUTES",
+        "Builtin_SECONDS": "SECONDS",
+        "Builtin_TIMEZONE": "TIMEZONE",
+        "Builtin_TZ": "TZ",
+        "Builtin_MD5": "MD5",
+        "Builtin_SHA1": "SHA1",
+        "Builtin_SHA256": "SHA256",
+        "Builtin_SHA384": "SHA384",
+        "Builtin_SHA512": "SHA512",
+        "Builtin_isIRI": "isIRI",
+        "Builtin_isURI": "isURI",
+        "Builtin_isLITERAL": "isLITERAL",
+        "Builtin_isNUMERIC": "isNUMERIC",
+        "Builtin_isBLANK": "isBLANK",
+        "Builtin_sameTerm": "sameTerm",
+        "Builtin_IN": "IN",
+        "Builtin_NOT_IN": "NOT_IN",
+        "Builtin_IF": "IF",
+        "Builtin_COALESCE": "COALESCE",
     }
 
     seen: Set[int] = set()
@@ -411,19 +459,26 @@ def extract_operators(text: str, parsed: object):
             for agg in aggs:
                 agg_name = getattr(agg, "name", "")
                 if "Count" in agg_name:
-                    ops.aggregates.add("COUNT"); ops.raw.add("COUNT")
+                    ops.aggregates.add("COUNT")
+                    ops.raw.add("COUNT")
                 elif "Sum" in agg_name:
-                    ops.aggregates.add("SUM"); ops.raw.add("SUM")
+                    ops.aggregates.add("SUM")
+                    ops.raw.add("SUM")
                 elif "Avg" in agg_name:
-                    ops.aggregates.add("AVG"); ops.raw.add("AVG")
+                    ops.aggregates.add("AVG")
+                    ops.raw.add("AVG")
                 elif "Min" in agg_name:
-                    ops.aggregates.add("MIN"); ops.raw.add("MIN")
+                    ops.aggregates.add("MIN")
+                    ops.raw.add("MIN")
                 elif "Max" in agg_name:
-                    ops.aggregates.add("MAX"); ops.raw.add("MAX")
+                    ops.aggregates.add("MAX")
+                    ops.raw.add("MAX")
                 elif "Sample" in agg_name:
-                    ops.aggregates.add("SAMPLE"); ops.raw.add("SAMPLE")
+                    ops.aggregates.add("SAMPLE")
+                    ops.raw.add("SAMPLE")
                 elif "GroupConcat" in agg_name:
-                    ops.aggregates.add("GROUP_CONCAT"); ops.raw.add("GROUP_CONCAT")
+                    ops.aggregates.add("GROUP_CONCAT")
+                    ops.raw.add("GROUP_CONCAT")
 
         elif name == "Group":
             ops.solution_modifiers.add("GROUP BY")
@@ -435,9 +490,11 @@ def extract_operators(text: str, parsed: object):
 
         elif name == "Slice":
             if node.get("start") not in (None, 0):
-                ops.solution_modifiers.add("OFFSET"); ops.raw.add("OFFSET")
+                ops.solution_modifiers.add("OFFSET")
+                ops.raw.add("OFFSET")
             if node.get("length") is not None:
-                ops.solution_modifiers.add("LIMIT"); ops.raw.add("LIMIT")
+                ops.solution_modifiers.add("LIMIT")
+                ops.raw.add("LIMIT")
 
         elif name == "Distinct":
             ops.projection_modifiers.add("DISTINCT")
@@ -450,7 +507,9 @@ def extract_operators(text: str, parsed: object):
     # HAVING: check parse tree
     try:
         query_clause = parsed[1]
-        having_node = query_clause.get("having") if hasattr(query_clause, "get") else None
+        having_node = (
+            query_clause.get("having") if hasattr(query_clause, "get") else None
+        )
         if isinstance(having_node, CompValue):
             ops.solution_modifiers.add("HAVING")
             ops.raw.add("HAVING")
@@ -467,6 +526,7 @@ def extract_operators(text: str, parsed: object):
 # ---------------------------------------------------------------------------
 # Utility
 # ---------------------------------------------------------------------------
+
 
 def referenced_terms(text: str) -> Set[str]:
     """Return the set of IRIs written in angle brackets in *text*."""

@@ -6,6 +6,7 @@ Public API
 render_algebra_dot(algebra_node, sparql_text=None, show_query=True) -> graphviz.Digraph
 save_algebra_viz(algebra_node, output_path, fmt="svg", sparql_text=None, show_query=True) -> Path
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,24 +16,24 @@ from rdflib.plugins.sparql.parserutils import CompValue
 from rdflib.term import URIRef, Literal, Variable as _Variable
 
 _COLOURS = {
-    "BGP":               "#D4EDDA",
-    "Filter":            "#FFF3CD",
-    "LeftJoin":          "#CCE5FF",
-    "Union":             "#E2D9F3",
-    "Minus":             "#F8D7DA",
-    "AggregateJoin":     "#FDEBD0",
-    "Group":             "#FDEBD0",
-    "Extend":            "#EAF2FB",
-    "Project":           "#EAFAF1",
-    "Distinct":          "#EAFAF1",
-    "OrderBy":           "#EAFAF1",
-    "Slice":             "#EAFAF1",
-    "ToMultiSet":        "#F9F9F9",
-    "SelectQuery":       "#D6EAF8",
+    "BGP": "#D4EDDA",
+    "Filter": "#FFF3CD",
+    "LeftJoin": "#CCE5FF",
+    "Union": "#E2D9F3",
+    "Minus": "#F8D7DA",
+    "AggregateJoin": "#FDEBD0",
+    "Group": "#FDEBD0",
+    "Extend": "#EAF2FB",
+    "Project": "#EAFAF1",
+    "Distinct": "#EAFAF1",
+    "OrderBy": "#EAFAF1",
+    "Slice": "#EAFAF1",
+    "ToMultiSet": "#F9F9F9",
+    "SelectQuery": "#D6EAF8",
     "Builtin_NOTEXISTS": "#F8D7DA",
-    "Builtin_EXISTS":    "#FFF3CD",
+    "Builtin_EXISTS": "#FFF3CD",
     "GroupGraphPatternSub": "#F5F5F5",
-    "TriplesBlock":      "#D4EDDA",
+    "TriplesBlock": "#D4EDDA",
 }
 _DEFAULT_COLOUR = "#F5F5F5"
 
@@ -54,14 +55,23 @@ def _short(value) -> str:
 
 def _esc(s: str) -> str:
     """Escape for plain Graphviz string labels."""
-    return s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") \
-            .replace("<", "\\<").replace(">", "\\>")
+    return (
+        s.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("<", "\\<")
+        .replace(">", "\\>")
+    )
 
 
 def _html_esc(s: str) -> str:
     """Escape for Graphviz HTML-like labels."""
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") \
-            .replace('"', "&quot;")
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
 
 
 def render_algebra_dot(
@@ -82,7 +92,9 @@ def render_algebra_dot(
 
     dot = Digraph("sparql_algebra")
     dot.attr(rankdir="TB", splines="ortho", nodesep="0.4", ranksep="0.6")
-    dot.attr("node", shape="box", style="rounded,filled", fontname="Helvetica", fontsize="11")
+    dot.attr(
+        "node", shape="box", style="rounded,filled", fontname="Helvetica", fontsize="11"
+    )
     dot.attr("edge", arrowsize="0.7", fontname="Helvetica", fontsize="9")
 
     _counter = [0]
@@ -116,20 +128,37 @@ def render_algebra_dot(
                             # BGP triple pattern — render as "s p o" inline
                             triple_label = "  ".join(_short(x) for x in item)
                             leaf = _nid()
-                            dot.node(leaf, _esc(triple_label), shape="oval",
-                                     fillcolor="#EEEEEE", fontname="Courier", fontsize="9")
+                            dot.node(
+                                leaf,
+                                _esc(triple_label),
+                                shape="oval",
+                                fillcolor="#EEEEEE",
+                                fontname="Courier",
+                                fontsize="9",
+                            )
                             dot.edge(nid, leaf, label=_esc(lbl))
                         elif item is not None:
                             leaf = _nid()
-                            dot.node(leaf, _esc(_short(item)), shape="oval", fillcolor="#EEEEEE")
+                            dot.node(
+                                leaf,
+                                _esc(_short(item)),
+                                shape="oval",
+                                fillcolor="#EEEEEE",
+                            )
                             dot.edge(nid, leaf, label=_esc(lbl))
 
                 elif isinstance(v, tuple):
                     # standalone tuple (e.g. a single triple pattern)
                     triple_label = "  ".join(_short(x) for x in v)
                     leaf = _nid()
-                    dot.node(leaf, _esc(triple_label), shape="oval",
-                             fillcolor="#EEEEEE", fontname="Courier", fontsize="9")
+                    dot.node(
+                        leaf,
+                        _esc(triple_label),
+                        shape="oval",
+                        fillcolor="#EEEEEE",
+                        fontname="Courier",
+                        fontsize="9",
+                    )
                     dot.edge(nid, leaf, label=_esc(k))
 
                 elif v is not None:
@@ -162,7 +191,7 @@ def render_algebra_dot(
         rows = "".join(
             f'<TR><TD ALIGN="LEFT" BALIGN="LEFT">'
             f'<FONT FACE="Courier" POINT-SIZE="10">{_html_esc(line) or " "}</FONT>'
-            f'</TD></TR>'
+            f"</TD></TR>"
             for line in lines
         )
         html_label = (
@@ -172,8 +201,14 @@ def render_algebra_dot(
             + "</TABLE>>"
         )
         with dot.subgraph(name="cluster_query") as sg:
-            sg.attr(label="", style="rounded,filled", fillcolor="white",
-                    color="#CCCCCC", margin="16", rank="same")
+            sg.attr(
+                label="",
+                style="rounded,filled",
+                fillcolor="white",
+                color="#CCCCCC",
+                margin="16",
+                rank="same",
+            )
             sg.node("sparql_text", html_label, shape="none", margin="0")
 
         # Invisible edge to push the query box to the right of the tree
@@ -191,7 +226,9 @@ def save_algebra_viz(
 ) -> Path:
     """Render and save to output_path. fmt: 'dot' | 'svg' | 'png'."""
     output_path = Path(output_path)
-    dot = render_algebra_dot(algebra_node, sparql_text=sparql_text, show_query=show_query)
+    dot = render_algebra_dot(
+        algebra_node, sparql_text=sparql_text, show_query=show_query
+    )
 
     if fmt == "dot":
         out = output_path.with_suffix(".dot")

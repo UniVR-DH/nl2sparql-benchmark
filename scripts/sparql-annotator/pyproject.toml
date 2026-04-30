@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "sparql-annotator"
 version = "0.2.6"
 description = "Annotate SPARQL queries extracting operator and structural features"
+requires-python = ">=3.10"
 authors = [ { name = "nl2s-bench" } ]
 dependencies = [
     "rdflib>=6.0",

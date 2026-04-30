@@ -37,6 +37,7 @@ cli.add_command(inspect_cmd)
 # annotate sub-command
 # ---------------------------------------------------------------------------
 
+
 @cli.command()
 @click.option("--input", "input_path", required=True, help="Input file path")
 @click.option("--format", "fmt", default=None, help="Input format: ttl/csv/json")
@@ -46,7 +47,9 @@ def annotate(input_path, fmt, output_path):
     if fmt is None:
         fmt = _detect_format(input_path)
         if fmt is None:
-            raise click.ClickException("Could not detect input format; please provide --format")
+            raise click.ClickException(
+                "Could not detect input format; please provide --format"
+            )
 
     if fmt == "csv":
         adapter = CSVAdapter()
@@ -73,13 +76,16 @@ def annotate(input_path, fmt, output_path):
 # classify sub-command — helpers
 # ---------------------------------------------------------------------------
 
+
 def _setup_logging(log_file: Optional[Path], verbose: bool) -> logging.Logger:
     logger = logging.getLogger("sparql_annotator.classify")
     if logger.handlers:
         return logger
     level = logging.DEBUG if verbose else logging.INFO
     logger.setLevel(level)
-    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    fmt = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(level)
     ch.setFormatter(fmt)
@@ -94,7 +100,9 @@ def _setup_logging(log_file: Optional[Path], verbose: bool) -> logging.Logger:
 
 def _print_results(
     classifier: QuestionTypeClassifier,
-    results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]],
+    results: Dict[
+        str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
+    ],
     logger: logging.Logger,
 ) -> None:
     W = 80
@@ -156,7 +164,9 @@ def _print_results(
             print(f"  {'':5s} conflicting types: {', '.join(sorted(qtypes))}")
             print(f"  {'':5s} features: {', '.join(sorted(features))}")
             print(f"  {'':5s} counts: {counts}")
-            logger.warning(f"Ambiguous {short!r}: types={sorted(qtypes)} features={sorted(features)}")
+            logger.warning(
+                f"Ambiguous {short!r}: types={sorted(qtypes)} features={sorted(features)}"
+            )
 
     if unclassifiable:
         print(f"\n✗ Unclassifiable ({len(unclassifiable)}):")
@@ -181,7 +191,8 @@ def _print_results(
     n_amb = len(ambiguous)
     n_unc = len(unclassifiable)
     n_warn = len(queries_with_warnings)
-    pct = lambda n: f"{100 * n // total if total else 0}%"
+    def pct(n):
+        return f"{100 * n // total if total else 0}%"
 
     print("\n" + "=" * W)
     print(
@@ -201,16 +212,24 @@ def _print_results(
         logger.info("All queries classified cleanly.")
     else:
         if n_amb:
-            logger.warning(f"{n_amb} ambiguous quer{'y' if n_amb == 1 else 'ies'} need review")
+            logger.warning(
+                f"{n_amb} ambiguous quer{'y' if n_amb == 1 else 'ies'} need review"
+            )
         if n_unc:
-            logger.error(f"{n_unc} quer{'y' if n_unc == 1 else 'ies'} could not be classified")
+            logger.error(
+                f"{n_unc} quer{'y' if n_unc == 1 else 'ies'} could not be classified"
+            )
         if n_warn:
-            logger.warning(f"{n_warn} quer{'y' if n_warn == 1 else 'ies'} have LSQ annotation gaps")
+            logger.warning(
+                f"{n_warn} quer{'y' if n_warn == 1 else 'ies'} have LSQ annotation gaps"
+            )
 
 
 def _generate_type_assertions(
     query_file: Path,
-    results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]],
+    results: Dict[
+        str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
+    ],
     classifier: QuestionTypeClassifier,
     logger: logging.Logger,
 ) -> Graph:
@@ -257,7 +276,9 @@ def _generate_type_assertions(
         for feat in sorted(features):
             feat_uri = None
             try:
-                feat_uri = classifier.ontology.namespace_manager.expand_curie(f"lsqv:{feat}")
+                feat_uri = classifier.ontology.namespace_manager.expand_curie(
+                    f"lsqv:{feat}"
+                )
             except Exception:
                 feat_uri = None
             if feat_uri:
@@ -286,17 +307,36 @@ def _generate_type_assertions(
 # classify sub-command
 # ---------------------------------------------------------------------------
 
+
 @cli.command("classify")
-@click.option("--query-file", required=True, type=click.Path(exists=True, path_type=Path),
-              help="LSQ query file (Turtle).")
-@click.option("--ontology", required=True, type=click.Path(exists=True, path_type=Path),
-              help="qa-types.ttl ontology file.")
-@click.option("--output", default=None, type=click.Path(path_type=Path),
-              help="Output Turtle file with added rdf:type assertions.")
-@click.option("--log-file", default=None, type=click.Path(path_type=Path),
-              help="Log file path (default: console only).")
+@click.option(
+    "--query-file",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="LSQ query file (Turtle).",
+)
+@click.option(
+    "--ontology",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="qa-types.ttl ontology file.",
+)
+@click.option(
+    "--output",
+    default=None,
+    type=click.Path(path_type=Path),
+    help="Output Turtle file with added rdf:type assertions.",
+)
+@click.option(
+    "--log-file",
+    default=None,
+    type=click.Path(path_type=Path),
+    help="Log file path (default: console only).",
+)
 @click.option("--verbose", is_flag=True, help="Enable DEBUG output.")
-@click.option("--debug", is_flag=True, help="Print extracted ontology rules before classifying.")
+@click.option(
+    "--debug", is_flag=True, help="Print extracted ontology rules before classifying."
+)
 def classify_cmd(query_file, ontology, output, log_file, verbose, debug):
     """Classify SPARQL queries by question type using LSQ features."""
     logger = _setup_logging(log_file, verbose)
@@ -308,7 +348,9 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug):
         results = classifier.classify_queries_from_file(query_file)
         _print_results(classifier, results, logger)
         if output:
-            out_graph = _generate_type_assertions(query_file, results, classifier, logger)
+            out_graph = _generate_type_assertions(
+                query_file, results, classifier, logger
+            )
             out_graph.serialize(destination=str(output), format="turtle")
             logger.info(f"Saved classified queries to {output}")
     except Exception as exc:

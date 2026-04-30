@@ -23,17 +23,32 @@ class JSONAdapter(InputAdapter, OutputAdapter):
                 q = obj.get(self.query_key) or obj.get("queryText")
                 if not q:
                     continue
-                yield QueryRecord(uri=obj.get("uri"), label=obj.get("label") or f"obj-{i+1}", text=q, metadata=obj)
+                yield QueryRecord(
+                    uri=obj.get("uri"),
+                    label=obj.get("label") or f"obj-{i + 1}",
+                    text=q,
+                    metadata=obj,
+                )
         elif isinstance(data, dict):
             # object-of-objects
             for key, obj in data.items():
                 if isinstance(obj, dict):
-                    q = obj.get(self.query_key) or obj.get("queryText") or obj.get("query")
+                    q = (
+                        obj.get(self.query_key)
+                        or obj.get("queryText")
+                        or obj.get("query")
+                    )
                     if not q:
                         continue
-                    yield QueryRecord(uri=key, label=obj.get("label") or key, text=q, metadata=obj)
+                    yield QueryRecord(
+                        uri=key, label=obj.get("label") or key, text=q, metadata=obj
+                    )
 
-    def write(self, annotations: Iterable[Annotation], destination: Union[Path, io.IOBase, str]):
+    def write(
+        self,
+        annotations: Iterable[Annotation],
+        destination: Union[Path, io.IOBase, str],
+    ):
         out = []
         for ann in annotations:
             item = dict(ann.record.metadata or {})

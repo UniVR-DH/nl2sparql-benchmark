@@ -8,6 +8,7 @@ Usage:
     sparql-annotator inspect --query-file <file.ttl> --query-id 30 --viz .temp/q30.png
     sparql-annotator inspect --query-file <file.ttl> --query-id 30 --viz .temp/q30.dot
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -49,16 +50,20 @@ def _print_tree(node, indent: int = 0, label: str = "") -> None:
                 if isinstance(item, CompValue):
                     _print_tree(item, indent + 1, f"{k}[{i}]")
                 else:
-                    click.echo(f"{'  '*(indent+1)}{k}[{i}]: {repr(item)[:80]}")
+                    click.echo(f"{'  ' * (indent + 1)}{k}[{i}]: {repr(item)[:80]}")
         else:
             val = repr(v)
             if len(val) > 100:
                 val = val[:97] + "..."
-            click.echo(f"{'  '*(indent+1)}.{k} = {val}")
+            click.echo(f"{'  ' * (indent + 1)}.{k} = {val}")
 
 
-def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = None,
-                  check: bool = False) -> None:
+def inspect_query(
+    query_file: Path,
+    query_id: str,
+    viz_path: Optional[Path] = None,
+    check: bool = False,
+) -> None:
     g = Graph()
     g.parse(str(query_file), format="turtle")
 
@@ -110,6 +115,7 @@ def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = No
 
     if check:
         from .antipatterns import detect_antipatterns
+
         issues = detect_antipatterns(text, parsed)
         click.echo("=" * W)
         click.echo("ANTIPATTERN CHECK")
@@ -124,9 +130,12 @@ def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = No
     if viz_path is not None:
         fmt = viz_path.suffix.lstrip(".").lower() or "svg"
         if fmt not in {"dot", "svg", "png"}:
-            raise click.ClickException(f"Unsupported viz format {fmt!r}. Use .dot, .svg, or .png")
+            raise click.ClickException(
+                f"Unsupported viz format {fmt!r}. Use .dot, .svg, or .png"
+            )
         try:
             from .algebra_viz import save_algebra_viz
+
             out = save_algebra_viz(alg.algebra, viz_path, fmt=fmt, sparql_text=text)
             click.echo(f"\nAlgebra diagram saved → {out}")
         except ImportError as exc:
@@ -134,13 +143,25 @@ def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = No
 
 
 @click.command("inspect")
-@click.option("--query-file", required=True, type=click.Path(exists=True, path_type=Path),
-              help="LSQ query file (Turtle).")
+@click.option(
+    "--query-file",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="LSQ query file (Turtle).",
+)
 @click.option("--query-id", required=True, help="Query URI or local ID (e.g. '30').")
-@click.option("--viz", "viz_path", default=None, type=click.Path(path_type=Path),
-              help="Save algebra diagram to this path (.dot / .svg / .png).")
-@click.option("--check", is_flag=True, default=False,
-              help="Run antipattern checks on the query.")
-def inspect_cmd(query_file: Path, query_id: str, viz_path: Optional[Path], check: bool) -> None:
+@click.option(
+    "--viz",
+    "viz_path",
+    default=None,
+    type=click.Path(path_type=Path),
+    help="Save algebra diagram to this path (.dot / .svg / .png).",
+)
+@click.option(
+    "--check", is_flag=True, default=False, help="Run antipattern checks on the query."
+)
+def inspect_cmd(
+    query_file: Path, query_id: str, viz_path: Optional[Path], check: bool
+) -> None:
     """Print SPARQL text, parse tree, algebra tree, and LSQ features for one query."""
     inspect_query(query_file, query_id, viz_path, check)

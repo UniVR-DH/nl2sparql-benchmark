@@ -25,12 +25,21 @@ class CSVAdapter(InputAdapter, OutputAdapter):
             if not text:
                 continue
             metadata = {k: v for k, v in row.items() if k != self.query_column}
-            yield QueryRecord(uri=None, label=row.get("label") or f"row-{i+1}", text=text, metadata=metadata)
+            yield QueryRecord(
+                uri=None,
+                label=row.get("label") or f"row-{i + 1}",
+                text=text,
+                metadata=metadata,
+            )
 
         if close:
             fh.close()
 
-    def write(self, annotations: Iterable[Annotation], destination: Union[Path, io.IOBase, str]):
+    def write(
+        self,
+        annotations: Iterable[Annotation],
+        destination: Union[Path, io.IOBase, str],
+    ):
         rows = []
         fieldnames = set()
         for ann in annotations:

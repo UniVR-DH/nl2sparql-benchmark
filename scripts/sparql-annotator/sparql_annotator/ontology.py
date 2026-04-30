@@ -29,7 +29,9 @@ def _all_question_type_uris(ontology: Graph) -> Set[URIRef]:
     return visited
 
 
-def _parse_feature_restriction(ontology: Graph, restriction) -> Optional[FeatureRequirement]:
+def _parse_feature_restriction(
+    ontology: Graph, restriction
+) -> Optional[FeatureRequirement]:
     on_prop = list(ontology.objects(restriction, OWL.onProperty))
     if not on_prop or on_prop[0] != LSQV.hasStructuralFeatures:
         return None
@@ -55,7 +57,9 @@ def _parse_feature_restriction(ontology: Graph, restriction) -> Optional[Feature
     return req
 
 
-def _own_requirements_of(ontology: Graph, qtype_uri: URIRef) -> List[FeatureRequirement]:
+def _own_requirements_of(
+    ontology: Graph, qtype_uri: URIRef
+) -> List[FeatureRequirement]:
     requirements: List[FeatureRequirement] = []
     for restriction in ontology.objects(qtype_uri, RDFS.subClassOf):
         if isinstance(restriction, URIRef):
@@ -66,7 +70,9 @@ def _own_requirements_of(ontology: Graph, qtype_uri: URIRef) -> List[FeatureRequ
     return requirements
 
 
-def _direct_parent_type_names(ontology: Graph, qtype_uri: URIRef, known_uris: Set[URIRef]) -> Set[str]:
+def _direct_parent_type_names(
+    ontology: Graph, qtype_uri: URIRef, known_uris: Set[URIRef]
+) -> Set[str]:
     parents: Set[str] = set()
     for parent in ontology.objects(qtype_uri, RDFS.subClassOf):
         if isinstance(parent, URIRef) and parent in known_uris:
@@ -76,7 +82,9 @@ def _direct_parent_type_names(ontology: Graph, qtype_uri: URIRef, known_uris: Se
     return parents
 
 
-def build_type_definitions(ontology: Graph, logger: logging.Logger) -> Dict[str, QuestionTypeDefinition]:
+def build_type_definitions(
+    ontology: Graph, logger: logging.Logger
+) -> Dict[str, QuestionTypeDefinition]:
     """Parse the ontology and return the full type definition map."""
     all_uris = _all_question_type_uris(ontology)
 
@@ -88,8 +96,10 @@ def build_type_definitions(ontology: Graph, logger: logging.Logger) -> Dict[str,
         own = _own_requirements_of(ontology, uri)
         parents = _direct_parent_type_names(ontology, uri, all_uris)
         defs[name] = QuestionTypeDefinition(
-            uri=uri, name=name,
-            own_requirements=own, all_requirements=list(own),
+            uri=uri,
+            name=name,
+            own_requirements=own,
+            all_requirements=list(own),
             parent_types=parents,
         )
 
@@ -135,7 +145,9 @@ def build_type_definitions(ontology: Graph, logger: logging.Logger) -> Dict[str,
     return defs
 
 
-def build_depth_cache(type_definitions: Dict[str, QuestionTypeDefinition]) -> Dict[str, int]:
+def build_depth_cache(
+    type_definitions: Dict[str, QuestionTypeDefinition],
+) -> Dict[str, int]:
     """Pre-compute longest-path depth for every type."""
     cache: Dict[str, int] = {}
 

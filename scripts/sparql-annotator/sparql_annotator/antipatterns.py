@@ -8,6 +8,7 @@ Public API
 ----------
 detect_antipatterns(text, parsed=None) -> List[AntipatternIssue]
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -22,14 +23,15 @@ from .algebra import parse_query, _walk_algebra
 
 @dataclass
 class AntipatternIssue:
-    code: str           # e.g. "AP01"
+    code: str  # e.g. "AP01"
     message: str
-    hint: str           # suggested fix
+    hint: str  # suggested fix
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _aggregate_alias_vars(alg_root: CompValue) -> Set[str]:
     """Return variable names that are true aggregate aliases (not GROUP BY re-projections).
@@ -42,7 +44,7 @@ def _aggregate_alias_vars(alg_root: CompValue) -> Set[str]:
     agg_map: dict[str, str] = {}  # __agg_N__ → aggregate name
     for node in _walk_algebra(alg_root):
         if node.name == "AggregateJoin":
-            for agg in (node.get("A") or []):
+            for agg in node.get("A") or []:
                 res = agg.get("res")
                 if isinstance(res, Variable):
                     agg_map[str(res)] = agg.name
@@ -65,7 +67,7 @@ def _bgp_bound_vars(alg_root: CompValue) -> Set[str]:
     bound: Set[str] = set()
     for node in _walk_algebra(alg_root):
         if node.name == "BGP":
-            for triple in (node.get("triples") or []):
+            for triple in node.get("triples") or []:
                 for item in triple:
                     if isinstance(item, Variable):
                         bound.add(str(item))
@@ -109,6 +111,7 @@ def _bgp_components(triples) -> int:
 # Detectors
 # ---------------------------------------------------------------------------
 
+
 def _ap01_order_limit1(alg: CompValue) -> Optional[AntipatternIssue]:
     """ORDER BY + LIMIT 1 for extrema — use MIN/MAX aggregate instead."""
     has_order = any(n.name == "OrderBy" for n in _walk_algebra(alg))
@@ -137,7 +140,9 @@ def _ap02_distinct_with_aggregation(alg: CompValue) -> Optional[AntipatternIssue
     return None
 
 
-def _ap03_proj_var_agg_no_groupby(alg: CompValue, parsed: object) -> Optional[AntipatternIssue]:
+def _ap03_proj_var_agg_no_groupby(
+    alg: CompValue, parsed: object
+) -> Optional[AntipatternIssue]:
     """Non-aggregate projected variable alongside aggregate without GROUP BY."""
     has_agg = any(n.name == "AggregateJoin" for n in _walk_algebra(alg))
     if not has_agg:
@@ -177,7 +182,9 @@ def _ap05_cartesian_product(alg: CompValue) -> Optional[AntipatternIssue]:
     return None
 
 
-def _ap06_non_grouped_vars(alg: CompValue, parsed: object = None) -> Optional[AntipatternIssue]:
+def _ap06_non_grouped_vars(
+    alg: CompValue, parsed: object = None
+) -> Optional[AntipatternIssue]:
     """Projected variables not in GROUP BY and not aggregate aliases."""
     has_agg = any(n.name == "AggregateJoin" for n in _walk_algebra(alg))
     if not has_agg:
@@ -186,7 +193,7 @@ def _ap06_non_grouped_vars(alg: CompValue, parsed: object = None) -> Optional[An
     group_vars: Set[str] = set()
     for node in _walk_algebra(alg):
         if node.name == "Group":
-            for v in (node.get("expr") or []):
+            for v in node.get("expr") or []:
                 if isinstance(v, Variable):
                     group_vars.add(str(v))
 
@@ -226,10 +233,99 @@ def _ap11_unbound_projected_vars(alg: CompValue) -> Optional[AntipatternIssue]:
 # Public API
 # ---------------------------------------------------------------------------
 
+
+def _ap08_aggregate_in_filter(alg: CompValue) -> Optional[AntipatternIssue]:
+    """Aggregate used in FILTER instead of HAVING."""
+    has_agg = any(n.name == "AggregateJoin" for n in _walk_algebra(alg))
+    if not has_agg:
+        return None
+    for node in _walk_algebra(alg):
+        if node.name == "Filter":
+            child = node.get("p")
+            # A HAVING filter wraps Extend or AggregateJoin; a misplaced FILTER wraps BGP
+            if isinstance(child, CompValue) and child.name == "BGP":
+                # Check if the filter expression references an aggregate variable (__agg_N__)
+                expr = node.get("expr")
+                if expr is not None:
+                    expr_vars = {
+                        str(v)
+                        for v in (getattr(expr, "_vars", None) or set())
+                        if isinstance(v, Variable)
+                    }
+                    if any(v.startswith("__agg_") for v in expr_vars):
+                        return AntipatternIssue(
+                            code="AP08",
+                            message="Aggregate function used in FILTER instead of HAVING.",
+                            hint="Move the aggregate condition to a HAVING clause.",
+                        )
+    return None
+
+
+def _ap09_alias_reference_in_select(alg: CompValue) -> Optional[AntipatternIssue]:
+    """SELECT alias referenced in the same SELECT clause."""
+    # Collect all aggregate alias variables (__agg_N__ → projected name)
+    agg_res_vars: set[str] = set()
+    for node in _walk_algebra(alg):
+        if node.name == "AggregateJoin":
+            for agg in node.get("A") or []:
+                res = agg.get("res")
+                if isinstance(res, Variable):
+                    agg_res_vars.add(str(res))
+
+    # Check if any Extend.expr references an __agg_N__ that is itself an alias result
+    # (i.e. another Extend maps a projected name to that __agg_N__)
+    for node in _walk_algebra(alg):
+        if node.name == "Extend":
+            expr = node.get("expr")
+            if expr is None:
+                continue
+            expr_vars = {
+                str(v)
+                for v in (getattr(expr, "_vars", None) or set())
+                if isinstance(v, Variable)
+            }
+            # If expr references an __agg_N__ that is NOT a direct aggregate result
+            # but is itself the expr of another Extend, it's a cross-alias reference
+            non_agg_refs = expr_vars - agg_res_vars
+            if non_agg_refs and any(not v.startswith("__agg_") for v in non_agg_refs):
+                # expr references a plain projected variable — likely an alias reference
+                pv_names = {
+                    str(v) for v in (alg.get("PV") or []) if isinstance(v, Variable)
+                }
+                if non_agg_refs & pv_names:
+                    return AntipatternIssue(
+                        code="AP09",
+                        message="SELECT alias referenced within the same SELECT clause.",
+                        hint="Aliases defined in SELECT cannot be referenced in the same SELECT; use a subquery.",
+                    )
+    return None
+
+
+def _ap10_translation_error(text: str, parsed: object) -> Optional[AntipatternIssue]:
+    """Query parses but fails algebra translation — likely vendor-specific extension."""
+    import rdflib.plugins.sparql.algebra as _alg
+
+    try:
+        _alg.translateQuery(parsed)
+        return None
+    except Exception as exc:
+        return AntipatternIssue(
+            code="AP10",
+            message=f"Query uses non-standard or vendor-specific syntax: {exc}",
+            hint="Remove or replace vendor-specific functions/extensions for portability.",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
 _DETECTORS = [
     _ap01_order_limit1,
     _ap02_distinct_with_aggregation,
     _ap05_cartesian_product,
+    _ap08_aggregate_in_filter,
+    _ap09_alias_reference_in_select,
     _ap11_unbound_projected_vars,
 ]
 
@@ -252,12 +348,23 @@ def detect_antipatterns(text: str, parsed: object = None) -> List[AntipatternIss
     AP03  Non-aggregate projected variable alongside aggregate without GROUP BY
     AP05  Cartesian product (disconnected BGP components)
     AP06  Projected variable not in GROUP BY and not aggregated
+    AP08  Aggregate used in FILTER instead of HAVING
+    AP09  SELECT alias referenced in the same SELECT clause
+    AP10  Non-standard/vendor-specific syntax (algebra translation fails)
     AP11  Projected variable never bound in the query body
+
+    Note: AP04 (aggregate without AS rename) is a parse error in rdflib.
+    AP07 (implicit grouping) is identical to AP03.
     """
     if parsed is None:
         ok, parsed, _ = parse_query(text)
         if not ok:
             return []
+
+    # AP10: check before translation (translation itself may fail)
+    ap10 = _ap10_translation_error(text, parsed)
+    if ap10:
+        return [ap10]
 
     try:
         alg = _sparql_algebra.translateQuery(parsed).algebra

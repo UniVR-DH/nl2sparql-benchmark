@@ -4,15 +4,15 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from rdflib import Graph, URIRef, RDF, RDFS, Literal
+from rdflib import Graph, URIRef, RDF, RDFS
 from rdflib.term import Variable as _Variable
 import rdflib.plugins.sparql.parser as _sparql_parser
 import rdflib.plugins.sparql.algebra as _sparql_algebra
 
-from .model import FeatureRequirement, QuestionTypeDefinition
+from .model import QuestionTypeDefinition
 from .ontology import build_type_definitions, build_depth_cache, _uri_to_local
 from .algebra import detect_lsq_features, compute_metrics
-from .namespaces import LSQV, QAT, QA
+from .namespaces import LSQV
 
 
 class QuestionTypeClassifier:
@@ -24,9 +24,13 @@ class QuestionTypeClassifier:
 
         self.ontology = Graph()
         self.ontology.parse(str(ontology_path), format="turtle")
-        self.logger.info(f"Loaded ontology from {ontology_path} ({len(self.ontology)} triples)")
+        self.logger.info(
+            f"Loaded ontology from {ontology_path} ({len(self.ontology)} triples)"
+        )
 
-        self.type_definitions: Dict[str, QuestionTypeDefinition] = build_type_definitions(self.ontology, self.logger)
+        self.type_definitions: Dict[str, QuestionTypeDefinition] = (
+            build_type_definitions(self.ontology, self.logger)
+        )
         self.type_uris: Dict[str, URIRef] = {
             name: defn.uri for name, defn in self.type_definitions.items()
         }
@@ -40,7 +44,11 @@ class QuestionTypeClassifier:
         self, query_graph: Graph, query_uri: URIRef, algebra_node, short_uri: str
     ) -> List[str]:
         warnings: List[str] = []
-        declared: Dict[str, Optional[int]] = {"projectVarCount": None, "bgpCount": None, "tpCount": None}
+        declared: Dict[str, Optional[int]] = {
+            "projectVarCount": None,
+            "bgpCount": None,
+            "tpCount": None,
+        }
         for sf in query_graph.objects(query_uri, LSQV.hasStructuralFeatures):
             for prop_local, lsqv_prop in (
                 ("projectVarCount", LSQV.projectVarCount),
@@ -57,7 +65,11 @@ class QuestionTypeClassifier:
             return warnings
 
         actual_bgp, actual_tp, actual_pv = compute_metrics(algebra_node)
-        actual = {"projectVarCount": actual_pv, "bgpCount": actual_bgp, "tpCount": actual_tp}
+        actual = {
+            "projectVarCount": actual_pv,
+            "bgpCount": actual_bgp,
+            "tpCount": actual_tp,
+        }
         is_select = algebra_node.name == "SelectQuery"
 
         for prop, declared_val in declared.items():
@@ -75,7 +87,9 @@ class QuestionTypeClassifier:
                 warnings.append(msg)
                 self.logger.warning(f"Query {short_uri!r}: {msg}")
             else:
-                self.logger.debug(f"Query {short_uri!r}: lsqv:{prop} = {declared_val} ✓")
+                self.logger.debug(
+                    f"Query {short_uri!r}: lsqv:{prop} = {declared_val} ✓"
+                )
         return warnings
 
     def _check_sparql_syntax(self, text: str, short_uri: str) -> bool:
@@ -86,7 +100,9 @@ class QuestionTypeClassifier:
             self.logger.error(f"Query {short_uri!r}: invalid SPARQL — {exc}")
             return False
 
-    def extract_features(self, query_graph: Graph, query_uri: URIRef) -> Tuple[Set[str], List[str]]:
+    def extract_features(
+        self, query_graph: Graph, query_uri: URIRef
+    ) -> Tuple[Set[str], List[str]]:
         short_uri = str(query_uri).split("/")[-1]
         features: Set[str] = set()
         warnings: List[str] = []
@@ -105,17 +121,24 @@ class QuestionTypeClassifier:
                 parsed = _sparql_parser.parseQuery(text)
                 algebra = _sparql_algebra.translateQuery(parsed)
             except Exception as exc:
-                self.logger.error(f"Query {short_uri!r}: algebra translation failed — {exc}")
+                self.logger.error(
+                    f"Query {short_uri!r}: algebra translation failed — {exc}"
+                )
                 continue
 
             # Pure-aggregate Distinct stripping
-            if "Aggregators" in features and "GroupBy" not in features and "Distinct" in features:
+            if (
+                "Aggregators" in features
+                and "GroupBy" not in features
+                and "Distinct" in features
+            ):
                 try:
                     projection = parsed[1].get("projection", [])
                     has_bare_var = any(
                         isinstance(item.get("var"), _Variable)
                         and not isinstance(item.get("evar"), _Variable)
-                        for item in projection if hasattr(item, "get")
+                        for item in projection
+                        if hasattr(item, "get")
                     )
                     if not has_bare_var:
                         self.logger.debug(
@@ -138,7 +161,11 @@ class QuestionTypeClassifier:
                     self.logger.warning(f"Query {short_uri!r}: {msg}")
                 features |= implied
 
-            warnings.extend(self._check_count_annotations(query_graph, query_uri, algebra.algebra, short_uri))
+            warnings.extend(
+                self._check_count_annotations(
+                    query_graph, query_uri, algebra.algebra, short_uri
+                )
+            )
 
         return features, warnings
 
@@ -159,7 +186,11 @@ class QuestionTypeClassifier:
         return result
 
     def classify_query(self, query_uri: URIRef, features: Set[str]) -> Set[str]:
-        candidates = [name for name, defn in self.type_definitions.items() if defn.matches(features)]
+        candidates = [
+            name
+            for name, defn in self.type_definitions.items()
+            if defn.matches(features)
+        ]
         if not candidates:
             return set()
 
@@ -209,7 +240,9 @@ class QuestionTypeClassifier:
         query_uris = list(g.subjects(RDF.type, LSQV.Query))
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
-        results: Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]] = {}
+        results: Dict[
+            str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
+        ] = {}
         for uri in query_uris:
             if not any(True for _ in g.objects(uri, LSQV.text)):
                 short = str(uri).split("/")[-1]
@@ -240,7 +273,11 @@ class QuestionTypeClassifier:
                     parsed = _sparql_parser.parseQuery(text)
                     algebra = _sparql_algebra.translateQuery(parsed)
                     bgp_c, tp_c, pv_c = compute_metrics(algebra.algebra)
-                    counts = {"bgpCount": bgp_c, "tpCount": tp_c, "projectVarCount": pv_c}
+                    counts = {
+                        "bgpCount": bgp_c,
+                        "tpCount": tp_c,
+                        "projectVarCount": pv_c,
+                    }
                 except Exception:
                     counts = {}
                 break

@@ -26,7 +26,9 @@ class TTLAdapter(InputAdapter, OutputAdapter):
         output_ns: str = str(SPARQLA),
         lsq: bool = False,
     ):
-        self.query_predicates = list(query_predicates) if query_predicates else self.DEFAULT_TEXT_PREDICATES
+        self.query_predicates = (
+            list(query_predicates) if query_predicates else self.DEFAULT_TEXT_PREDICATES
+        )
         self.output_ns = output_ns
         self._last_graph: Optional[Graph] = None
         self.lsq = lsq
@@ -43,19 +45,27 @@ class TTLAdapter(InputAdapter, OutputAdapter):
             if str(p) in self.query_predicates and o is not None:
                 text = str(o)
                 uri = str(s)
-                label = str(g.value(s, RDFS.label)) if (s, RDFS.label, None) in g else None
+                label = (
+                    str(g.value(s, RDFS.label)) if (s, RDFS.label, None) in g else None
+                )
                 meta = {}
                 for _s, _p, _o in g.triples((s, None, None)):
                     key = str(_p)
                     val = str(_o)
                     if key in meta:
-                        meta[key] = meta[key] if isinstance(meta[key], list) else [meta[key]]
+                        meta[key] = (
+                            meta[key] if isinstance(meta[key], list) else [meta[key]]
+                        )
                         meta[key].append(val)
                     else:
                         meta[key] = val
                 yield QueryRecord(uri=uri, label=label, text=text, metadata=meta)
 
-    def write(self, annotations: Iterable[Annotation], destination: Union[Path, io.IOBase, str]):
+    def write(
+        self,
+        annotations: Iterable[Annotation],
+        destination: Union[Path, io.IOBase, str],
+    ):
         g = self._last_graph if self._last_graph is not None else Graph()
         OUT = Namespace(self.output_ns)
 
@@ -67,7 +77,9 @@ class TTLAdapter(InputAdapter, OutputAdapter):
             g.add((subj, OUT.operators, Literal(",".join(sorted(ann.operators.raw)))))
 
             if self.lsq:
-                bgp_count, tp_count, proj_vars = compute_metrics_from_text(ann.record.text)
+                bgp_count, tp_count, proj_vars = compute_metrics_from_text(
+                    ann.record.text
+                )
                 sf = BNode()
                 g.add((subj, LSQV.hasStructuralFeatures, sf))
                 g.add((sf, RDF.type, LSQV.StructuralFeatures))
@@ -93,6 +105,7 @@ def compute_metrics_from_text(text: str):
     """Parse text and return (bgp_count, tp_count, project_var_count)."""
     import rdflib.plugins.sparql.parser as _p
     import rdflib.plugins.sparql.algebra as _a
+
     try:
         parsed = _p.parseQuery(text)
         alg = _a.translateQuery(parsed)

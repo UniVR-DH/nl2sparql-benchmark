@@ -8,6 +8,7 @@ from rdflib import URIRef
 # Annotation model
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class QueryRecord:
     uri: Optional[str]
@@ -22,7 +23,9 @@ class OperatorSet:
     projection_modifiers: Set[str] = field(default_factory=set)
     graph_patterns: Set[str] = field(default_factory=set)
     filters: Set[str] = field(default_factory=set)
-    filter_functions: Set[str] = field(default_factory=set)  # REGEX, LANG, DATATYPE, etc.
+    filter_functions: Set[str] = field(
+        default_factory=set
+    )  # REGEX, LANG, DATATYPE, etc.
     aggregates: Set[str] = field(default_factory=set)
     solution_modifiers: Set[str] = field(default_factory=set)
     assignments: Set[str] = field(default_factory=set)
@@ -47,6 +50,7 @@ class Annotation:
 # Classifier model
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FeatureRequirement:
     """One structural-feature restriction block from the ontology.
@@ -54,6 +58,7 @@ class FeatureRequirement:
     required     — features that MUST all be present (owl:hasValue)
     alternatives — at least one of these must be present (owl:someValuesFrom union)
     """
+
     required: Set[str] = field(default_factory=set)
     alternatives: Set[str] = field(default_factory=set)
 
@@ -66,6 +71,7 @@ class FeatureRequirement:
 @dataclass
 class QuestionTypeDefinition:
     """Extracted definition of a question type from the ontology."""
+
     uri: URIRef
     name: str
     own_requirements: List[FeatureRequirement] = field(default_factory=list)

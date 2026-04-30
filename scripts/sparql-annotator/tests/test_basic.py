@@ -1,8 +1,8 @@
 """Tests for Annotator, CSVAdapter, JSONAdapter round-trips."""
+
 import csv
 import io
 import json
-from pathlib import Path
 
 from sparql_annotator import Annotator, QueryRecord
 from sparql_annotator.adapters.csv import CSVAdapter
@@ -13,8 +13,13 @@ from sparql_annotator.adapters.json import JSONAdapter
 # Annotator
 # ---------------------------------------------------------------------------
 
+
 def test_annotate_valid_query():
-    records = [QueryRecord(uri=None, label="q1", text="SELECT ?s WHERE { ?s ?p ?o }", metadata={})]
+    records = [
+        QueryRecord(
+            uri=None, label="q1", text="SELECT ?s WHERE { ?s ?p ?o }", metadata={}
+        )
+    ]
     anns = Annotator().annotate(records)
     assert len(anns) == 1
     assert anns[0].is_valid
@@ -31,7 +36,9 @@ def test_annotate_invalid_query():
 
 def test_annotate_mixed():
     records = [
-        QueryRecord(uri=None, label="ok", text="SELECT ?s WHERE { ?s ?p ?o }", metadata={}),
+        QueryRecord(
+            uri=None, label="ok", text="SELECT ?s WHERE { ?s ?p ?o }", metadata={}
+        ),
         QueryRecord(uri=None, label="bad", text="NOT SPARQL", metadata={}),
     ]
     anns = Annotator().annotate(records)
@@ -41,6 +48,7 @@ def test_annotate_mixed():
 
 def test_annotate_file_requires_adapter():
     import pytest
+
     with pytest.raises(ValueError):
         Annotator().annotate_file("anything.ttl", input_adapter=None)
 
@@ -48,6 +56,7 @@ def test_annotate_file_requires_adapter():
 # ---------------------------------------------------------------------------
 # CSVAdapter — read
 # ---------------------------------------------------------------------------
+
 
 def test_csv_read(tmp_path):
     src = tmp_path / "in.csv"
@@ -60,7 +69,9 @@ def test_csv_read(tmp_path):
 
 def test_csv_read_skips_empty_query(tmp_path):
     src = tmp_path / "in.csv"
-    src.write_text("label,query\nq1,\nq2,SELECT ?s WHERE { ?s ?p ?o }\n", encoding="utf-8")
+    src.write_text(
+        "label,query\nq1,\nq2,SELECT ?s WHERE { ?s ?p ?o }\n", encoding="utf-8"
+    )
     records = list(CSVAdapter().read(str(src)))
     assert len(records) == 1
 
@@ -75,10 +86,13 @@ def test_csv_read_stream():
 # CSVAdapter — write round-trip
 # ---------------------------------------------------------------------------
 
+
 def test_csv_write_round_trip(tmp_path):
     src = tmp_path / "in.csv"
     out = tmp_path / "out.csv"
-    src.write_text("label,query\nq1,SELECT DISTINCT ?s WHERE { ?s ?p ?o }\n", encoding="utf-8")
+    src.write_text(
+        "label,query\nq1,SELECT DISTINCT ?s WHERE { ?s ?p ?o }\n", encoding="utf-8"
+    )
 
     adapter = CSVAdapter()
     anns = Annotator().annotate_file(str(src), input_adapter=adapter)
@@ -94,9 +108,13 @@ def test_csv_write_round_trip(tmp_path):
 # JSONAdapter — read
 # ---------------------------------------------------------------------------
 
+
 def test_json_read_array(tmp_path):
     src = tmp_path / "in.json"
-    src.write_text(json.dumps([{"label": "q1", "query": "SELECT ?s WHERE { ?s ?p ?o }"}]), encoding="utf-8")
+    src.write_text(
+        json.dumps([{"label": "q1", "query": "SELECT ?s WHERE { ?s ?p ?o }"}]),
+        encoding="utf-8",
+    )
     records = list(JSONAdapter().read(str(src)))
     assert len(records) == 1
     assert records[0].label == "q1"
@@ -104,7 +122,9 @@ def test_json_read_array(tmp_path):
 
 def test_json_read_object_of_objects(tmp_path):
     src = tmp_path / "in.json"
-    src.write_text(json.dumps({"q1": {"query": "SELECT ?s WHERE { ?s ?p ?o }"}}), encoding="utf-8")
+    src.write_text(
+        json.dumps({"q1": {"query": "SELECT ?s WHERE { ?s ?p ?o }"}}), encoding="utf-8"
+    )
     records = list(JSONAdapter().read(str(src)))
     assert len(records) == 1
     assert records[0].uri == "q1"
@@ -112,7 +132,12 @@ def test_json_read_object_of_objects(tmp_path):
 
 def test_json_read_skips_missing_query(tmp_path):
     src = tmp_path / "in.json"
-    src.write_text(json.dumps([{"label": "no-query"}, {"label": "q1", "query": "ASK { ?s ?p ?o }"}]), encoding="utf-8")
+    src.write_text(
+        json.dumps(
+            [{"label": "no-query"}, {"label": "q1", "query": "ASK { ?s ?p ?o }"}]
+        ),
+        encoding="utf-8",
+    )
     records = list(JSONAdapter().read(str(src)))
     assert len(records) == 1
 
@@ -121,10 +146,14 @@ def test_json_read_skips_missing_query(tmp_path):
 # JSONAdapter — write round-trip
 # ---------------------------------------------------------------------------
 
+
 def test_json_write_round_trip(tmp_path):
     src = tmp_path / "in.json"
     out = tmp_path / "out.json"
-    src.write_text(json.dumps([{"label": "q1", "query": "SELECT ?s WHERE { ?s ?p ?o }"}]), encoding="utf-8")
+    src.write_text(
+        json.dumps([{"label": "q1", "query": "SELECT ?s WHERE { ?s ?p ?o }"}]),
+        encoding="utf-8",
+    )
 
     adapter = JSONAdapter()
     anns = Annotator().annotate_file(str(src), input_adapter=adapter)

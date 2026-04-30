@@ -1,6 +1,6 @@
 """Tests for TTLAdapter LSQ output — including numeric literal fidelity."""
+
 import textwrap
-from pathlib import Path
 
 from rdflib import Graph, Namespace, URIRef, Literal
 from rdflib.namespace import XSD
@@ -81,8 +81,9 @@ def test_ttl_adapter_count_literals_are_integers(tmp_path):
     for prop in (LSQV.bgpCount, LSQV.tpCount, LSQV.projectVarCount):
         for val in g.objects(sf, prop):
             assert isinstance(val, Literal), f"{prop} value is not a Literal"
-            assert val.datatype in (XSD.integer, XSD.int, XSD.nonNegativeInteger), \
+            assert val.datatype in (XSD.integer, XSD.int, XSD.nonNegativeInteger), (
                 f"{prop} has unexpected datatype {val.datatype}"
+            )
 
 
 def test_ttl_adapter_multiline_query(tmp_path):
