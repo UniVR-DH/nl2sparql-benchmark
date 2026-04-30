@@ -49,6 +49,20 @@ def test_ap02_agg_no_distinct_no_flag():
     )
 
 
+def test_ap02_count_distinct_no_flag():
+    # COUNT(DISTINCT) is valid - inner DISTINCT is part of the aggregate semantics
+    assert "AP02" not in _codes(
+        "SELECT ?x (COUNT(DISTINCT ?y) AS ?c) WHERE { ?x <http://x.org/p> ?y } GROUP BY ?x"
+    )
+
+
+def test_ap02_select_distinct_with_count_distinct():
+    # SELECT DISTINCT with COUNT(DISTINCT) - outer DISTINCT is redundant
+    assert "AP02" in _codes(
+        "SELECT DISTINCT ?x (COUNT(DISTINCT ?y) AS ?c) WHERE { ?x <http://x.org/p> ?y } GROUP BY ?x"
+    )
+
+
 # ---------------------------------------------------------------------------
 # AP03 — projected var + aggregate without GROUP BY
 # ---------------------------------------------------------------------------
