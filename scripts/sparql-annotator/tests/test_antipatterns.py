@@ -56,7 +56,7 @@ def test_ap02_agg_no_distinct_no_flag():
 
 def test_ap03_proj_var_agg_no_groupby():
     assert "AP03" in _codes(
-        "SELECT ?x (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y . ?y a <http://x.org/T> }"
+        "SELECT ?x (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y }"
     )
 
 
