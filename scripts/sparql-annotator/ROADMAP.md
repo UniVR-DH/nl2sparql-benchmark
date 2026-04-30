@@ -57,37 +57,23 @@ sparql-annotator/
 
 ## Milestones
 
-### ✅ M1–M2.6 — Foundation through Classifier Integration — DONE
+### ✅ M1-M3 — Core Functionality (v0.1-v0.3) — DONE
 
-Everything up to and including the classifier migration is complete:
+**Completed features:**
+- `model.py`: Core data structures (`QueryRecord`, `Annotation`, `OperatorSet`, `FeatureRequirement`, `QuestionTypeDefinition`)
+- `algebra.py`: Single algebra-walk module for all structural analysis (operators, LSQ features, metrics, referenced terms)
+- `ontology.py`: OWL ontology parsing → type definitions + depth cache
+- `classifier.py`: Ontology-driven question type classification
+- `antipatterns.py`: 9 antipattern detectors (AP01-AP09)
+- `adapters/`: TTL, CSV, JSON file adapters
+- `cli.py`: `annotate`, `classify`, `inspect` commands
+- Complete operator coverage: VALUES, SERVICE, GRAPH, property paths, filter functions
+- 152 tests passing
 
-- `model.py`: `QueryRecord`, `Annotation`, `OperatorSet` (with structural metrics),
-  `FeatureRequirement`, `QuestionTypeDefinition`
-- `algebra.py`: single proper algebra-walk module — replaces all prior keyword-scan and
-  duplicate metric implementations. Includes fixes for:
-  - Spurious `Bind` on multi-aggregate `Extend` chains (GROUP BY re-projection)
-  - Spurious `Filter` on HAVING when inner `Extend` aliases sit between the HAVING
-    `Filter` and `AggregateJoin`
-- `ontology.py`: ontology parsing → type definitions + depth cache
-- `classifier.py`: `QuestionTypeClassifier` — LSQ feature extraction + ontology-driven
-  classification
-- `adapters/ttl.py`, `adapters/csv.py`, `adapters/json.py`: all file adapters
-- `cli.py`: `annotate`, `classify`, `inspect` sub-commands
-- `inspect_query.py`: query debugger (text + parse tree + algebra tree + LSQ features)
-- 24 tests passing
-
----
-
-### ✅ M3 — Complete Operator Coverage (v0.3) — DONE
-
-`extract_operators` in `algebra.py` now covers:
-- `VALUES` — detected via `ToMultiSet(values)` node
-- `SERVICE` — detected via `ServiceGraphPattern` node
-- `GRAPH` — detected via `Graph` node
-- `CONSTRUCT` / `DESCRIBE` — query form from algebra root node name
-- Property path operators — detected via `rdflib.paths.Path` instances in BGP triple predicates
-- FILTER expression functions (`REGEX`, `LANG`, `DATATYPE`, `STR`, `BOUND`, `IN`, etc.) — detected via `Builtin_*` nodes inside Filter expressions, stored in `OperatorSet.filter_functions`
-- `OperatorSet.filter_functions: Set[str]` field added to model
+**Key fixes:**
+- Spurious `Bind` on GROUP BY re-projection (multi-aggregate Extend chains)
+- Spurious `Filter` on HAVING (inner Extend aliases between Filter and AggregateJoin)
+- Parse tree mutation handling (rdflib mutates during `translateQuery`)
 
 ---
 
