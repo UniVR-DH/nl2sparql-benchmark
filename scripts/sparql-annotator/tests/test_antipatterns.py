@@ -35,7 +35,7 @@ def test_ap01_no_order_no_flag():
 
 def test_ap02_distinct_with_agg():
     assert "AP02" in _codes(
-        "SELECT DISTINCT (COUNT(?x) AS ?c) WHERE { ?x a <http://x.org/T> }"
+        "SELECT DISTINCT ?t (COUNT(?x) AS ?c) WHERE { ?x a ?t } GROUP BY ?t"
     )
 
 
@@ -56,7 +56,7 @@ def test_ap02_agg_no_distinct_no_flag():
 
 def test_ap03_proj_var_agg_no_groupby():
     assert "AP03" in _codes(
-        "SELECT ?x (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y }"
+        "SELECT ?x (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y . ?y a <http://x.org/T> }"
     )
 
 
