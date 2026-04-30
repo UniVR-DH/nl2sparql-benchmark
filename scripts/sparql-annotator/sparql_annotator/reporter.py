@@ -311,10 +311,7 @@ class ReportGenerator:
         ambiguous = sum(1 for r in data if r["status"] == "ambiguous")
         with_ap = sum(1 for r in data if r["issues"])
 
-        feat_counter: Counter = Counter(f for r in data for f in r["features"])
-        type_counter: Counter = Counter(qt for r in data for qt in r["qtypes"])
         ap_counter: Counter = Counter(i.code for r in data for i in r["issues"])
-
         bgp_vals = [r["counts"].get("bgpCount", 0) for r in data if r["counts"]]
         tp_vals = [r["counts"].get("tpCount", 0) for r in data if r["counts"]]
         pv_vals = [r["counts"].get("projectVarCount", 0) for r in data if r["counts"]]
@@ -330,9 +327,6 @@ class ReportGenerator:
             ("unclassified_queries", unclassified),
             ("ambiguous_queries", ambiguous),
             ("queries_with_antipatterns", with_ap),
-            ("most_common_feature", feat_counter.most_common(1)[0][0] if feat_counter else ""),
-            ("most_common_question_type", type_counter.most_common(1)[0][0] if type_counter else ""),
-            ("most_common_antipattern", ap_counter.most_common(1)[0][0] if ap_counter else ""),
             ("avg_bgp_count", avg(bgp_vals)),
             ("avg_triple_count", avg(tp_vals)),
             ("avg_projected_vars", avg(pv_vals)),
