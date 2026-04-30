@@ -186,6 +186,40 @@ Aggregate statistics across the dataset.
 - `avg_triple_count`: Average triples per query
 - `avg_projected_vars`: Average projected variables per query
 
+### 7. `<prefix>_count_by_question_type.csv`
+Query count per question type (frequency table).
+
+**Columns:**
+- `question_type`: `qat:*` type name (e.g. `Factoid`, `Enumeration`) or `(unclassified)`
+- `count`: Number of queries assigned that type
+
+Sorted by `count` descending.
+
+### 8. `<prefix>_count_by_feature.csv`
+Query count per LSQ structural feature (frequency table).
+
+**Columns:**
+- `feature`: LSQ feature name (e.g. `Aggregators`, `GroupBy`, `Distinct`)
+- `count`: Number of queries that carry that feature
+
+Sorted by `count` descending.
+
+### 9. `<prefix>_count_by_operator.csv`
+Query count per SPARQL operator (frequency table, restricted to operator-level LSQ features).
+
+Operators covered: `Select`, `Ask`, `Construct`, `Describe`, `Distinct`, `Reduced`,
+`Limit`, `Offset`, `OrderBy`, `Filter`, `Optional`, `Union`, `Minus`, `Graph`,
+`Service`, `Aggregators`, `GroupBy`, `Having`, `SubQuery`, `PropertyPath`, `Bind`, `Values`.
+
+**Columns:**
+- `operator`: Operator name
+- `count`: Number of queries that use that operator
+
+Sorted by `count` descending.
+
+> **Note:** Reports 7–9 are also printed to the console at the end of the `classify` command
+> (implemented in `_print_results` in `cli.py`).
+
 ## Implementation Structure
 
 ### New Module: `reporter.py`
@@ -288,9 +322,10 @@ def report(query_file: str, ontology: str, output_dir: str, prefix: str, formats
 2. Implement data collection (reuse `Annotator`, `QuestionTypeClassifier`, `detect_antipatterns`)
 3. Implement CSV writers for each report type
 4. Implement summary statistics computation
-5. Add CLI command in `cli.py`
-6. Add tests in `tests/test_reporter.py`
-7. Update README with `report` command documentation
+5. Implement frequency-table writers for reports 7–9 (`count_by_question_type`, `count_by_feature`, `count_by_operator`)
+6. Add CLI command in `cli.py`
+7. Add tests in `tests/test_reporter.py`
+8. Update README with `report` command documentation
 
 ## Testing Strategy
 

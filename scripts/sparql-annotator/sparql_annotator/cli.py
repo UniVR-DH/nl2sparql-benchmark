@@ -1,5 +1,6 @@
 import logging
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -202,6 +203,54 @@ def _print_results(
     )
     print(f"Total BGP count: {total_bgp}")
     print(f"Total TP count: {total_tp}")
+    print("=" * W + "\n")
+
+    # --- Summary: counts per question type ---
+    type_counter: Counter = Counter()
+    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+        for qt in qtypes:
+            type_counter[qt] += 1
+        if not qtypes:
+            type_counter["(unclassified)"] += 1
+
+    print("=" * W)
+    print("Summary: queries per question type")
+    print("-" * W)
+    for qtype, cnt in sorted(type_counter.items(), key=lambda x: (-x[1], x[0])):
+        print(f"  {cnt:4d}  {qtype}")
+    print("=" * W + "\n")
+
+    # --- Summary: counts per LSQ feature ---
+    feature_counter: Counter = Counter()
+    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+        for feat in features:
+            feature_counter[feat] += 1
+
+    print("=" * W)
+    print("Summary: queries per LSQ feature")
+    print("-" * W)
+    for feat, cnt in sorted(feature_counter.items(), key=lambda x: (-x[1], x[0])):
+        print(f"  {cnt:4d}  {feat}")
+    print("=" * W + "\n")
+
+    # --- Summary: counts per SPARQL operator ---
+    # LSQ features are the canonical operator vocabulary for this benchmark.
+    print("=" * W)
+    print("Summary: queries per SPARQL operator (via LSQ features)")
+    print("-" * W)
+    _operator_features = {
+        "Select", "Ask", "Construct", "Describe",
+        "Distinct", "Reduced", "Limit", "Offset", "OrderBy",
+        "Filter", "Optional", "Union", "Minus", "Graph", "Service",
+        "Aggregators", "GroupBy", "Having",
+        "SubQuery", "PropertyPath",
+        "Bind", "Values",
+    }
+    for feat, cnt in sorted(
+        ((f, c) for f, c in feature_counter.items() if f in _operator_features),
+        key=lambda x: (-x[1], x[0]),
+    ):
+        print(f"  {cnt:4d}  {feat}")
     print("=" * W + "\n")
 
     logger.info(
