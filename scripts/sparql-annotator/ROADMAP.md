@@ -139,37 +139,65 @@ sparql-annotator report \
 
 ---
 
-### 🔲 M5 — Validation Layer (v0.5)
+### 🔲 M5 — Batch Validation (v0.5)
 
-Optional `--validate` mode. Seeds already in `classifier.py`:
-`_check_count_annotations`, `_check_sparql_syntax`.
+Add `--validate` flag to `report` command to include validation checks in output.
 
-```python
-@dataclass
-class ValidationIssue:
-    severity: Literal["error", "warning", "info"]
-    code: str
-    message: str
-    location: Optional[str]
-```
+**Validation checks:**
+- Parse errors (already captured)
+- Missing LSQ annotations (if input is TTL with existing annotations)
+- Inconsistent counts (e.g., `lsqv:triplePatterns` ≠ actual triple count)
 
----
+**Output:**
+- Add `<prefix>_validation.csv` with columns: `query_id`, `severity`, `code`, `message`
+- Add validation summary to `<prefix>_summary.csv`
 
-### 🔲 M5 — Validation Layer (v0.5)
+**Implementation:**
+- Reuse existing `_check_count_annotations` from `classifier.py`
+- Add simple validation checks to `ReportGenerator`
+- No new CLI command, just a flag on existing `report` command
 
-Optional `--validate` mode. Seeds already in `classifier.py`:
-`_check_count_annotations`, `_check_sparql_syntax`.
+Purpose
 
-```python
-@dataclass
-class ValidationIssue:
-    severity: Literal["error", "warning", "info"]
-    code: str
-    message: str
-    location: Optional[str]
-```
+Provide a reproducible validation step for queries and annotation results to surface
+syntax, structural, and semantic issues before reports or downstream publication.
 
----
+Specification
+
+- Data model: add `ValidationIssue` dataclass:
+  - `severity: Literal["error","warning","info"]`
+  - `code: str` (e.g. `VAL_SYNTAX`, `VAL_COUNT_MISMATCH`)
+  - `message: str`
+  - `location: Optional[str]` (query id / URI / file:line)
+  - optional `hint: Optional[str]` and `fixable: bool`
+
+- Core validation checks (initial set):
+  - `VAL_SYNTAX`: SPARQL parse errors (fatal per-query)
+  - `VAL_COUNT_MISMATCH`: declared LSQ counts differ from `compute_metrics`
+  - `VAL_UNBOUND_VAR`: projected variable never bound in the body
+  - `VAL_ANTIPATTERN_*`: promote selected antipatterns to validation warnings
+  - `VAL_UNUSED_PREFIX`: unused TTL prefixes (info)
+  - `VAL_RESULTCOUNT_MISMATCH` (optional): `lsqv:resultCount` vs actual fetch
+
+- CLI integration:
+  - add `--validate` flag to `classify` / `annotate` / new `report` command
+  - `--fail-on {error,warning}` to return non-zero for CI when thresholds exceeded
+  - `--validate-format {pretty,json,csv}` to export issues
+
+- Python API:
+  - `validate_annotations(results, *, strict: bool=False) -> List[ValidationIssue]`
+  - `ValidationSummary` object with counts by severity and quick stats
+
+- Outputs and storage:
+  - human-readable console summary grouped by severity
+  - machine-readable JSON export (list of issues)
+  - optional TTL enrichment (e.g., `qat:validationIssue`) when `--output` requested
+
+- Testing and rollout:
+  - unit tests for each rule using small synthetic queries (add tests/test_validation.py)
+  - Phase 1: implement parsing, count mismatch, unbound var, and selected antipatterns
+  - Phase 2: add stricter semantic checks and CI gating (`--fail-on`)
+  - Phase 3: optional autofix hooks for trivially fixable items (only when `--fix` used)
 
 ### 🔲 M6 — Public API and Documentation (v1.0)
 
