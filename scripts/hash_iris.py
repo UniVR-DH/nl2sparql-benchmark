@@ -3,7 +3,6 @@
 
 The script creates a mirrored output directory with the same file names as the
 input directory. It hashes only IRIs under configured namespace prefixes.
-Query files are copied without hashing by default.
 """
 
 from __future__ import annotations
@@ -25,10 +24,7 @@ DEFAULT_NAMESPACES = [
 
 SKIP_FILES: set[str] = set()
 
-COPY_ONLY_FILES = {
-#     "ck25-queries.ttl",
-#     "ck25-queries.graph",
-}
+COPY_ONLY_FILES: set[str] = set()
 
 SPARQL_STRING_PREDICATES = {
     "http://lsq.aksw.org/vocab#text",
@@ -58,22 +54,36 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
     return normalized
 
 
-def short_hash(text: str, length: int) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:length]
+def short_hash(text: str, length: int, fmt: str = "hex") -> str:
+    """Return a short hash of *text*.
+
+    Args:
+        text:   The string to hash.
+        length: Number of characters (hex) or digits (int) to keep.
+        fmt:    ``"hex"`` returns the first *length* hex characters of the
+                SHA-256 digest.  ``"int"`` converts the digest to an integer,
+                takes it modulo ``10**length``, and zero-pads to *length*
+                decimal digits.
+    """
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if fmt == "int":
+        return str(int(digest, 16) % (10 ** length)).zfill(length)
+    return digest[:length]
 
 
-def hash_full_iri(iri: str, namespaces: list[str], hash_len: int) -> str:
+def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> str:
     for ns in namespaces:
         if iri.startswith(ns):
             local = iri[len(ns):]
-            # Don't hash if there's no local name
             if not local:
                 return iri
-            return f"{ns}{short_hash(iri, hash_len)}"
+            return f"{ns}{short_hash(iri, hash_len, fmt)}"
     return iri
 
 
-def hash_sparql_string(sparql: str, namespaces: list[str], hash_len: int) -> str:
+def hash_sparql_string(
+    sparql: str, namespaces: list[str], hash_len: int, fmt: str
+) -> str:
     """Hash IRIs inside an embedded SPARQL query string.
 
     Handles both full IRIs (<http://...>) and prefixed names (pv:Something).
@@ -86,18 +96,16 @@ def hash_sparql_string(sparql: str, namespaces: list[str], hash_len: int) -> str
             prefix_to_ns[prefix] = ns
 
     def hash_angle_line(line: str) -> str:
-        # Skip PREFIX declaration lines entirely
         if SPARQL_PREFIX_RE.match(line.strip()):
             return line
+
         def repl(m: re.Match[str]) -> str:
             iri = m.group(1)
-            # Skip if IRI is exactly a namespace (no local name after it)
             if any(iri == ns or iri == ns.rstrip("/") for ns in namespaces):
                 return f"<{iri}>"
-            return f"<{hash_full_iri(iri, namespaces, hash_len)}>"
+            return f"<{hash_full_iri(iri, namespaces, hash_len, fmt)}>"
+
         return ANGLE_IRI_RE.sub(repl, line)
-        
-    
 
     lines = sparql.splitlines(keepends=True)
     result = []
@@ -107,13 +115,15 @@ def hash_sparql_string(sparql: str, namespaces: list[str], hash_len: int) -> str
             pattern = re.compile(
                 rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([A-Za-z0-9._~%-]+)"
             )
+
             def repl_pref(
                 m: re.Match[str],
                 ns_val: str = ns,
                 pref: str = prefix,
             ) -> str:
                 full_iri = f"{ns_val}{m.group(1)}"
-                return f"{pref}:{short_hash(full_iri, hash_len)}"
+                return f"{pref}:{short_hash(full_iri, hash_len, fmt)}"
+
             hashed_line = pattern.sub(repl_pref, hashed_line)
         result.append(hashed_line)
     return "".join(result)
@@ -123,17 +133,16 @@ def replace_angle_iris(
     text: str,
     namespaces: list[str],
     hash_len: int,
+    fmt: str,
     skip_multiline_strings: bool = False,
 ) -> str:
     output_lines = []
     in_multiline_string = False
     for line in text.splitlines(keepends=True):
-        # Never hash IRIs inside @prefix declarations
         if line.lstrip().startswith("@prefix"):
             output_lines.append(line)
             continue
 
-        # Skip content inside multiline strings if requested
         if skip_multiline_strings and in_multiline_string:
             output_lines.append(line)
             if line.count('"""') % 2 == 1:
@@ -142,7 +151,7 @@ def replace_angle_iris(
 
         def repl(match: re.Match[str]) -> str:
             iri = match.group(1)
-            return f"<{hash_full_iri(iri, namespaces, hash_len)}>"
+            return f"<{hash_full_iri(iri, namespaces, hash_len, fmt)}>"
 
         output_lines.append(ANGLE_IRI_RE.sub(repl, line))
 
@@ -156,6 +165,7 @@ def replace_prefixed_names(
     text: str,
     namespaces: list[str],
     hash_len: int,
+    fmt: str,
     hash_query_strings: bool,
 ) -> str:
     prefix_to_ns: dict[str, str] = {}
@@ -175,10 +185,10 @@ def replace_prefixed_names(
 
     if not prefix_to_ns:
         return text
-    
+
     patterns = {
         prefix: re.compile(
-            rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([^\s;,]+)"
+            rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([^\s;,/]+)"
         )
         for prefix in prefix_to_ns
     }
@@ -206,9 +216,12 @@ def replace_prefixed_names(
                 ns_value: str = ns,
                 pref: str = prefix,
             ) -> str:
-                local = match.group(1)
+                # rstrip handles trailing dots used as Turtle statement
+                # terminators (e.g. pv:name.) without breaking local names
+                # that legitimately contain dots (e.g. email-style IRIs).
+                local = match.group(1).rstrip(".")
                 full_iri = f"{ns_value}{local}"
-                hashed = short_hash(full_iri, hash_len)
+                hashed = short_hash(full_iri, hash_len, fmt)
                 return f"{pref}:{hashed}"
 
             updated = pattern.sub(repl, updated)
@@ -225,6 +238,7 @@ def hash_sparql_literals_via_rdflib(
     text: str,
     namespaces: list[str],
     hash_len: int,
+    fmt: str,
 ) -> str:
     """Use rdflib to find embedded SPARQL literals and hash IRIs inside them."""
     g = Graph()
@@ -239,13 +253,13 @@ def hash_sparql_literals_via_rdflib(
         for s, p, o in g.triples((None, pred, None)):
             if isinstance(o, Literal):
                 original = str(o)
-                hashed = hash_sparql_string(original, namespaces, hash_len)
+                hashed = hash_sparql_string(original, namespaces, hash_len, fmt)
                 if original != hashed:
                     replacements.append((original, hashed))
 
     result = text
     for original, hashed in replacements:
-        result = result.replace(original, hashed, 1)
+        result = result.replace(original, hashed)
     return result
 
 
@@ -253,24 +267,22 @@ def transform_text(
     text: str,
     namespaces: list[str],
     hash_len: int,
+    fmt: str,
     hash_query_strings: bool,
 ) -> str:
     if hash_query_strings:
-        # Hash SPARQL literals first via rdflib
-        text = hash_sparql_literals_via_rdflib(text, namespaces, hash_len)
-        # Then hash remaining IRIs but skip multiline strings
-        # (already processed above — avoids double hashing)
+        text = hash_sparql_literals_via_rdflib(text, namespaces, hash_len, fmt)
         step1 = replace_prefixed_names(
-            text, namespaces, hash_len, hash_query_strings
+            text, namespaces, hash_len, fmt, hash_query_strings
         )
         return replace_angle_iris(
-            step1, namespaces, hash_len, skip_multiline_strings=True
+            step1, namespaces, hash_len, fmt, skip_multiline_strings=True
         )
     else:
         step1 = replace_prefixed_names(
-            text, namespaces, hash_len, hash_query_strings
+            text, namespaces, hash_len, fmt, hash_query_strings
         )
-        return replace_angle_iris(step1, namespaces, hash_len)
+        return replace_angle_iris(step1, namespaces, hash_len, fmt)
 
 
 def process_folder(
@@ -278,11 +290,11 @@ def process_folder(
     output_dir: Path,
     namespaces: list[str],
     hash_len: int,
+    fmt: str,
     hash_query_strings: bool,
     skip_files: set[str],
     copy_only_files: set[str],
 ) -> tuple[int, int, int, int]:
-    # Always overwrite output dir cleanly
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -308,7 +320,7 @@ def process_folder(
 
         content = src.read_text(encoding="utf-8")
         transformed = transform_text(
-            content, namespaces, hash_len, hash_query_strings
+            content, namespaces, hash_len, fmt, hash_query_strings
         )
         dst.write_text(transformed, encoding="utf-8")
         transformed_count += 1
@@ -344,7 +356,18 @@ def parse_args() -> argparse.Namespace:
         "--hash-len",
         type=int,
         default=6,
-        help="Hex chars from sha256 to keep (default: 6)",
+        help="Number of characters (hex) or digits (int) to keep (default: 6).",
+    )
+    parser.add_argument(
+        "--hash-format",
+        choices=["hex", "int"],
+        default="hex",
+        help=(
+            "Output format for hashes: "
+            "'hex' (default) keeps the first --hash-len hex chars of the SHA-256 digest; "
+            "'int' converts the digest to a decimal integer modulo 10**hash-len, "
+            "zero-padded to hash-len digits."
+        ),
     )
     parser.add_argument(
         "--hash-query-strings",
@@ -362,10 +385,7 @@ def parse_args() -> argparse.Namespace:
         "--copy-only-file",
         action="append",
         default=None,
-        help=(
-            "File name to copy without hashing (repeatable). "
-            "Defaults to ck25-queries.ttl and ck25-queries.graph."
-        ),
+        help="File name to copy without hashing (repeatable).",
     )
     return parser.parse_args()
 
@@ -395,6 +415,7 @@ def main() -> int:
         output_dir=output_dir,
         namespaces=namespaces,
         hash_len=args.hash_len,
+        fmt=args.hash_format,
         hash_query_strings=args.hash_query_strings,
         skip_files=skip_files,
         copy_only_files=copy_only_files,
@@ -405,6 +426,7 @@ def main() -> int:
     print(f"  Input dir:    {input_dir}")
     print(f"  Output dir:   {output_dir}")
     print(f"  Namespaces:   {', '.join(namespaces)}")
+    print(f"  Hash format:  {args.hash_format}")
     print(f"  Hash queries: {args.hash_query_strings}")
     print(f"  Files in:     {file_count}")
     print(f"  Processed:    {transformed_count}")
