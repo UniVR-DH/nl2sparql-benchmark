@@ -73,106 +73,106 @@ def test_ap03_pure_agg_no_flag():
 
 
 # ---------------------------------------------------------------------------
-# AP05 — Cartesian product
+# AP04 — Cartesian product
 # ---------------------------------------------------------------------------
 
 
-def test_ap05_cartesian():
-    assert "AP05" in _codes(
+def test_ap04_cartesian():
+    assert "AP04" in _codes(
         "SELECT ?x ?y WHERE { ?x a <http://x.org/Person> . ?y a <http://x.org/City> }"
     )
 
 
-def test_ap05_joined_no_flag():
-    assert "AP05" not in _codes(
+def test_ap04_joined_no_flag():
+    assert "AP04" not in _codes(
         "SELECT ?x ?y WHERE { ?x a <http://x.org/Person> . ?x <http://x.org/lives> ?y }"
     )
 
 
-def test_ap05_single_triple_no_flag():
-    assert "AP05" not in _codes("SELECT ?x WHERE { ?x a <http://x.org/T> }")
+def test_ap04_single_triple_no_flag():
+    assert "AP04" not in _codes("SELECT ?x WHERE { ?x a <http://x.org/T> }")
 
 
 # ---------------------------------------------------------------------------
-# AP06 — non-grouped projected variable
+# AP05 — non-grouped projected variable
 # ---------------------------------------------------------------------------
 
 
-def test_ap06_non_grouped_var():
-    assert "AP06" in _codes(
+def test_ap05_non_grouped_var():
+    assert "AP05" in _codes(
         "SELECT ?x ?z (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y ; <http://x.org/q> ?z } GROUP BY ?x"
     )
 
 
-def test_ap06_all_grouped_no_flag():
-    assert "AP06" not in _codes(
+def test_ap05_all_grouped_no_flag():
+    assert "AP05" not in _codes(
         "SELECT ?x ?z (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y ; <http://x.org/q> ?z } GROUP BY ?x ?z"
     )
 
 
 # ---------------------------------------------------------------------------
-# AP11 — unbound projected variable
+# AP09 — unbound projected variable
 # ---------------------------------------------------------------------------
 
 
-def test_ap11_unbound_proj():
-    assert "AP11" in _codes("SELECT ?x ?y WHERE { ?x a <http://x.org/T> }")
+def test_ap09_unbound_proj():
+    assert "AP09" in _codes("SELECT ?x ?y WHERE { ?x a <http://x.org/T> }")
 
 
-def test_ap11_all_bound_no_flag():
-    assert "AP11" not in _codes(
+def test_ap09_all_bound_no_flag():
+    assert "AP09" not in _codes(
         "SELECT ?x ?y WHERE { ?x a <http://x.org/T> . ?x <http://x.org/p> ?y }"
     )
 
 
 # ---------------------------------------------------------------------------
-# AP08 — aggregate in FILTER instead of HAVING
+# AP06 — aggregate in FILTER instead of HAVING
 # ---------------------------------------------------------------------------
 
 
-def test_ap08_aggregate_in_filter():
-    assert "AP08" in _codes(
+def test_ap06_aggregate_in_filter():
+    assert "AP06" in _codes(
         "SELECT ?x WHERE { ?x <http://x.org/p> ?y FILTER(COUNT(?y) > 5) } GROUP BY ?x"
     )
 
 
-def test_ap08_having_no_flag():
-    assert "AP08" not in _codes(
+def test_ap06_having_no_flag():
+    assert "AP06" not in _codes(
         "SELECT ?x (COUNT(?y) AS ?c) WHERE { ?x <http://x.org/p> ?y } GROUP BY ?x HAVING (COUNT(?y) > 5)"
     )
 
 
 # ---------------------------------------------------------------------------
-# AP09 — alias reference in same SELECT
+# AP07 — alias reference in same SELECT
 # ---------------------------------------------------------------------------
 
 
-def test_ap09_alias_reference():
-    assert "AP09" in _codes(
+def test_ap07_alias_reference():
+    assert "AP07" in _codes(
         "SELECT (COUNT(?x) AS ?c) (?c + 1 AS ?d) WHERE { ?x a <http://x.org/T> }"
     )
 
 
-def test_ap09_no_cross_ref_no_flag():
-    assert "AP09" not in _codes(
+def test_ap07_no_cross_ref_no_flag():
+    assert "AP07" not in _codes(
         "SELECT (COUNT(?x) AS ?c) WHERE { ?x a <http://x.org/T> }"
     )
 
 
 # ---------------------------------------------------------------------------
-# AP10 — vendor-specific syntax
+# AP08 — vendor-specific syntax
 # ---------------------------------------------------------------------------
 
 
-def test_ap10_vendor_function():
+def test_ap08_vendor_function():
     # bif:contains is a Virtuoso extension — unknown prefix causes translation error
-    assert "AP10" in _codes(
+    assert "AP08" in _codes(
         'SELECT ?x WHERE { ?x <http://x.org/name> ?n FILTER(bif:contains(?n, "Alice")) }'
     )
 
 
-def test_ap10_standard_function_no_flag():
-    assert "AP10" not in _codes(
+def test_ap08_standard_function_no_flag():
+    assert "AP08" not in _codes(
         'SELECT ?x WHERE { ?x <http://x.org/name> ?n FILTER(REGEX(?n, "Alice")) }'
     )
 
@@ -209,4 +209,4 @@ def test_multiple_antipatterns():
         "SELECT ?x ?z WHERE { ?x <http://x.org/v> ?v } ORDER BY DESC(?v) LIMIT 1"
     )
     assert "AP01" in codes
-    assert "AP11" in codes
+    assert "AP09" in codes

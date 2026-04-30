@@ -284,9 +284,12 @@ for issue in issues:
 | AP01 | `ORDER BY` + `LIMIT 1` for extrema — use `MIN()`/`MAX()` instead |
 | AP02 | `DISTINCT` with aggregation — redundant or misleading |
 | AP03 | Non-aggregate projected variable alongside aggregate without `GROUP BY` |
-| AP05 | Cartesian product — disconnected BGP components |
-| AP06 | Projected variable not in `GROUP BY` and not aggregated |
-| AP11 | Projected variable never bound in the query body |
+| AP04 | Cartesian product — disconnected BGP components |
+| AP05 | Projected variable not in `GROUP BY` and not aggregated |
+| AP06 | Aggregate used in `FILTER` instead of `HAVING` |
+| AP07 | `SELECT` alias referenced in the same `SELECT` clause |
+| AP08 | Non-standard/vendor-specific syntax (algebra translation fails) |
+| AP09 | Projected variable never bound in the query body |
 
 Returns an empty list for unparseable queries (no crash).
 

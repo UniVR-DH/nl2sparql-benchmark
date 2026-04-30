@@ -168,21 +168,21 @@ def _ap03_proj_var_agg_no_groupby(
     return None
 
 
-def _ap05_cartesian_product(alg: CompValue) -> Optional[AntipatternIssue]:
+def _ap04_cartesian_product(alg: CompValue) -> Optional[AntipatternIssue]:
     """BGP with disconnected variable components — likely unintended Cartesian product."""
     for node in _walk_algebra(alg):
         if node.name == "BGP":
             triples = node.get("triples") or []
             if len(triples) >= 2 and _bgp_components(triples) > 1:
                 return AntipatternIssue(
-                    code="AP05",
+                    code="AP04",
                     message="BGP contains disconnected triple patterns (Cartesian product).",
                     hint="Add a join condition linking the disconnected variable sets.",
                 )
     return None
 
 
-def _ap06_non_grouped_vars(
+def _ap05_non_grouped_vars(
     alg: CompValue, parsed: object = None
 ) -> Optional[AntipatternIssue]:
     """Projected variables not in GROUP BY and not aggregate aliases."""
@@ -205,14 +205,14 @@ def _ap06_non_grouped_vars(
     non_grouped = [v for v in pv if v not in group_vars and v not in aliases]
     if non_grouped:
         return AntipatternIssue(
-            code="AP06",
+            code="AP05",
             message=f"Variable(s) {non_grouped} projected but not in GROUP BY and not aggregated.",
             hint="Add missing variables to GROUP BY or wrap them in an aggregate.",
         )
     return None
 
 
-def _ap11_unbound_projected_vars(alg: CompValue) -> Optional[AntipatternIssue]:
+def _ap09_unbound_projected_vars(alg: CompValue) -> Optional[AntipatternIssue]:
     """Projected variables that are never bound in the query body."""
     pv = {str(v) for v in (alg.get("PV") or []) if isinstance(v, Variable)}
     if not pv:
@@ -222,7 +222,7 @@ def _ap11_unbound_projected_vars(alg: CompValue) -> Optional[AntipatternIssue]:
     unbound = pv - bound
     if unbound:
         return AntipatternIssue(
-            code="AP11",
+            code="AP09",
             message=f"Projected variable(s) {sorted(unbound)} are never bound in the query body.",
             hint="Remove the unbound variable(s) from SELECT or add patterns that bind them.",
         )
@@ -234,7 +234,7 @@ def _ap11_unbound_projected_vars(alg: CompValue) -> Optional[AntipatternIssue]:
 # ---------------------------------------------------------------------------
 
 
-def _ap08_aggregate_in_filter(alg: CompValue) -> Optional[AntipatternIssue]:
+def _ap06_aggregate_in_filter(alg: CompValue) -> Optional[AntipatternIssue]:
     """Aggregate used in FILTER instead of HAVING."""
     has_agg = any(n.name == "AggregateJoin" for n in _walk_algebra(alg))
     if not has_agg:
@@ -254,14 +254,14 @@ def _ap08_aggregate_in_filter(alg: CompValue) -> Optional[AntipatternIssue]:
                     }
                     if any(v.startswith("__agg_") for v in expr_vars):
                         return AntipatternIssue(
-                            code="AP08",
+                            code="AP06",
                             message="Aggregate function used in FILTER instead of HAVING.",
                             hint="Move the aggregate condition to a HAVING clause.",
                         )
     return None
 
 
-def _ap09_alias_reference_in_select(alg: CompValue) -> Optional[AntipatternIssue]:
+def _ap07_alias_reference_in_select(alg: CompValue) -> Optional[AntipatternIssue]:
     """SELECT alias referenced in the same SELECT clause."""
     # Collect all aggregate alias variables (__agg_N__ → projected name)
     agg_res_vars: set[str] = set()
@@ -294,14 +294,14 @@ def _ap09_alias_reference_in_select(alg: CompValue) -> Optional[AntipatternIssue
                 }
                 if non_agg_refs & pv_names:
                     return AntipatternIssue(
-                        code="AP09",
+                        code="AP07",
                         message="SELECT alias referenced within the same SELECT clause.",
                         hint="Aliases defined in SELECT cannot be referenced in the same SELECT; use a subquery.",
                     )
     return None
 
 
-def _ap10_translation_error(text: str, parsed: object) -> Optional[AntipatternIssue]:
+def _ap08_translation_error(text: str, parsed: object) -> Optional[AntipatternIssue]:
     """Query parses but fails algebra translation — likely vendor-specific extension."""
     import rdflib.plugins.sparql.algebra as _alg
 
@@ -310,7 +310,7 @@ def _ap10_translation_error(text: str, parsed: object) -> Optional[AntipatternIs
         return None
     except Exception as exc:
         return AntipatternIssue(
-            code="AP10",
+            code="AP08",
             message=f"Query uses non-standard or vendor-specific syntax: {exc}",
             hint="Remove or replace vendor-specific functions/extensions for portability.",
         )
@@ -323,15 +323,15 @@ def _ap10_translation_error(text: str, parsed: object) -> Optional[AntipatternIs
 _DETECTORS = [
     _ap01_order_limit1,
     _ap02_distinct_with_aggregation,
-    _ap05_cartesian_product,
-    _ap08_aggregate_in_filter,
-    _ap09_alias_reference_in_select,
-    _ap11_unbound_projected_vars,
+    _ap04_cartesian_product,
+    _ap06_aggregate_in_filter,
+    _ap07_alias_reference_in_select,
+    _ap09_unbound_projected_vars,
 ]
 
 _DETECTORS_WITH_PARSED = [
     _ap03_proj_var_agg_no_groupby,
-    _ap06_non_grouped_vars,
+    _ap05_non_grouped_vars,
 ]
 
 
@@ -362,7 +362,7 @@ def detect_antipatterns(text: str, parsed: object = None) -> List[AntipatternIss
             return []
 
     # AP10: check before translation (translation itself may fail)
-    ap10 = _ap10_translation_error(text, parsed)
+    ap10 = _ap08_translation_error(text, parsed)
     if ap10:
         return [ap10]
 
