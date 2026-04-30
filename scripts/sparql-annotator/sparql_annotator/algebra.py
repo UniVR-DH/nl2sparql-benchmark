@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import re
+from rdflib.paths import Path as _RDFPath
 from typing import Any, Optional, Set, Tuple
 
 from rdflib.plugins.sparql.parserutils import CompValue
@@ -264,20 +265,15 @@ def extract_operators(text: str, parsed: object):
 
     ops = OperatorSet()
 
-    # Query form from parse tree
-    up = text.upper().lstrip()
-    if up.startswith("ASK"):
-        ops.query_form = "ASK"
-    elif up.startswith("CONSTRUCT"):
-        ops.query_form = "CONSTRUCT"
-    elif up.startswith("DESCRIBE"):
-        ops.query_form = "DESCRIBE"
-    elif up.startswith("SELECT"):
-        ops.query_form = "SELECT"
-    else:
-        ops.query_form = "UNKNOWN"
-
+    # Query form — use algebra root node name (reliable) with text fallback
     if parsed is None:
+        up = text.upper().lstrip()
+        ops.query_form = (
+            "ASK" if up.startswith("ASK") else
+            "CONSTRUCT" if up.startswith("CONSTRUCT") else
+            "DESCRIBE" if up.startswith("DESCRIBE") else
+            "SELECT" if up.startswith("SELECT") else "UNKNOWN"
+        )
         return ops
 
     try:
@@ -285,7 +281,58 @@ def extract_operators(text: str, parsed: object):
     except Exception:
         return ops
 
+    root_name = alg.algebra.name
+    if root_name == "SelectQuery":
+        ops.query_form = "SELECT"
+    elif root_name == "AskQuery":
+        ops.query_form = "ASK"
+    elif root_name == "ConstructQuery":
+        ops.query_form = "CONSTRUCT"
+    elif root_name == "DescribeQuery":
+        ops.query_form = "DESCRIBE"
+    else:
+        ops.query_form = "UNKNOWN"
+
+    # FILTER function names that map to Builtin_* nodes
+    _FILTER_FUNCS = {
+        "Builtin_REGEX": "REGEX", "Builtin_LANG": "LANG", "Builtin_LANGMATCHES": "LANGMATCHES",
+        "Builtin_DATATYPE": "DATATYPE", "Builtin_BOUND": "BOUND", "Builtin_IRI": "IRI",
+        "Builtin_URI": "URI", "Builtin_BNODE": "BNODE", "Builtin_STR": "STR",
+        "Builtin_STRDT": "STRDT", "Builtin_STRLANG": "STRLANG", "Builtin_STRLEN": "STRLEN",
+        "Builtin_SUBSTR": "SUBSTR", "Builtin_UCASE": "UCASE", "Builtin_LCASE": "LCASE",
+        "Builtin_STRSTARTS": "STRSTARTS", "Builtin_STRENDS": "STRENDS",
+        "Builtin_CONTAINS": "CONTAINS", "Builtin_ENCODE_FOR_URI": "ENCODE_FOR_URI",
+        "Builtin_CONCAT": "CONCAT", "Builtin_REPLACE": "REPLACE",
+        "Builtin_ABS": "ABS", "Builtin_ROUND": "ROUND", "Builtin_CEIL": "CEIL",
+        "Builtin_FLOOR": "FLOOR", "Builtin_RAND": "RAND",
+        "Builtin_NOW": "NOW", "Builtin_YEAR": "YEAR", "Builtin_MONTH": "MONTH",
+        "Builtin_DAY": "DAY", "Builtin_HOURS": "HOURS", "Builtin_MINUTES": "MINUTES",
+        "Builtin_SECONDS": "SECONDS", "Builtin_TIMEZONE": "TIMEZONE", "Builtin_TZ": "TZ",
+        "Builtin_MD5": "MD5", "Builtin_SHA1": "SHA1", "Builtin_SHA256": "SHA256",
+        "Builtin_SHA384": "SHA384", "Builtin_SHA512": "SHA512",
+        "Builtin_isIRI": "isIRI", "Builtin_isURI": "isURI", "Builtin_isLITERAL": "isLITERAL",
+        "Builtin_isNUMERIC": "isNUMERIC", "Builtin_isBLANK": "isBLANK",
+        "Builtin_sameTerm": "sameTerm", "Builtin_IN": "IN", "Builtin_NOT_IN": "NOT_IN",
+        "Builtin_IF": "IF", "Builtin_COALESCE": "COALESCE",
+    }
+
     seen: Set[int] = set()
+
+    def _check_expr_for_builtins(expr) -> None:
+        """Recursively find Builtin_* nodes inside a filter expression."""
+        if not isinstance(expr, CompValue):
+            return
+        fn = _FILTER_FUNCS.get(expr.name)
+        if fn:
+            ops.filter_functions.add(fn)
+            ops.raw.add(fn)
+        for v in expr.values():
+            if isinstance(v, CompValue):
+                _check_expr_for_builtins(v)
+            elif isinstance(v, list):
+                for item in v:
+                    if isinstance(item, CompValue):
+                        _check_expr_for_builtins(item)
 
     for node in _walk_algebra(alg.algebra):
         nid = id(node)
@@ -296,7 +343,15 @@ def extract_operators(text: str, parsed: object):
 
         if name == "BGP":
             ops.bgp_count += 1
-            ops.tp_count += len(node.get("triples") or [])
+            triples = node.get("triples") or []
+            ops.tp_count += len(triples)
+            # Property paths: check predicate position of each triple
+            for triple in triples:
+                if len(triple) >= 2:
+                    pred = triple[1]
+                    if isinstance(pred, _RDFPath):
+                        ops.property_paths = True
+                        ops.raw.add("PROPERTY_PATH")
 
         elif name == "LeftJoin":
             ops.graph_patterns.add("OPTIONAL")
@@ -314,7 +369,7 @@ def extract_operators(text: str, parsed: object):
             ops.graph_patterns.add("GRAPH")
             ops.raw.add("GRAPH")
 
-        elif name == "Service":
+        elif name == "ServiceGraphPattern":
             ops.graph_patterns.add("SERVICE")
             ops.raw.add("SERVICE")
 
@@ -332,6 +387,7 @@ def extract_operators(text: str, parsed: object):
             elif expr_name is not None:
                 ops.filters.add("FILTER")
                 ops.raw.add("FILTER")
+                _check_expr_for_builtins(expr)
 
         elif name == "Extend":
             if _is_user_bind(node, parsed):
@@ -340,35 +396,32 @@ def extract_operators(text: str, parsed: object):
 
         elif name == "ToMultiSet":
             inner = node.get("p")
-            if isinstance(inner, CompValue) and inner.name == "Project":
-                ops.subqueries = True
-                ops.raw.add("SUBQUERY")
+            if isinstance(inner, CompValue):
+                if inner.name == "Project":
+                    ops.subqueries = True
+                    ops.raw.add("SUBQUERY")
+                elif inner.name == "values":
+                    ops.assignments.add("VALUES")
+                    ops.raw.add("VALUES")
 
         elif name == "AggregateJoin":
             aggs = node.get("A") or []
             for agg in aggs:
                 agg_name = getattr(agg, "name", "")
                 if "Count" in agg_name:
-                    ops.aggregates.add("COUNT")
-                    ops.raw.add("COUNT")
+                    ops.aggregates.add("COUNT"); ops.raw.add("COUNT")
                 elif "Sum" in agg_name:
-                    ops.aggregates.add("SUM")
-                    ops.raw.add("SUM")
+                    ops.aggregates.add("SUM"); ops.raw.add("SUM")
                 elif "Avg" in agg_name:
-                    ops.aggregates.add("AVG")
-                    ops.raw.add("AVG")
+                    ops.aggregates.add("AVG"); ops.raw.add("AVG")
                 elif "Min" in agg_name:
-                    ops.aggregates.add("MIN")
-                    ops.raw.add("MIN")
+                    ops.aggregates.add("MIN"); ops.raw.add("MIN")
                 elif "Max" in agg_name:
-                    ops.aggregates.add("MAX")
-                    ops.raw.add("MAX")
+                    ops.aggregates.add("MAX"); ops.raw.add("MAX")
                 elif "Sample" in agg_name:
-                    ops.aggregates.add("SAMPLE")
-                    ops.raw.add("SAMPLE")
+                    ops.aggregates.add("SAMPLE"); ops.raw.add("SAMPLE")
                 elif "GroupConcat" in agg_name:
-                    ops.aggregates.add("GROUP_CONCAT")
-                    ops.raw.add("GROUP_CONCAT")
+                    ops.aggregates.add("GROUP_CONCAT"); ops.raw.add("GROUP_CONCAT")
 
         elif name == "Group":
             ops.solution_modifiers.add("GROUP BY")
@@ -380,11 +433,9 @@ def extract_operators(text: str, parsed: object):
 
         elif name == "Slice":
             if node.get("start") not in (None, 0):
-                ops.solution_modifiers.add("OFFSET")
-                ops.raw.add("OFFSET")
+                ops.solution_modifiers.add("OFFSET"); ops.raw.add("OFFSET")
             if node.get("length") is not None:
-                ops.solution_modifiers.add("LIMIT")
-                ops.raw.add("LIMIT")
+                ops.solution_modifiers.add("LIMIT"); ops.raw.add("LIMIT")
 
         elif name == "Distinct":
             ops.projection_modifiers.add("DISTINCT")
@@ -393,17 +444,6 @@ def extract_operators(text: str, parsed: object):
         elif name == "Reduced":
             ops.projection_modifiers.add("REDUCED")
             ops.raw.add("REDUCED")
-
-        elif name == "Join" and node.get("p1") is not None:
-            # VALUES inline data compiles to a Join with a ToMultiSet(values) on one side
-            p1 = node.get("p1")
-            p2 = node.get("p2")
-            for side in (p1, p2):
-                if isinstance(side, CompValue) and side.name == "ToMultiSet":
-                    inner = side.get("p")
-                    if isinstance(inner, CompValue) and inner.name != "Project":
-                        ops.assignments.add("VALUES")
-                        ops.raw.add("VALUES")
 
     # HAVING: check parse tree
     try:
@@ -415,16 +455,9 @@ def extract_operators(text: str, parsed: object):
     except (IndexError, AttributeError):
         pass
 
-    # project_var_count
+    # project_var_count (SELECT only)
     if alg.algebra.name == "SelectQuery":
         ops.project_var_count = len(alg.algebra.get("PV") or [])
-
-    # property paths: any NegatedPath / AlternativePath / SequencePath / etc.
-    for node in _walk_algebra(alg.algebra):
-        if isinstance(node, CompValue) and "Path" in node.name:
-            ops.property_paths = True
-            ops.raw.add("PROPERTY_PATH")
-            break
 
     return ops
 

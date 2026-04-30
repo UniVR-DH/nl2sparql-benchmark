@@ -78,16 +78,16 @@ Everything up to and including the classifier migration is complete:
 
 ---
 
-### 🔲 M3 — Complete Operator Coverage (v0.3)
+### ✅ M3 — Complete Operator Coverage (v0.3) — DONE
 
-Extend `extract_operators` in `algebra.py` to cover:
-- `VALUES` (inline data)
-- `SERVICE` (federated queries)
-- `GRAPH` pattern
-- `CONSTRUCT` / `DESCRIBE` query forms
-- Property path operators (`/`, `|`, `*`, `+`, `?`, `^`)
-- `FILTER` expression functions (`REGEX`, `LANG`, `DATATYPE`, etc.)
-- `ExtendedOperatorSet` subclass (opt-in via `--extended`)
+`extract_operators` in `algebra.py` now covers:
+- `VALUES` — detected via `ToMultiSet(values)` node
+- `SERVICE` — detected via `ServiceGraphPattern` node
+- `GRAPH` — detected via `Graph` node
+- `CONSTRUCT` / `DESCRIBE` — query form from algebra root node name
+- Property path operators — detected via `rdflib.paths.Path` instances in BGP triple predicates
+- FILTER expression functions (`REGEX`, `LANG`, `DATATYPE`, `STR`, `BOUND`, `IN`, etc.) — detected via `Builtin_*` nodes inside Filter expressions, stored in `OperatorSet.filter_functions`
+- `OperatorSet.filter_functions: Set[str]` field added to model
 
 ---
 

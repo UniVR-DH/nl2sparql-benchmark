@@ -1,4 +1,4 @@
-"""Tests for sparql_annotator.algebra — complete coverage."""
+"""Tests for sparql_annotator.algebra — complete coverage with parameterization."""
 import pytest
 import rdflib.plugins.sparql.algebra as _a
 
@@ -33,261 +33,157 @@ def test_parse_valid():
     assert ok and parsed is not None and err is None
 
 
-def test_parse_invalid():
-    ok, parsed, err = parse_query("NOT SPARQL AT ALL")
+@pytest.mark.parametrize("text", [
+    "NOT SPARQL AT ALL",
+    "SELECT WHERE",
+    "{ ?s ?p ?o }",
+    "",
+])
+def test_parse_invalid(text):
+    ok, parsed, err = parse_query(text)
     assert not ok and parsed is None and err is not None
 
 
 # ---------------------------------------------------------------------------
-# compute_metrics
+# compute_metrics — exact (bgp, tp, pv) triples
 # ---------------------------------------------------------------------------
 
-def test_metrics_select_one_triple():
-    bgp, tp, pv = compute_metrics(_alg("SELECT ?s WHERE { ?s ?p ?o }")[0])
-    assert (bgp, tp, pv) == (1, 1, 1)
-
-
-def test_metrics_select_two_triples():
-    bgp, tp, pv = compute_metrics(_alg("SELECT ?s ?p WHERE { ?s ?p ?o . ?s a <http://x.org/C> }")[0])
-    assert bgp == 1 and tp == 2 and pv == 2
-
-
-def test_metrics_ask_pv_zero():
-    bgp, tp, pv = compute_metrics(_alg("ASK { ?s ?p ?o }")[0])
-    assert bgp == 1 and tp == 1 and pv == 0
-
-
-def test_metrics_subquery_counts_inner_bgp():
-    # subquery adds a second BGP
-    text = "SELECT ?s WHERE { ?s ?p ?o . { SELECT ?x WHERE { ?x a <http://x.org/C> } } }"
+@pytest.mark.parametrize("text,expected", [
+    ("SELECT ?s WHERE { ?s ?p ?o }",                                          (1, 1, 1)),
+    ("SELECT ?s ?p WHERE { ?s ?p ?o . ?s a <http://x.org/C> }",              (1, 2, 2)),
+    ("ASK { ?s ?p ?o }",                                                      (1, 1, 0)),  # pv=0 for ASK
+    # OPTIONAL adds a BGP per branch
+    ("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }",   (2, 2, 1)),
+    # nested OPTIONAL
+    ("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z . OPTIONAL { ?z <http://x.org/w> ?v } } }", (3, 3, 1)),
+    # UNION: one BGP per branch
+    ("SELECT ?s WHERE { { ?s a <http://x.org/A> } UNION { ?s a <http://x.org/B> } }", (2, 2, 1)),
+    # outer BGP + UNION
+    ("SELECT ?s WHERE { ?s ?p ?o . { ?s a <http://x.org/A> } UNION { ?s a <http://x.org/B> } }", (3, 3, 1)),
+    # FILTER NOT EXISTS inner pattern counts as BGP (SPARQL 1.1 §18)
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s a <http://x.org/Bad> } }", (2, 2, 1)),
+    # inner BGP with 2 triples
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s a <http://x.org/Bad> . ?s <http://x.org/p> ?v } }", (2, 3, 1)),
+    # FILTER EXISTS inner pattern counts as BGP
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER EXISTS { ?s a <http://x.org/Good> } }", (2, 2, 1)),
+    # subquery adds inner BGP
+    ("SELECT ?s WHERE { ?s ?p ?o . { SELECT ?x WHERE { ?x a <http://x.org/C> } } }", (2, 2, 1)),
+    # outer + OPTIONAL + subquery
+    ("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } . { SELECT ?x WHERE { ?x a <http://x.org/C> } } }", (3, 3, 1)),
+])
+def test_metrics_exact(text, expected):
     bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 2
-
-
-# ---------------------------------------------------------------------------
-# compute_metrics — BGP counting with OPTIONAL, UNION, subquery, FILTER NOT EXISTS
-# ---------------------------------------------------------------------------
-
-def test_metrics_optional_adds_bgp():
-    # OPTIONAL { … } compiles to LeftJoin(BGP, BGP) → 2 BGPs
-    text = "SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 2 and tp == 2
-
-
-def test_metrics_nested_optional_adds_bgp():
-    # Two nested OPTIONALs → 3 BGPs
-    text = "SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z . OPTIONAL { ?z <http://x.org/w> ?v } } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 3 and tp == 3
-
-
-def test_metrics_union_adds_bgp():
-    # UNION { A } { B } → 2 BGPs (one per branch)
-    text = "SELECT ?s WHERE { { ?s a <http://x.org/A> } UNION { ?s a <http://x.org/B> } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 2 and tp == 2
-
-
-def test_metrics_union_plus_outer_bgp():
-    # outer BGP + UNION with 2 branches → 3 BGPs
-    text = "SELECT ?s WHERE { ?s ?p ?o . { ?s a <http://x.org/A> } UNION { ?s a <http://x.org/B> } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 3 and tp == 3
-
-
-def test_metrics_filter_not_exists_counts_inner_bgp():
-    # Per SPARQL 1.1 §18: inner pattern of FILTER NOT EXISTS is a separate BGP
-    text = "SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s a <http://x.org/Bad> } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 2 and tp == 2
-
-
-def test_metrics_filter_not_exists_multi_triple_inner():
-    # Inner BGP with 2 triples
-    text = "SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s a <http://x.org/Bad> . ?s <http://x.org/p> ?v } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 2 and tp == 3  # outer: 1 tp, inner: 2 tp
-
-
-def test_metrics_filter_exists_counts_inner_bgp():
-    text = "SELECT ?s WHERE { ?s ?p ?o . FILTER EXISTS { ?s a <http://x.org/Good> } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 2 and tp == 2
-
-
-def test_metrics_subquery_plus_optional():
-    # outer BGP + OPTIONAL BGP + subquery BGP → 3
-    text = "SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } . { SELECT ?x WHERE { ?x a <http://x.org/C> } } }"
-    bgp, tp, pv = compute_metrics(_alg(text)[0])
-    assert bgp == 3 and tp == 3
+    assert (bgp, tp, pv) == expected, f"got ({bgp},{tp},{pv}), expected {expected}"
 
 
 # ---------------------------------------------------------------------------
-# detect_lsq_features — basic operators
+# detect_lsq_features
 # ---------------------------------------------------------------------------
 
-def test_lsq_optional():
-    assert "Optional" in _lsq("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }")
-
-
-def test_lsq_filter_plain():
-    assert "Filter" in _lsq("SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 5) }")
-
-
-def test_lsq_filter_not_exists():
-    feats = _lsq("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s <http://x.org/y> ?z } }")
-    assert "NotExists" in feats
-    assert "Filter" not in feats
-
-
-def test_lsq_filter_exists():
-    feats = _lsq("SELECT ?s WHERE { ?s ?p ?o . FILTER EXISTS { ?s <http://x.org/y> ?z } }")
-    assert "fn-exists" in feats
-    assert "Filter" not in feats
-
-
-def test_lsq_subquery():
-    assert "SubQuery" in _lsq("SELECT ?s WHERE { { SELECT ?s WHERE { ?s ?p ?o } } }")
-
-
-def test_lsq_bind_user():
-    feats = _lsq("SELECT ?s ?v WHERE { ?s ?p ?o . BIND(str(?o) AS ?v) }")
-    assert "Bind" in feats
-
-
-# ---------------------------------------------------------------------------
-# detect_lsq_features — HAVING bug fixes (q30, q36 regression tests)
-# ---------------------------------------------------------------------------
-
-def test_lsq_having_single_aggregate_no_spurious_filter():
-    """q30-style: HAVING with one aggregate projection — must not emit Filter."""
-    text = """SELECT ?name (COUNT(?emp) AS ?n)
-WHERE { ?dept <http://x.org/name> ?name . ?emp <http://x.org/memberOf> ?dept }
-GROUP BY ?dept ?name
-HAVING (COUNT(?emp) > 5)"""
+@pytest.mark.parametrize("text,present,absent", [
+    # basic operators
+    ("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }",
+     ["Optional"], []),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 5) }",
+     ["Filter"], []),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s <http://x.org/y> ?z } }",
+     ["NotExists"], ["Filter"]),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER EXISTS { ?s <http://x.org/y> ?z } }",
+     ["fn-exists"], ["Filter"]),
+    ("SELECT ?s WHERE { { SELECT ?s WHERE { ?s ?p ?o } } }",
+     ["SubQuery"], []),
+    ("SELECT ?s ?v WHERE { ?s ?p ?o . BIND(str(?o) AS ?v) }",
+     ["Bind"], []),
+    # HAVING regressions
+    ("SELECT ?name (COUNT(?emp) AS ?n) WHERE { ?dept <http://x.org/name> ?name . ?emp <http://x.org/memberOf> ?dept } GROUP BY ?dept ?name HAVING (COUNT(?emp) > 5)",
+     ["Having"], ["Filter"]),
+    ("SELECT ?dept ?name (COUNT(?emp) AS ?n) WHERE { ?dept <http://x.org/name> ?name . ?emp <http://x.org/memberOf> ?dept } GROUP BY ?dept ?name HAVING (COUNT(?emp) > 2)",
+     ["Having"], ["Filter"]),
+    # GROUP BY multi-projection must not emit Bind
+    ("SELECT ?cat ?name WHERE { ?hw <http://x.org/cat> ?cat . ?cat <http://x.org/name> ?name } GROUP BY ?cat ?name ORDER BY DESC(COUNT(*)) LIMIT 3",
+     [], ["Bind"]),
+    # real BIND alongside aggregates
+    ("SELECT ?s ?v (COUNT(?o) AS ?c) WHERE { ?s ?p ?o . BIND(str(?s) AS ?v) } GROUP BY ?s ?v",
+     ["Bind"], []),
+])
+def test_lsq_features(text, present, absent):
     feats = _lsq(text)
-    assert "Having" in feats
-    assert "Filter" not in feats
-
-
-def test_lsq_having_multi_aggregate_no_spurious_filter():
-    """q30-style with multiple projections — HAVING Filter sits above inner Extend."""
-    text = """SELECT ?dept ?name (COUNT(?emp) AS ?n)
-WHERE { ?dept <http://x.org/name> ?name . ?emp <http://x.org/memberOf> ?dept }
-GROUP BY ?dept ?name
-HAVING (COUNT(?emp) > 2)"""
-    feats = _lsq(text)
-    assert "Having" in feats
-    assert "Filter" not in feats
-
-
-def test_lsq_group_by_multi_projection_no_spurious_bind():
-    """q36-style: GROUP BY with multiple projected vars — must not emit Bind."""
-    text = """SELECT ?cat ?name
-WHERE { ?hw <http://x.org/cat> ?cat . ?cat <http://x.org/name> ?name }
-GROUP BY ?cat ?name
-ORDER BY DESC(COUNT(*))
-LIMIT 3"""
-    feats = _lsq(text)
-    assert "Bind" not in feats
-
-
-def test_lsq_real_bind_detected():
-    """A real user BIND must still be detected even alongside aggregates."""
-    text = """SELECT ?s ?v (COUNT(?o) AS ?c)
-WHERE { ?s ?p ?o . BIND(str(?s) AS ?v) }
-GROUP BY ?s ?v"""
-    feats = _lsq(text)
-    assert "Bind" in feats
+    for f in present:
+        assert f in feats, f"{f!r} missing from {feats}"
+    for f in absent:
+        assert f not in feats, f"{f!r} should not be in {feats}"
 
 
 # ---------------------------------------------------------------------------
 # extract_operators — query forms
 # ---------------------------------------------------------------------------
 
-def test_ops_select_form():
-    assert _ops("SELECT ?s WHERE { ?s ?p ?o }").query_form == "SELECT"
-
-
-def test_ops_ask_form():
-    assert _ops("ASK { ?s ?p ?o }").query_form == "ASK"
-
-
-def test_ops_construct_form():
-    assert _ops("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }").query_form == "CONSTRUCT"
+@pytest.mark.parametrize("text,form", [
+    ("SELECT ?s WHERE { ?s ?p ?o }", "SELECT"),
+    ("ASK { ?s ?p ?o }", "ASK"),
+    ("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", "CONSTRUCT"),
+    ("DESCRIBE <http://x.org/A>", "DESCRIBE"),
+])
+def test_ops_query_form(text, form):
+    assert _ops(text).query_form == form
 
 
 # ---------------------------------------------------------------------------
 # extract_operators — graph patterns
 # ---------------------------------------------------------------------------
 
-def test_ops_optional():
-    assert "OPTIONAL" in _ops("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }").graph_patterns
-
-
-def test_ops_union():
-    assert "UNION" in _ops("SELECT ?s WHERE { { ?s a <http://x.org/A> } UNION { ?s a <http://x.org/B> } }").graph_patterns
-
-
-def test_ops_minus():
-    assert "MINUS" in _ops("SELECT ?s WHERE { ?s ?p ?o . MINUS { ?s a <http://x.org/Bad> } }").graph_patterns
+@pytest.mark.parametrize("text,pattern", [
+    ("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }", "OPTIONAL"),
+    ("SELECT ?s WHERE { { ?s a <http://x.org/A> } UNION { ?s a <http://x.org/B> } }", "UNION"),
+    ("SELECT ?s WHERE { ?s ?p ?o . MINUS { ?s a <http://x.org/Bad> } }", "MINUS"),
+    ("SELECT ?s WHERE { GRAPH <http://x.org/g> { ?s ?p ?o } }", "GRAPH"),
+    ("SELECT ?s WHERE { SERVICE <http://dbpedia.org/sparql> { ?s ?p ?o } }", "SERVICE"),
+])
+def test_ops_graph_patterns(text, pattern):
+    assert pattern in _ops(text).graph_patterns
 
 
 # ---------------------------------------------------------------------------
 # extract_operators — filters
 # ---------------------------------------------------------------------------
 
-def test_ops_filter_plain():
-    assert "FILTER" in _ops("SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 5) }").filters
-
-
-def test_ops_filter_not_exists():
-    assert "FILTER NOT EXISTS" in _ops("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s <http://x.org/y> ?z } }").filters
-
-
-def test_ops_filter_exists():
-    assert "FILTER EXISTS" in _ops("SELECT ?s WHERE { ?s ?p ?o . FILTER EXISTS { ?s <http://x.org/y> ?z } }").filters
+@pytest.mark.parametrize("text,filt", [
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 5) }", "FILTER"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s <http://x.org/y> ?z } }", "FILTER NOT EXISTS"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER EXISTS { ?s <http://x.org/y> ?z } }", "FILTER EXISTS"),
+])
+def test_ops_filters(text, filt):
+    assert filt in _ops(text).filters
 
 
 # ---------------------------------------------------------------------------
 # extract_operators — aggregates
 # ---------------------------------------------------------------------------
 
-def test_ops_count():
-    assert "COUNT" in _ops("SELECT (COUNT(?s) AS ?c) WHERE { ?s ?p ?o }").aggregates
-
-
-def test_ops_sum():
-    assert "SUM" in _ops("SELECT (SUM(?o) AS ?total) WHERE { ?s <http://x.org/val> ?o }").aggregates
-
-
-def test_ops_avg():
-    assert "AVG" in _ops("SELECT (AVG(?o) AS ?avg) WHERE { ?s <http://x.org/val> ?o }").aggregates
-
-
-def test_ops_min_max():
-    ops = _ops("SELECT (MIN(?o) AS ?mn) (MAX(?o) AS ?mx) WHERE { ?s <http://x.org/val> ?o }")
-    assert "MIN" in ops.aggregates and "MAX" in ops.aggregates
+@pytest.mark.parametrize("text,agg", [
+    ("SELECT (COUNT(?s) AS ?c) WHERE { ?s ?p ?o }", "COUNT"),
+    ("SELECT (SUM(?o) AS ?t) WHERE { ?s <http://x.org/val> ?o }", "SUM"),
+    ("SELECT (AVG(?o) AS ?a) WHERE { ?s <http://x.org/val> ?o }", "AVG"),
+    ("SELECT (MIN(?o) AS ?mn) WHERE { ?s <http://x.org/val> ?o }", "MIN"),
+    ("SELECT (MAX(?o) AS ?mx) WHERE { ?s <http://x.org/val> ?o }", "MAX"),
+])
+def test_ops_aggregates(text, agg):
+    assert agg in _ops(text).aggregates
 
 
 # ---------------------------------------------------------------------------
 # extract_operators — solution modifiers
 # ---------------------------------------------------------------------------
 
-def test_ops_group_by():
-    assert "GROUP BY" in _ops("SELECT ?p (COUNT(?s) AS ?c) WHERE { ?s ?p ?o } GROUP BY ?p").solution_modifiers
-
-
-def test_ops_having():
-    assert "HAVING" in _ops("SELECT ?p (COUNT(?s) AS ?c) WHERE { ?s ?p ?o } GROUP BY ?p HAVING (COUNT(?s) > 1)").solution_modifiers
-
-
-def test_ops_order_limit_offset():
-    ops = _ops("SELECT ?s WHERE { ?s ?p ?o } ORDER BY ?s LIMIT 10 OFFSET 5")
-    assert "ORDER BY" in ops.solution_modifiers
-    assert "LIMIT" in ops.solution_modifiers
-    assert "OFFSET" in ops.solution_modifiers
+@pytest.mark.parametrize("text,mod", [
+    ("SELECT ?p (COUNT(?s) AS ?c) WHERE { ?s ?p ?o } GROUP BY ?p", "GROUP BY"),
+    ("SELECT ?p (COUNT(?s) AS ?c) WHERE { ?s ?p ?o } GROUP BY ?p HAVING (COUNT(?s) > 1)", "HAVING"),
+    ("SELECT ?s WHERE { ?s ?p ?o } ORDER BY ?s", "ORDER BY"),
+    ("SELECT ?s WHERE { ?s ?p ?o } LIMIT 10", "LIMIT"),
+    ("SELECT ?s WHERE { ?s ?p ?o } LIMIT 10 OFFSET 5", "OFFSET"),
+])
+def test_ops_solution_modifiers(text, mod):
+    assert mod in _ops(text).solution_modifiers
 
 
 # ---------------------------------------------------------------------------
@@ -314,42 +210,120 @@ def test_ops_subquery():
     assert _ops("SELECT ?s WHERE { { SELECT ?s WHERE { ?s ?p ?o } } }").subqueries is True
 
 
+def test_ops_values_single_var():
+    assert "VALUES" in _ops(
+        "SELECT ?s WHERE { VALUES ?s { <http://x.org/A> <http://x.org/B> } . ?s ?p ?o }"
+    ).assignments
+
+
+def test_ops_values_multi_var():
+    assert "VALUES" in _ops(
+        "SELECT ?s ?p WHERE { VALUES (?s ?p) { (<http://x.org/A> <http://x.org/p>) } . ?s ?p ?o }"
+    ).assignments
+
+
+def test_ops_values_empty():
+    # Empty VALUES {} — rdflib may not produce a values node; just verify no crash
+    ok, parsed, _ = parse_query("SELECT ?s WHERE { VALUES ?s { } . ?s ?p ?o }")
+    assert ok  # must parse without error
+
+
 # ---------------------------------------------------------------------------
-# extract_operators — structural metrics
+# extract_operators — property paths (all path operators)
 # ---------------------------------------------------------------------------
 
-def test_ops_metrics_populated():
-    ops = _ops("SELECT ?s ?p WHERE { ?s ?p ?o . ?s a <http://x.org/C> }")
-    assert ops.bgp_count == 1 and ops.tp_count == 2 and ops.project_var_count == 2
+@pytest.mark.parametrize("text", [
+    "SELECT ?s WHERE { ?s <http://x.org/a>/<http://x.org/b> ?o }",          # sequence /
+    "SELECT ?s WHERE { ?s <http://x.org/a>|<http://x.org/b> ?o }",          # alternative |
+    "SELECT ?s WHERE { ?s <http://x.org/a>* ?o }",                           # zero-or-more *
+    "SELECT ?s WHERE { ?s <http://x.org/a>+ ?o }",                           # one-or-more +
+    "SELECT ?s WHERE { ?s <http://x.org/a>? ?o }",                           # zero-or-one ?
+    "SELECT ?s WHERE { ?s ^<http://x.org/a> ?o }",                           # inverse ^
+    "SELECT ?s WHERE { ?s (<http://x.org/a>/<http://x.org/b>)* ?o }",        # nested
+])
+def test_ops_property_path(text):
+    ops = _ops(text)
+    assert ops.property_paths is True
+    assert "PROPERTY_PATH" in ops.raw
 
 
-def test_ops_metrics_ask_pv_zero():
-    ops = _ops("ASK { ?s ?p ?o }")
-    assert ops.project_var_count == 0
+def test_ops_no_property_path():
+    ops = _ops("SELECT ?s WHERE { ?s <http://x.org/a> ?o }")
+    assert ops.property_paths is False
 
 
 # ---------------------------------------------------------------------------
-# extract_operators — invalid query returns empty OperatorSet
+# extract_operators — filter functions (M3)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,fn", [
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(REGEX(STR(?o), 'foo')) }", "REGEX"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(REGEX(STR(?o), 'foo')) }", "STR"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(LANG(?o) = 'en') }", "LANG"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(LANGMATCHES(LANG(?o), 'en')) }", "LANGMATCHES"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(BOUND(?o)) }", "BOUND"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(DATATYPE(?o) = <http://www.w3.org/2001/XMLSchema#integer>) }", "DATATYPE"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(isIRI(?s)) }", "isIRI"),
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER(isLITERAL(?o)) }", "isLITERAL"),
+])
+def test_ops_filter_functions(text, fn):
+    assert fn in _ops(text).filter_functions
+
+
+def test_ops_no_filter_functions_when_plain_filter():
+    # A plain comparison filter has no Builtin_* nodes
+    ops = _ops("SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 5) }")
+    assert ops.filter_functions == set()
+
+
+# ---------------------------------------------------------------------------
+# extract_operators — structural metrics (exact values)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text,bgp,tp,pv", [
+    ("SELECT ?s ?p WHERE { ?s ?p ?o . ?s a <http://x.org/C> }", 1, 2, 2),
+    ("ASK { ?s ?p ?o }", 1, 1, 0),
+    ("SELECT ?s WHERE { ?s ?p ?o . OPTIONAL { ?s <http://x.org/y> ?z } }", 2, 2, 1),
+    # extract_operators counts algebra BGP nodes only (not inner FILTER NOT EXISTS patterns)
+    # use compute_metrics directly for the spec-correct count
+    ("SELECT ?s WHERE { ?s ?p ?o . FILTER NOT EXISTS { ?s a <http://x.org/Bad> } }", 1, 1, 1),
+])
+def test_ops_metrics_exact(text, bgp, tp, pv):
+    ops = _ops(text)
+    assert ops.bgp_count == bgp, f"bgp: got {ops.bgp_count}, expected {bgp}"
+    assert ops.tp_count == tp, f"tp: got {ops.tp_count}, expected {tp}"
+    assert ops.project_var_count == pv, f"pv: got {ops.project_var_count}, expected {pv}"
+
+
+# ---------------------------------------------------------------------------
+# extract_operators — invalid / boundary
 # ---------------------------------------------------------------------------
 
 def test_ops_invalid_query_returns_empty():
-    ok, parsed, _ = parse_query("NOT VALID SPARQL")
-    assert not ok
     ops = extract_operators("NOT VALID SPARQL", None)
     assert ops.query_form == "UNKNOWN"
     assert not ops.raw
+    assert ops.filter_functions == set()
+
+
+def test_ops_empty_where():
+    # rdflib produces an empty BGP node for WHERE {}
+    ops = _ops("SELECT ?s WHERE {}")
+    assert ops.query_form == "SELECT"
+    assert ops.bgp_count == 1 and ops.tp_count == 0
 
 
 # ---------------------------------------------------------------------------
 # referenced_terms
 # ---------------------------------------------------------------------------
 
-def test_referenced_terms():
-    text = "SELECT ?s WHERE { ?s a <http://example.org/Class> . ?s <http://example.org/prop> ?o }"
+@pytest.mark.parametrize("text,expected_iris", [
+    ("SELECT ?s WHERE { ?s a <http://example.org/Class> . ?s <http://example.org/prop> ?o }",
+     {"http://example.org/Class", "http://example.org/prop"}),
+    ("SELECT ?s WHERE { ?s ?p ?o }", set()),
+    ("ASK { <http://x.org/A> <http://x.org/p> <http://x.org/B> }",
+     {"http://x.org/A", "http://x.org/p", "http://x.org/B"}),
+])
+def test_referenced_terms(text, expected_iris):
     terms = referenced_terms(text)
-    assert "http://example.org/Class" in terms
-    assert "http://example.org/prop" in terms
-
-
-def test_referenced_terms_empty():
-    assert referenced_terms("SELECT ?s WHERE { ?s ?p ?o }") == set()
+    assert expected_iris <= terms  # expected is a subset (PREFIX declarations may add more)

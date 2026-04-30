@@ -3,8 +3,8 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from rdflib import Graph, Namespace, URIRef
-from rdflib.namespace import RDF
+from rdflib import Graph, Namespace, URIRef, Literal
+from rdflib.namespace import RDF, XSD
 
 from sparql_annotator.classifier import QuestionTypeClassifier
 
@@ -13,6 +13,45 @@ QAT = Namespace("https://w3id.org/univr-qa/qatypes#")
 
 ONTOLOGY_PATH = Path(__file__).parent.parent.parent.parent / "graphs" / "qa-types.ttl"
 QUERIES_PATH = Path(__file__).parent.parent.parent.parent / "graphs" / "ck25" / "ck25-queries.ttl"
+
+# ---------------------------------------------------------------------------
+# Hermetic minimal ontology — no external files needed
+# ---------------------------------------------------------------------------
+_MINI_ONTOLOGY = textwrap.dedent("""
+    @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    @prefix lsqv: <http://lsq.aksw.org/vocab#> .
+    @prefix qat:  <https://w3id.org/univr-qa/qatypes#> .
+
+    qat:QuestionType a owl:Class .
+
+    qat:Factoid rdfs:subClassOf qat:QuestionType ;
+        rdfs:subClassOf [
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [
+                owl:onProperty lsqv:usesFeature ;
+                owl:hasValue lsqv:Select
+            ]
+        ] .
+
+    qat:Confirmation rdfs:subClassOf qat:QuestionType ;
+        rdfs:subClassOf [
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [
+                owl:onProperty lsqv:usesFeature ;
+                owl:hasValue lsqv:Ask
+            ]
+        ] ;
+        owl:disjointWith qat:Factoid .
+""")
+
+
+@pytest.fixture(scope="module")
+def mini_clf(tmp_path_factory):
+    """Hermetic classifier using a minimal in-memory ontology — no external files."""
+    onto = tmp_path_factory.mktemp("onto") / "mini.ttl"
+    onto.write_text(_MINI_ONTOLOGY)
+    return QuestionTypeClassifier(onto)
 
 
 @pytest.fixture(scope="module")
@@ -57,6 +96,63 @@ def test_all_types_have_requirements(clf):
 
 def test_depth_cache_populated(clf):
     assert len(clf._depth_cache) == len(clf.type_definitions)
+
+
+# ---------------------------------------------------------------------------
+# Hermetic unit tests (no external files)
+# ---------------------------------------------------------------------------
+
+def test_mini_clf_loads(mini_clf):
+    assert set(mini_clf.type_definitions.keys()) == {"Factoid", "Confirmation"}
+
+
+def test_mini_clf_factoid(mini_clf, tmp_path):
+    ttl = textwrap.dedent("""
+        @prefix lsqv: <http://lsq.aksw.org/vocab#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        <http://example.org/q> a lsqv:Query ;
+            rdfs:label "select" ;
+            lsqv:text "SELECT ?s WHERE { ?s ?p ?o }" ;
+            lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select ] .
+    """)
+    p = tmp_path / "q.ttl"; p.write_text(ttl)
+    results = mini_clf.classify_queries_from_file(p)
+    qtypes, *_ = next(iter(results.values()))
+    assert qtypes == {"Factoid"}
+
+
+def test_mini_clf_confirmation(mini_clf, tmp_path):
+    ttl = textwrap.dedent("""
+        @prefix lsqv: <http://lsq.aksw.org/vocab#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        <http://example.org/q> a lsqv:Query ;
+            rdfs:label "ask" ;
+            lsqv:text "ASK { ?s ?p ?o }" ;
+            lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Ask ] .
+    """)
+    p = tmp_path / "q.ttl"; p.write_text(ttl)
+    results = mini_clf.classify_queries_from_file(p)
+    qtypes, *_ = next(iter(results.values()))
+    assert qtypes == {"Confirmation"}
+
+
+def test_mini_clf_disjointness_respected(mini_clf, tmp_path):
+    """A query with both Select and Ask features — both types match.
+    Disjointness resolution only drops a type when the other has strictly more
+    required_features. With equal sizes, both remain (ambiguous)."""
+    ttl = textwrap.dedent("""
+        @prefix lsqv: <http://lsq.aksw.org/vocab#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        <http://example.org/q> a lsqv:Query ;
+            rdfs:label "both" ;
+            lsqv:text "SELECT ?s WHERE { ?s ?p ?o }" ;
+            lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select, lsqv:Ask ] .
+    """)
+    p = tmp_path / "q.ttl"; p.write_text(ttl)
+    results = mini_clf.classify_queries_from_file(p)
+    qtypes, *_ = next(iter(results.values()))
+    # Both Factoid and Confirmation match; equal required_features → ambiguous
+    assert "Factoid" in qtypes and "Confirmation" in qtypes
 
 
 # ---------------------------------------------------------------------------

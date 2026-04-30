@@ -22,6 +22,7 @@ class OperatorSet:
     projection_modifiers: Set[str] = field(default_factory=set)
     graph_patterns: Set[str] = field(default_factory=set)
     filters: Set[str] = field(default_factory=set)
+    filter_functions: Set[str] = field(default_factory=set)  # REGEX, LANG, DATATYPE, etc.
     aggregates: Set[str] = field(default_factory=set)
     solution_modifiers: Set[str] = field(default_factory=set)
     assignments: Set[str] = field(default_factory=set)

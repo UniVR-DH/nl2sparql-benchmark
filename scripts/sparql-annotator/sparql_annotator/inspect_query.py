@@ -113,7 +113,7 @@ def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = No
             raise click.ClickException(f"Unsupported viz format {fmt!r}. Use .dot, .svg, or .png")
         try:
             from .algebra_viz import save_algebra_viz
-            out = save_algebra_viz(alg.algebra, viz_path, fmt=fmt)
+            out = save_algebra_viz(alg.algebra, viz_path, fmt=fmt, sparql_text=text)
             click.echo(f"\nAlgebra diagram saved → {out}")
         except ImportError as exc:
             raise click.ClickException(str(exc))
