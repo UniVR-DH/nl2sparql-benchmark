@@ -52,7 +52,22 @@ $SA classify \
   --query-file graphs/ck25/ck25-queries.ttl \
   --ontology   graphs/qa-types.ttl \
   --verbose --debug
+
+# List only ambiguous queries (no other output)
+$SA classify \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --ontology   graphs/qa-types.ttl \
+  --ambiguous-only
 ```
+
+`--ambiguous-only` prints one line per ambiguous query to stdout and suppresses all logging:
+
+```
+27    CounterFactualIdentification,RankedListing
+36    AggregateEnumeration,LimitedRankedListing
+```
+
+Useful for piping into other tools or quickly auditing ontology coverage gaps.
 
 **Options:**
 
@@ -64,6 +79,7 @@ $SA classify \
 | `--log-file` | Write log to file (default: console only) |
 | `--verbose` | Enable DEBUG output |
 | `--debug` | Print extracted ontology rules before classifying |
+| `--ambiguous-only` | Print only ambiguous query IDs and their conflicting types (tab-separated), suppress all logging |
 
 **Output TTL enrichment:** for each classified query the output adds `rdf:type qat:*` assertions
 and rebuilds the `lsqv:hasStructuralFeatures` blank node with algebra-derived features and

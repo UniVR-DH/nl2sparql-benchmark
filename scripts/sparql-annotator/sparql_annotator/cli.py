@@ -386,8 +386,16 @@ def _generate_type_assertions(
 @click.option(
     "--debug", is_flag=True, help="Print extracted ontology rules before classifying."
 )
-def classify_cmd(query_file, ontology, output, log_file, verbose, debug):
+@click.option(
+    "--ambiguous-only",
+    is_flag=True,
+    help="Print only ambiguous query IDs and their conflicting types, then exit.",
+)
+def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguous_only):
     """Classify SPARQL queries by question type using LSQ features."""
+    if ambiguous_only:
+        import logging as _logging
+        _logging.disable(_logging.CRITICAL)
     logger = _setup_logging(log_file, verbose)
     try:
         classifier = QuestionTypeClassifier(ontology, logger=logger)
@@ -395,6 +403,12 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug):
             for name, defn in sorted(classifier.type_definitions.items()):
                 logger.info(repr(defn))
         results = classifier.classify_queries_from_file(query_file)
+        if ambiguous_only:
+            for uri_str, (qtypes, *_) in results.items():
+                if len(qtypes) > 1:
+                    short = uri_str.split("/")[-1]
+                    click.echo(f"{short}\t{','.join(sorted(qtypes))}")
+            return
         _print_results(classifier, results, logger)
         if output:
             out_graph = _generate_type_assertions(
