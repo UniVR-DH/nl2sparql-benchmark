@@ -253,6 +253,36 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
         elif name == "LeftJoin":
             found.add("Optional")
 
+        elif name == "AggregateJoin":
+            found.add("Aggregators")
+
+        elif name == "Group":
+            found.add("GroupBy")
+
+        elif name == "SelectQuery":
+            found.add("Select")
+
+        elif name == "AskQuery":
+            found.add("Ask")
+
+        elif name == "ConstructQuery":
+            found.add("Construct")
+
+        elif name == "DescribeQuery":
+            found.add("Describe")
+
+        elif name == "Distinct":
+            found.add("Distinct")
+
+        elif name == "OrderBy":
+            found.add("OrderBy")
+
+        elif name == "Slice":
+            if node.get("length") is not None:
+                found.add("Limit")
+            if node.get("start") not in (None, 0):
+                found.add("Offset")
+
         for value in node.values():
             if isinstance(value, CompValue):
                 _walk(value)

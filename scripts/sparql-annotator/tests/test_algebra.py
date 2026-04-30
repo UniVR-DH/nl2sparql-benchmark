@@ -480,3 +480,51 @@ def test_referenced_terms(text, expected_iris):
     assert (
         expected_iris <= terms
     )  # expected is a subset (PREFIX declarations may add more)
+
+# ---------------------------------------------------------------------------
+# detect_lsq_features — subquery feature propagation
+# ---------------------------------------------------------------------------
+
+_COMPARATIVE_QUERY = """\
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT ?result ?deptCount
+WHERE {
+  {
+    SELECT (MAX(?c) AS ?maxCount)
+    WHERE {
+      SELECT ?dept (COUNT(?p) AS ?c)
+      WHERE { ?dept pv:responsibleFor ?p . }
+      GROUP BY ?dept
+    }
+  }
+  {
+    SELECT ?result (COUNT(?p) AS ?deptCount)
+    WHERE { ?result pv:responsibleFor ?p . }
+    GROUP BY ?result
+  }
+  FILTER(?deptCount = ?maxCount)
+}"""
+
+
+def test_detect_features_subquery_aggregators():
+    """Aggregators used inside subqueries must be detected at the outer level."""
+    feats = _lsq(_COMPARATIVE_QUERY)
+    assert "Aggregators" in feats
+
+
+def test_detect_features_subquery_groupby():
+    """GroupBy used inside subqueries must be detected at the outer level."""
+    feats = _lsq(_COMPARATIVE_QUERY)
+    assert "GroupBy" in feats
+
+
+def test_detect_features_subquery_select():
+    """Select must be detected for a SELECT query."""
+    feats = _lsq(_COMPARATIVE_QUERY)
+    assert "Select" in feats
+
+
+def test_detect_features_comparative_full():
+    """Full feature set for the comparative query."""
+    feats = _lsq(_COMPARATIVE_QUERY)
+    assert {"Select", "SubQuery", "Filter", "Aggregators", "GroupBy"} <= feats
