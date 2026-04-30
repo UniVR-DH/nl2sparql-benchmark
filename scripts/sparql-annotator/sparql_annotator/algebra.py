@@ -221,8 +221,10 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
             _log.debug(f"Extend node: {node}")
             child = node.get("p")
             # Unwrap Filter and nested Extend nodes to find the aggregate root.
-            # rdflib nests multiple aggregate aliases as Extend→Extend→…→AggregateJoin,
-            # and may place a HAVING Filter between the outermost Extend and AggregateJoin.
+            # rdflib nests multiple aggregate aliases as Extend→Extend→…→AggregateJoin.
+            # GROUP BY re-projections also compile to Extend nodes (using Aggregate_Sample
+            # internally), so the structural check on AggregateJoin correctly catches both
+            # real aliases and re-projections — neither should emit Bind.
             while isinstance(child, CompValue) and child.name in {"Filter", "Extend"}:
                 _log.debug(f"Unwrapping {child.name} under Extend")
                 child = child.get("p")

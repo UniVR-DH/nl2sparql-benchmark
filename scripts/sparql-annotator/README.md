@@ -253,6 +253,45 @@ dot.render("query", format="svg", cleanup=True)
 
 ---
 
+## Antipattern Detection
+
+Detect structural issues in SPARQL queries before classification or annotation.
+
+### CLI — `inspect --check`
+
+```bash
+$SA inspect \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --query-id   30 \
+  --check
+```
+
+### Python API
+
+```python
+from sparql_annotator.antipatterns import detect_antipatterns, AntipatternIssue
+
+issues = detect_antipatterns("SELECT ?x ?y WHERE { ?x a <http://x.org/T> }")
+for issue in issues:
+    print(f"[{issue.code}] {issue.message}")
+    print(f"  → {issue.hint}")
+```
+
+### Detected antipatterns
+
+| Code | Description |
+|---|---|
+| AP01 | `ORDER BY` + `LIMIT 1` for extrema — use `MIN()`/`MAX()` instead |
+| AP02 | `DISTINCT` with aggregation — redundant or misleading |
+| AP03 | Non-aggregate projected variable alongside aggregate without `GROUP BY` |
+| AP05 | Cartesian product — disconnected BGP components |
+| AP06 | Projected variable not in `GROUP BY` and not aggregated |
+| AP11 | Projected variable never bound in the query body |
+
+Returns an empty list for unparseable queries (no crash).
+
+---
+
 ## BGP counting semantics
 
 `compute_metrics` follows SPARQL 1.1 §18: the inner pattern of `FILTER NOT EXISTS` /
