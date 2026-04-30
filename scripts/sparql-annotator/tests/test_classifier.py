@@ -236,9 +236,7 @@ def test_aggregation(clf, tmp_path):
     )
     results = clf.classify_queries_from_file(p)
     qtypes, *_ = next(iter(results.values()))
-    # rdflib emits an implicit Group node even without explicit GROUP BY,
-    # so AggregateEnumeration (Aggregators + GroupBy + Select) is the resolved type
-    assert "AggregateEnumeration" in qtypes
+    assert "Aggregation" in qtypes
 
 
 def test_aggregate_enumeration(clf, tmp_path):

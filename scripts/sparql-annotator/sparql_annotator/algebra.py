@@ -257,7 +257,8 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
             found.add("Aggregators")
 
         elif name == "Group":
-            found.add("GroupBy")
+            if node.get("expr"):  # None = implicit aggregate group, not a real GROUP BY
+                found.add("GroupBy")
 
         elif name == "SelectQuery":
             found.add("Select")
