@@ -57,7 +57,8 @@ def _print_tree(node, indent: int = 0, label: str = "") -> None:
             click.echo(f"{'  '*(indent+1)}.{k} = {val}")
 
 
-def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = None) -> None:
+def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = None,
+                  check: bool = False) -> None:
     g = Graph()
     g.parse(str(query_file), format="turtle")
 
@@ -107,6 +108,19 @@ def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = No
         for feat in g.objects(sf, LSQV.usesFeature):
             click.echo(f"  {str(feat).split('#')[-1]}")
 
+    if check:
+        from .antipatterns import detect_antipatterns
+        issues = detect_antipatterns(text, parsed)
+        click.echo("=" * W)
+        click.echo("ANTIPATTERN CHECK")
+        click.echo("=" * W)
+        if issues:
+            for issue in issues:
+                click.echo(f"  [{issue.code}] {issue.message}")
+                click.echo(f"         → {issue.hint}")
+        else:
+            click.echo("  No antipatterns detected.")
+
     if viz_path is not None:
         fmt = viz_path.suffix.lstrip(".").lower() or "svg"
         if fmt not in {"dot", "svg", "png"}:
@@ -125,6 +139,8 @@ def inspect_query(query_file: Path, query_id: str, viz_path: Optional[Path] = No
 @click.option("--query-id", required=True, help="Query URI or local ID (e.g. '30').")
 @click.option("--viz", "viz_path", default=None, type=click.Path(path_type=Path),
               help="Save algebra diagram to this path (.dot / .svg / .png).")
-def inspect_cmd(query_file: Path, query_id: str, viz_path: Optional[Path]) -> None:
+@click.option("--check", is_flag=True, default=False,
+              help="Run antipattern checks on the query.")
+def inspect_cmd(query_file: Path, query_id: str, viz_path: Optional[Path], check: bool) -> None:
     """Print SPARQL text, parse tree, algebra tree, and LSQ features for one query."""
-    inspect_query(query_file, query_id, viz_path)
+    inspect_query(query_file, query_id, viz_path, check)
