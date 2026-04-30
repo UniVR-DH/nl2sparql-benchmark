@@ -14,6 +14,7 @@ from .classifier import QuestionTypeClassifier
 from .namespaces import LSQV, QAT, QA
 from .inspect_query import inspect_cmd
 from .antipatterns import detect_antipatterns
+from .reporter import ReportGenerator
 
 
 def _detect_format(path: str):
@@ -442,6 +443,51 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguo
             )
             out_graph.serialize(destination=str(output), format="turtle")
             logger.info(f"Saved classified queries to {output}")
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# report sub-command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("report")
+@click.option(
+    "--query-file",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="LSQ query file (Turtle).",
+)
+@click.option(
+    "--ontology",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="qa-types.ttl ontology file.",
+)
+@click.option(
+    "--output-dir",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Directory for output files (created if missing).",
+)
+@click.option("--prefix", default="report", show_default=True, help="Filename prefix.")
+@click.option(
+    "--format",
+    "formats",
+    default="csv",
+    show_default=True,
+    help="Output format(s): csv, latex, or csv,latex.",
+)
+def report_cmd(query_file, ontology, output_dir, prefix, formats):
+    """Generate CSV/LaTeX reports for a query dataset."""
+    logger = _setup_logging(None, verbose=False)
+    format_list = [f.strip() for f in formats.split(",")]
+    try:
+        generator = ReportGenerator(str(ontology), logger=logger)
+        generator.generate_reports(
+            str(query_file), str(output_dir), prefix=prefix, formats=format_list
+        )
     except Exception as exc:
         raise click.ClickException(str(exc)) from exc
 

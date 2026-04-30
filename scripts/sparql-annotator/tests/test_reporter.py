@@ -1,0 +1,262 @@
+"""Tests for sparql_annotator.reporter — ReportGenerator."""
+
+import csv
+import json
+import textwrap
+from pathlib import Path
+
+import pytest
+
+from sparql_annotator.reporter import ReportGenerator
+
+# ---------------------------------------------------------------------------
+# Minimal hermetic ontology (same as test_classifier.py)
+# ---------------------------------------------------------------------------
+
+_MINI_ONTOLOGY = textwrap.dedent("""
+    @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    @prefix lsqv: <http://lsq.aksw.org/vocab#> .
+    @prefix qat:  <https://w3id.org/univr-qa/qatypes#> .
+
+    qat:QuestionType a owl:Class .
+
+    qat:Factoid rdfs:subClassOf qat:QuestionType ;
+        rdfs:subClassOf [
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [
+                owl:onProperty lsqv:usesFeature ;
+                owl:hasValue lsqv:Select
+            ]
+        ] .
+
+    qat:Confirmation rdfs:subClassOf qat:QuestionType ;
+        rdfs:subClassOf [
+            owl:onProperty lsqv:hasStructuralFeatures ;
+            owl:someValuesFrom [
+                owl:onProperty lsqv:usesFeature ;
+                owl:hasValue lsqv:Ask
+            ]
+        ] ;
+        owl:disjointWith qat:Factoid .
+""")
+
+
+def _write_query_ttl(path: Path, queries: list[dict]) -> None:
+    """Write a minimal LSQ Turtle file with multiple queries.
+
+    Each dict: {id, label, sparql, features}
+    """
+    lines = [
+        "@prefix lsqv: <http://lsq.aksw.org/vocab#> .",
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+        "@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
+        "",
+    ]
+    for q in queries:
+        features = q["features"] or ["Select"]
+        # Each usesFeature must be a separate triple inside the blank node
+        feat_lines = " ;\n        ".join(f"lsqv:usesFeature lsqv:{f}" for f in features)
+        lines += [
+            f'<http://example.org/{q["id"]}> a lsqv:Query ;',
+            f'    rdfs:label "{q["label"]}" ;',
+            f'    lsqv:text """{q["sparql"]}""" ;',
+            f"    lsqv:hasStructuralFeatures [ {feat_lines} ] .",
+            "",
+        ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def onto(tmp_path_factory) -> Path:
+    p = tmp_path_factory.mktemp("onto") / "mini.ttl"
+    p.write_text(_MINI_ONTOLOGY, encoding="utf-8")
+    return p
+
+
+@pytest.fixture(scope="module")
+def query_file(tmp_path_factory) -> Path:
+    p = tmp_path_factory.mktemp("queries") / "queries.ttl"
+    _write_query_ttl(p, [
+        {
+            "id": "q1",
+            "label": "Simple select",
+            "sparql": "SELECT ?s WHERE { ?s ?p ?o }",
+            "features": ["Select"],
+        },
+        {
+            "id": "q2",
+            "label": "Ask query",
+            "sparql": "ASK { ?s ?p ?o }",
+            "features": ["Ask"],
+        },
+        {
+            "id": "q3",
+            "label": "Select with filter",
+            "sparql": "SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 1) }",
+            "features": ["Select", "Filter"],
+        },
+    ])
+    return p
+
+
+@pytest.fixture(scope="module")
+def reports(tmp_path_factory, onto, query_file) -> Path:
+    out = tmp_path_factory.mktemp("reports")
+    gen = ReportGenerator(str(onto))
+    gen.generate_reports(str(query_file), str(out), prefix="test", formats=["csv", "latex"])
+    return out
+
+
+# ---------------------------------------------------------------------------
+# CSV output tests
+# ---------------------------------------------------------------------------
+
+
+def test_features_csv_exists(reports):
+    assert (reports / "test_features.csv").exists()
+
+
+def test_features_csv_columns(reports):
+    rows = list(csv.DictReader((reports / "test_features.csv").open(encoding="utf-8")))
+    assert len(rows) == 3
+    assert "query_id" in rows[0]
+    assert "Select" in rows[0]
+
+
+def test_features_csv_values(reports):
+    rows = {r["query_id"]: r for r in csv.DictReader(
+        (reports / "test_features.csv").open(encoding="utf-8")
+    )}
+    assert rows["q1"]["Select"] == "1"
+    assert rows["q2"]["Ask"] == "1"
+    assert rows["q2"]["Select"] == "0"
+
+
+def test_operators_csv_exists(reports):
+    assert (reports / "test_operators.csv").exists()
+
+
+def test_operators_csv_has_query_form(reports):
+    rows = list(csv.DictReader((reports / "test_operators.csv").open(encoding="utf-8")))
+    forms = {r["query_id"]: r["query_form"] for r in rows}
+    assert forms["q1"] == "SELECT"
+    assert forms["q2"] == "ASK"
+
+
+def test_question_types_csv(reports):
+    rows = {r["query_id"]: r for r in csv.DictReader(
+        (reports / "test_question_types.csv").open(encoding="utf-8")
+    )}
+    assert rows["q1"]["question_types"] == "Factoid"
+    assert rows["q1"]["classification_status"] == "classified"
+    assert rows["q2"]["question_types"] == "Confirmation"
+
+
+def test_antipatterns_csv_exists(reports):
+    assert (reports / "test_antipatterns.csv").exists()
+
+
+def test_antipatterns_csv_columns(reports):
+    rows = list(csv.DictReader((reports / "test_antipatterns.csv").open(encoding="utf-8")))
+    assert "AP01" in rows[0]
+    assert "antipattern_messages" in rows[0]
+
+
+def test_metrics_csv(reports):
+    rows = {r["query_id"]: r for r in csv.DictReader(
+        (reports / "test_metrics.csv").open(encoding="utf-8")
+    )}
+    assert "bgp_count" in rows["q1"]
+    assert rows["q1"]["bgp_count"] != ""
+
+
+def test_summary_csv(reports):
+    rows = {r["metric"]: r["value"] for r in csv.DictReader(
+        (reports / "test_summary.csv").open(encoding="utf-8")
+    )}
+    assert rows["total_queries"] == "3"
+    assert rows["classified_queries"] == "3"
+    assert rows["unclassified_queries"] == "0"
+
+
+def test_count_by_question_type_csv(reports):
+    rows = list(csv.DictReader(
+        (reports / "test_count_by_question_type.csv").open(encoding="utf-8")
+    ))
+    types = {r["question_type"]: int(r["count"]) for r in rows}
+    assert types.get("Factoid", 0) == 2   # q1 and q3
+    assert types.get("Confirmation", 0) == 1
+
+
+def test_count_by_feature_csv(reports):
+    rows = list(csv.DictReader(
+        (reports / "test_count_by_feature.csv").open(encoding="utf-8")
+    ))
+    feats = {r["feature"]: int(r["count"]) for r in rows}
+    assert feats.get("Select", 0) == 2
+    assert feats.get("Ask", 0) == 1
+
+
+def test_count_by_operator_csv(reports):
+    p = reports / "test_count_by_operator.csv"
+    assert p.exists()
+    rows = list(csv.DictReader(p.open(encoding="utf-8")))
+    ops = {r["operator"] for r in rows}
+    # Select and Ask are operator-level features
+    assert "Select" in ops or "Ask" in ops
+
+
+# ---------------------------------------------------------------------------
+# LaTeX output tests
+# ---------------------------------------------------------------------------
+
+
+def test_features_latex_exists(reports):
+    assert (reports / "test_features.tex").exists()
+
+
+def test_features_latex_content(reports):
+    tex = (reports / "test_features.tex").read_text(encoding="utf-8")
+    assert r"\begin{table}" in tex
+    assert r"\toprule" in tex
+    assert r"\cellcolor" in tex
+
+
+def test_operators_latex_exists(reports):
+    assert (reports / "test_operators.tex").exists()
+
+
+def test_summary_latex_exists(reports):
+    tex = (reports / "test_summary.tex").read_text(encoding="utf-8")
+    assert "Total queries" in tex
+
+
+def test_antipatterns_latex_exists(reports):
+    assert (reports / "test_antipatterns.tex").exists()
+
+
+# ---------------------------------------------------------------------------
+# Edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_output_dir_created(tmp_path, onto, query_file):
+    out = tmp_path / "new" / "nested" / "dir"
+    gen = ReportGenerator(str(onto))
+    gen.generate_reports(str(query_file), str(out), prefix="x", formats=["csv"])
+    assert (out / "x_summary.csv").exists()
+
+
+def test_empty_query_file(tmp_path, onto):
+    qf = tmp_path / "empty.ttl"
+    qf.write_text(
+        "@prefix lsqv: <http://lsq.aksw.org/vocab#> .\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    gen = ReportGenerator(str(onto))
+    gen.generate_reports(str(qf), str(out), prefix="empty", formats=["csv"])
+    rows = list(csv.DictReader((out / "empty_summary.csv").open(encoding="utf-8")))
+    totals = {r["metric"]: r["value"] for r in rows}
+    assert totals["total_queries"] == "0"
