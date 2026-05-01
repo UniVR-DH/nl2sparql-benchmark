@@ -3,8 +3,8 @@ name = "nl2s-bench"
 version = "0.1.0"
 description = "NL to SPARQL benchmarking toolkit"
 requires-python = ">=3.10"
-
 dependencies = [
+    "pyproject-toml>=0.1.0",
     "rdflib>=7.0.0",
 ]
 
