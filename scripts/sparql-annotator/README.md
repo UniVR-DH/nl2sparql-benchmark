@@ -340,7 +340,7 @@ when you need the spec-correct count.
 
 ```bash
 cd scripts/sparql-annotator
-uv run pytest              # run tests (124 tests)
+uv run pytest              # run tests (158 tests)
 uv run pytest -x -q        # stop on first failure
 uv run ruff check .        # lint
 uv run ruff format .       # format
