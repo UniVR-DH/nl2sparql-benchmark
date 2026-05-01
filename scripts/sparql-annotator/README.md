@@ -58,6 +58,12 @@ $SA classify \
   --query-file graphs/ck25/ck25-queries.ttl \
   --ontology   graphs/qa-types.ttl \
   --ambiguous-only
+
+# List only queries with antipatterns (no other output)
+$SA classify \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --ontology   graphs/qa-types.ttl \
+  --ap-only
 ```
 
 `--ambiguous-only` prints one line per ambiguous query to stdout and suppresses all logging:
@@ -67,7 +73,14 @@ $SA classify \
 36    AggregateEnumeration,LimitedRankedListing
 ```
 
-Useful for piping into other tools or quickly auditing ontology coverage gaps.
+`--ap-only` prints one line per query that has at least one antipattern:
+
+```
+15    AP01    ORDER BY + LIMIT 1 used to find an extremum.
+42    AP01,AP09,AP05    ORDER BY + LIMIT 1 ...; Projected variable(s) ...
+```
+
+Both flags suppress all logging and are suitable for piping.
 
 **Options:**
 
@@ -80,6 +93,7 @@ Useful for piping into other tools or quickly auditing ontology coverage gaps.
 | `--verbose` | Enable DEBUG output |
 | `--debug` | Print extracted ontology rules before classifying |
 | `--ambiguous-only` | Print only ambiguous query IDs and their conflicting types (tab-separated), suppress all logging |
+| `--ap-only` | Print only queries with antipatterns (`id\tcodes\tmessages`), suppress all logging |
 
 **Output TTL enrichment:** for each classified query the output adds `rdf:type qat:*` assertions
 and rebuilds the `lsqv:hasStructuralFeatures` blank node with algebra-derived features and
