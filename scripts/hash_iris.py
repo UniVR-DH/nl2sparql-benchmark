@@ -24,7 +24,7 @@ DEFAULT_NAMESPACES = [
 
 SKIP_FILES: set[str] = set()
 
-COPY_ONLY_FILES: set[str] = {"croissant.jsonld"}
+COPY_ONLY_FILES: set[str] = set()
 
 SPARQL_STRING_PREDICATES = {
     "http://lsq.aksw.org/vocab#text",
@@ -56,30 +56,72 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
 
 _hash_cache: dict[tuple[str, int, str], str] = {}
 
-# Tracks unique IRIs hashed per namespace. Used to emit a single collision-risk
-# warning at the end of the run rather than once per IRI.
-# (16^hash_len slots for hex, 10^hash_len for int — at the default length of 6
-# that is 16M and 1M respectively. Fine for ck25, but large KGs may get close
-# with --hash-format int.)
-_hashed_iris_per_ns: dict[str, set[str]] = {}
-
 # Warn when unique IRIs in a namespace exceed this fraction of available slots.
 _COLLISION_WARN_THRESHOLD = 0.1  # 10 %
+
+
+# ---------------------------------------------------------------------------
+# HyperLogLog cardinality estimator (p=12)
+#
+# Counts unique IRIs per namespace in fixed 4 096 bytes of memory regardless
+# of how many IRIs are processed — vs O(n) for a plain set.  Standard error
+# is ~1.6%, which is negligible compared to the collision probability range.
+#
+# Taken from hash_collision_poc.py (same repo).
+# ---------------------------------------------------------------------------
+
+class _TinyHLL:
+    """Minimal HyperLogLog sketch (p=12, ~4 KB, ±1.6% error)."""
+
+    def __init__(self, p: int = 12) -> None:
+        self.p = p
+        self.m = 1 << p          # 4 096 registers
+        self.reg = [0] * self.m
+        self._bits = 128 - p     # remaining bits after register index
+
+    def add(self, x: str) -> None:
+        # MD5 is used only as a fast uniform hash for the internal HLL sketch,
+        # not for the IRI hashing exposed to callers.
+        h = int(hashlib.md5(x.encode()).hexdigest(), 16)
+        idx = h & (self.m - 1)
+        w = h >> self.p
+        rank = self._bits - w.bit_length() + 1
+        if rank > self.reg[idx]:
+            self.reg[idx] = rank
+
+    def count(self) -> float:
+        import math
+        alpha = 0.7213 / (1 + 1.079 / self.m)
+        raw = alpha * self.m ** 2 / sum(2 ** -r for r in self.reg)
+        if raw <= 2.5 * self.m:
+            zeros = self.reg.count(0)
+            if zeros:
+                return self.m * math.log(self.m / zeros)
+        return raw
+
+
+# One HLL sketch per namespace; created on first encounter.
+_hll_per_ns: dict[str, _TinyHLL] = {}
 
 
 def check_collision_warnings(hash_len: int, fmt: str) -> None:
     """Print a single warning line per namespace that exceeds the threshold.
 
-    Called once at the end of the run by ``main()``.
+    Called once at the end of the run by ``main()``.  Uses HLL estimates so
+    memory cost is O(namespaces) rather than O(unique IRIs).
     """
+    import math
     slots = (10 ** hash_len) if fmt == "int" else (16 ** hash_len)
-    threshold = int(slots * _COLLISION_WARN_THRESHOLD)
-    for ns, iris in _hashed_iris_per_ns.items():
-        count = len(iris)
+    threshold = slots * _COLLISION_WARN_THRESHOLD
+    for ns, hll in _hll_per_ns.items():
+        count = hll.count()
         if count >= threshold:
+            # Birthday-problem probability: P ≈ 1 - e^(-k(k-1)/2N)
+            p_collision = 1 - math.exp(-count * (count - 1) / (2 * slots))
             print(
-                f"  WARNING: Collision risk — {count:,} unique IRIs under <{ns}> "
+                f"  WARNING: Collision risk — ~{count:,.0f} unique IRIs under <{ns}> "
                 f"({count / slots:.1%} of {slots:,} slots, "
+                f"P(collision) ≈ {p_collision:.2%}, "
                 f"hash-len={hash_len}, format={fmt}). "
                 "Consider increasing --hash-len."
             )
@@ -121,8 +163,10 @@ def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> s
             local = iri[len(ns):]
             if not local:
                 return iri
-            # Track unique IRIs per namespace for end-of-run collision warning.
-            _hashed_iris_per_ns.setdefault(ns, set()).add(iri)
+            # Feed IRI into the per-namespace HLL sketch for collision tracking.
+            if ns not in _hll_per_ns:
+                _hll_per_ns[ns] = _TinyHLL()
+            _hll_per_ns[ns].add(iri)
             return f"{ns}{short_hash(iri, hash_len, fmt)}"
     return iri
 
