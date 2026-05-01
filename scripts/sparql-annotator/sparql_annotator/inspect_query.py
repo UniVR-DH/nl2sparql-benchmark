@@ -101,7 +101,9 @@ def inspect_query(
     click.echo("ALGEBRA TREE")
     click.echo("=" * W)
     try:
-        alg = _algebra.translateQuery(parsed)
+        # Re-parse: translateQuery mutates the parse tree, so we need a fresh copy
+        parsed_for_alg = _parser.parseQuery(text)
+        alg = _algebra.translateQuery(parsed_for_alg)
         _print_tree(alg.algebra)
     except Exception as exc:
         raise click.ClickException(f"Algebra error: {exc}")
