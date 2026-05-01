@@ -54,8 +54,14 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
     return normalized
 
 
+_hash_cache: dict[tuple[str, int, str], str] = {}
+
+
 def short_hash(text: str, length: int, fmt: str = "hex") -> str:
     """Return a short hash of *text*.
+
+    Results are cached so the same (text, length, fmt) triple always returns
+    the same value within a run without recomputing the digest.
 
     Args:
         text:   The string to hash.
@@ -65,20 +71,58 @@ def short_hash(text: str, length: int, fmt: str = "hex") -> str:
                 takes it modulo ``10**length``, and zero-pads to *length*
                 decimal digits.
     """
+    key = (text, length, fmt)
+    if key in _hash_cache:
+        return _hash_cache[key]
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     if fmt == "int":
-        return str(int(digest, 16) % (10 ** length)).zfill(length)
-    return digest[:length]
+        result = str(int(digest, 16) % (10 ** length)).zfill(length)
+    else:
+        result = digest[:length]
+    _hash_cache[key] = result
+    return result
 
 
 def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> str:
     for ns in namespaces:
+        # Safe against prefix bleed (e.g. "http://example.org/foo" matching
+        # namespace "http://example.org/foobar/") because normalize_namespaces
+        # guarantees every namespace ends with "/", which acts as an
+        # unambiguous separator in the startswith check.
         if iri.startswith(ns):
             local = iri[len(ns):]
             if not local:
                 return iri
             return f"{ns}{short_hash(iri, hash_len, fmt)}"
     return iri
+
+
+def extract_prefixes(
+    text: str,
+    namespaces: list[str],
+    *,
+    include_sparql_prefixes: bool = False,
+) -> dict[str, str]:
+    """Return a ``{prefix: namespace}`` map for *text*.
+
+    Scans Turtle ``@prefix`` declarations and, when *include_sparql_prefixes*
+    is True, also inline SPARQL ``PREFIX`` declarations.  Only namespaces that
+    appear in *namespaces* are included.
+    """
+    prefix_to_ns: dict[str, str] = {}
+    for line in text.splitlines():
+        m = PREFIX_DECL_RE.match(line.strip())
+        if m:
+            prefix, ns = m.group(1), m.group(2)
+            if ns in namespaces:
+                prefix_to_ns[prefix] = ns
+        if include_sparql_prefixes:
+            sm = SPARQL_PREFIX_RE.search(line)
+            if sm:
+                prefix, ns = sm.group(1), sm.group(2)
+                if ns in namespaces:
+                    prefix_to_ns[prefix] = ns
+    return prefix_to_ns
 
 
 def hash_sparql_string(
@@ -89,11 +133,9 @@ def hash_sparql_string(
     Handles both full IRIs (<http://...>) and prefixed names (pv:Something).
     PREFIX declarations inside the SPARQL string are preserved intact.
     """
-    prefix_to_ns: dict[str, str] = {}
-    for m in SPARQL_PREFIX_RE.finditer(sparql):
-        prefix, ns = m.group(1), m.group(2)
-        if any(ns == n or ns.startswith(n) for n in namespaces):
-            prefix_to_ns[prefix] = ns
+    prefix_to_ns = extract_prefixes(
+        sparql, namespaces, include_sparql_prefixes=True
+    )
 
     def hash_angle_line(line: str) -> str:
         if SPARQL_PREFIX_RE.match(line.strip()):
@@ -168,20 +210,9 @@ def replace_prefixed_names(
     fmt: str,
     hash_query_strings: bool,
 ) -> str:
-    prefix_to_ns: dict[str, str] = {}
-    for line in text.splitlines():
-        m = PREFIX_DECL_RE.match(line.strip())
-        if m:
-            prefix, ns = m.group(1), m.group(2)
-            if ns in namespaces:
-                prefix_to_ns[prefix] = ns
-
-        if hash_query_strings:
-            sm = SPARQL_PREFIX_RE.search(line)
-            if sm:
-                prefix, ns = sm.group(1), sm.group(2)
-                if ns in namespaces:
-                    prefix_to_ns[prefix] = ns
+    prefix_to_ns = extract_prefixes(
+        text, namespaces, include_sparql_prefixes=hash_query_strings
+    )
 
     if not prefix_to_ns:
         return text
