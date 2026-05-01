@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparql-annotator"
+version = "0.2.6"
+description = "Annotate SPARQL queries extracting operator and structural features"
+requires-python = ">=3.10"
+authors = [ { name = "nl2s-bench" } ]
+dependencies = [
+    "rdflib>=6.0",
+    "pyparsing>=3.0",
+    "click>=8.0"
+]
+
+[project.optional-dependencies]
+viz = ["graphviz>=0.20"]
+
+[project.scripts]
+sparql-annotator = "sparql_annotator.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sparql_annotator*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

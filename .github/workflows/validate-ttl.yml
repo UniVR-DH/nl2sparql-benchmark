@@ -1,0 +1,56 @@
+name: Validate Turtle files
+
+env:
+  TTL_PATTERNS: "*-examples.ttl *-queries.ttl qa-types.ttl"
+
+on:
+  push:
+    paths:
+      - '**/*.ttl'
+  workflow_dispatch:
+    inputs:
+      patterns:
+        description: 'Space- or comma-separated glob patterns'
+        required: false
+        default: ''
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container:
+      image: stain/jena:5.1.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run RIOT validation
+        run: |
+          set -euo pipefail
+          failures=0
+          files_checked=0
+
+          PATTERNS_INPUT="${{ github.event.inputs.patterns }}"
+          PATTERNS="${PATTERNS_INPUT:-$TTL_PATTERNS}"
+          PATTERNS="${PATTERNS//,/ }"
+
+          for pattern in $PATTERNS; do
+            while IFS= read -r -d '' file; do
+              files_checked=$((files_checked + 1))
+              echo "Validating $file..."
+              if ! riot --validate --quiet "$file"; then
+                echo "FAILED: $file" >&2
+                failures=$((failures + 1))
+              fi
+            done < <(find . -name "$pattern" -print0 | sort -z)
+          done
+
+          if [ "$files_checked" -eq 0 ]; then
+            echo "No files matched patterns: $PATTERNS" >&2
+            exit 1
+          fi
+
+          if [ "$failures" -gt 0 ]; then
+            echo "$failures/$files_checked files failed validation" >&2
+            exit 2
+          fi
+
+          echo "All $files_checked files validated successfully"
