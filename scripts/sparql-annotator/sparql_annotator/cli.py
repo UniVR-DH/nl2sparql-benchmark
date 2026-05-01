@@ -13,6 +13,7 @@ from .adapters import CSVAdapter, JSONAdapter, TTLAdapter
 from .classifier import QuestionTypeClassifier
 from .namespaces import LSQV, QAT, QA
 from .inspect_query import inspect_cmd
+from .antipatterns import detect_antipatterns
 
 
 def _detect_format(path: str):
@@ -288,6 +289,13 @@ def _generate_type_assertions(
     out.bind("qat", QAT)
     out.bind("qa", QA)
 
+    # Normalize CRLF (\r\n) to LF in lsqv:text literals.
+    # Only \r followed by \n is stripped — standalone \r is preserved.
+    for s, p, o in list(out.triples((None, LSQV.text, None))):
+        if isinstance(o, Literal) and "\r\n" in str(o):
+            out.remove((s, p, o))
+            out.add((s, p, Literal(str(o).replace("\r\n", "\n"), datatype=o.datatype, lang=o.language)))
+
     count = 0
     updated_bgp = updated_tp = updated_pv = 0
 
@@ -391,9 +399,14 @@ def _generate_type_assertions(
     is_flag=True,
     help="Print only ambiguous query IDs and their conflicting types, then exit.",
 )
-def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguous_only):
+@click.option(
+    "--ap-only",
+    is_flag=True,
+    help="Print only queries with antipatterns (id, AP codes, messages), then exit.",
+)
+def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguous_only, ap_only):
     """Classify SPARQL queries by question type using LSQ features."""
-    if ambiguous_only:
+    if ambiguous_only or ap_only:
         import logging as _logging
         _logging.disable(_logging.CRITICAL)
     logger = _setup_logging(log_file, verbose)
@@ -408,6 +421,23 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguo
                 if len(qtypes) > 1:
                     short = uri_str.split("/")[-1]
                     click.echo(f"{short}\t{','.join(sorted(qtypes))}")
+            return
+        if ap_only:
+            # Load query texts from the TTL to run antipattern detection
+            from rdflib import Graph as _Graph
+            g = _Graph()
+            g.parse(str(query_file), format="turtle")
+            for uri_str in results:
+                uri = URIRef(uri_str)
+                text = next((str(o) for o in g.objects(uri, LSQV.text)), None)
+                if not text:
+                    continue
+                issues = detect_antipatterns(text)
+                if issues:
+                    short = uri_str.split("/")[-1]
+                    codes = ",".join(i.code for i in issues)
+                    msgs = "; ".join(i.message for i in issues)
+                    click.echo(f"{short}\t{codes}\t{msgs}")
             return
         _print_results(classifier, results, logger)
         if output:
