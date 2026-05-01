@@ -24,7 +24,7 @@ DEFAULT_NAMESPACES = [
 
 SKIP_FILES: set[str] = set()
 
-COPY_ONLY_FILES: set[str] = set()
+COPY_ONLY_FILES: set[str] = {"croissant.jsonld"}
 
 SPARQL_STRING_PREDICATES = {
     "http://lsq.aksw.org/vocab#text",
@@ -410,18 +410,23 @@ def process_folder(
     copied_count = 0
 
     for src in in_files:
-        dst = output_dir / src.name
-
         if src.name in skip_files:
             print(f"  Skipping:   {src.name}")
             skipped_count += 1
             continue
 
         if src.name in copy_only_files:
+            dst = output_dir / src.name
             shutil.copy2(src, dst)
             print(f"  Copied:     {src.name}")
             copied_count += 1
             continue
+
+        if src.suffixes:
+            out_name = f"{src.stem}-h{''.join(src.suffixes)}"
+        else:
+            out_name = f"{src.name}-h"
+        dst = output_dir / out_name
 
         content = src.read_text(encoding="utf-8")
         transformed = transform_text(
@@ -429,7 +434,7 @@ def process_folder(
         )
         dst.write_text(transformed, encoding="utf-8")
         transformed_count += 1
-        print(f"  Processed:  {src.name}")
+        print(f"  Processed:  {src.name} -> {out_name}")
 
     return len(in_files), transformed_count, skipped_count, copied_count
 
