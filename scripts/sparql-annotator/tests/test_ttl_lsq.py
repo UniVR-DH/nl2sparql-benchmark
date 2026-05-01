@@ -103,3 +103,49 @@ WHERE {
     assert len(ann) == 1
     assert ann[0].is_valid
     assert ann[0].operators.tp_count == 2
+
+
+def test_classify_strips_cr_from_text(tmp_path):
+    """CRLF (\\r\\n) in lsqv:text must be normalized to LF; standalone \\r preserved."""
+    import textwrap
+    from pathlib import Path
+    from rdflib import Graph, URIRef
+    from sparql_annotator.classifier import QuestionTypeClassifier
+    from sparql_annotator.namespaces import LSQV
+    from sparql_annotator.cli import _generate_type_assertions
+    import logging
+
+    onto = tmp_path / "mini.ttl"
+    onto.write_text(textwrap.dedent("""
+        @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix lsqv: <http://lsq.aksw.org/vocab#> .
+        @prefix qat:  <https://w3id.org/univr-qa/qatypes#> .
+        qat:QuestionType a owl:Class .
+        qat:Factoid rdfs:subClassOf qat:QuestionType ;
+            rdfs:subClassOf [
+                owl:onProperty lsqv:hasStructuralFeatures ;
+                owl:someValuesFrom [
+                    owl:onProperty lsqv:usesFeature ;
+                    owl:hasValue lsqv:Select ] ] .
+    """), encoding="utf-8")
+
+    # Query 1: CRLF line endings — \r\n should become \n
+    # Query 2: standalone \r (not followed by \n) — should be preserved
+    qf = tmp_path / "q.ttl"
+    qf.write_bytes(
+        b"@prefix lsqv: <http://lsq.aksw.org/vocab#> .\n"
+        b"@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+        b"<http://example.org/q1> a lsqv:Query ;\n"
+        b'    lsqv:text """SELECT ?s\r\nWHERE { ?s ?p ?o }""" ;\n'
+        b"    lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select ] .\n"
+    )
+
+    clf = QuestionTypeClassifier(onto, logger=logging.getLogger("test"))
+    results = clf.classify_queries_from_file(qf)
+    out = _generate_type_assertions(qf, results, clf, logging.getLogger("test"))
+
+    for text_lit in out.objects(URIRef("http://example.org/q1"), LSQV.text):
+        text = str(text_lit)
+        assert "\r\n" not in text, f"CRLF found in lsqv:text: {text!r}"
+        assert "\n" in text, "LF should be present after CRLF normalization"

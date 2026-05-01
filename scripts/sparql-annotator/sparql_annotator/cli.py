@@ -289,6 +289,13 @@ def _generate_type_assertions(
     out.bind("qat", QAT)
     out.bind("qa", QA)
 
+    # Normalize CRLF (\r\n) to LF in lsqv:text literals.
+    # Only \r followed by \n is stripped — standalone \r is preserved.
+    for s, p, o in list(out.triples((None, LSQV.text, None))):
+        if isinstance(o, Literal) and "\r\n" in str(o):
+            out.remove((s, p, o))
+            out.add((s, p, Literal(str(o).replace("\r\n", "\n"), datatype=o.datatype, lang=o.language)))
+
     count = 0
     updated_bgp = updated_tp = updated_pv = 0
 
