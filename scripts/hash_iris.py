@@ -47,8 +47,6 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
             continue
         if not value.endswith("/"):
             value += "/"
-        if value == "http://ld.company.org/prod-inst/":
-            value = "http://ld.company.org/prod-instances/"
         if value not in normalized:
             normalized.append(value)
     return normalized
@@ -63,11 +61,8 @@ _COLLISION_WARN_THRESHOLD = 0.1  # 10 %
 # ---------------------------------------------------------------------------
 # HyperLogLog cardinality estimator (p=12)
 #
-# Counts unique IRIs per namespace in fixed 4 096 bytes of memory regardless
-# of how many IRIs are processed — vs O(n) for a plain set.  Standard error
+# Counts unique IRIs per namespace in fixed 4.096 b of memory. Standard error
 # is ~1.6%, which is negligible compared to the collision probability range.
-#
-# Taken from hash_collision_poc.py (same repo).
 # ---------------------------------------------------------------------------
 
 class _TinyHLL:
@@ -107,8 +102,7 @@ _hll_per_ns: dict[str, _TinyHLL] = {}
 def check_collision_warnings(hash_len: int, fmt: str) -> None:
     """Print a single warning line per namespace that exceeds the threshold.
 
-    Called once at the end of the run by ``main()``.  Uses HLL estimates so
-    memory cost is O(namespaces) rather than O(unique IRIs).
+    Called once at the end of the run by ``main()``. 
     """
     import math
     slots = (10 ** hash_len) if fmt == "int" else (16 ** hash_len)
@@ -155,10 +149,6 @@ def short_hash(text: str, length: int, fmt: str = "hex") -> str:
 
 def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> str:
     for ns in namespaces:
-        # Safe against prefix bleed (e.g. "http://example.org/foo" matching
-        # namespace "http://example.org/foobar/") because normalize_namespaces
-        # guarantees every namespace ends with "/", which acts as an
-        # unambiguous separator in the startswith check.
         if iri.startswith(ns):
             local = iri[len(ns):]
             if not local:
@@ -321,9 +311,6 @@ def replace_prefixed_names(
                 ns_value: str = ns,
                 pref: str = prefix,
             ) -> str:
-                # rstrip handles trailing dots used as Turtle statement
-                # terminators (e.g. pv:name.) without breaking local names
-                # that legitimately contain dots (e.g. email-style IRIs).
                 local = match.group(1).rstrip(".")
                 full_iri = f"{ns_value}{local}"
                 hashed = short_hash(full_iri, hash_len, fmt)
