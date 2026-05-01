@@ -24,7 +24,7 @@ DEFAULT_NAMESPACES = [
 
 SKIP_FILES: set[str] = set()
 
-COPY_ONLY_FILES: set[str] = set()
+COPY_ONLY_FILES: set[str] = {"croissant.jsonld"}
 
 SPARQL_STRING_PREDICATES = {
     "http://lsq.aksw.org/vocab#text",
@@ -55,6 +55,34 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
 
 
 _hash_cache: dict[tuple[str, int, str], str] = {}
+
+# Tracks unique IRIs hashed per namespace. Used to emit a single collision-risk
+# warning at the end of the run rather than once per IRI.
+# (16^hash_len slots for hex, 10^hash_len for int — at the default length of 6
+# that is 16M and 1M respectively. Fine for ck25, but large KGs may get close
+# with --hash-format int.)
+_hashed_iris_per_ns: dict[str, set[str]] = {}
+
+# Warn when unique IRIs in a namespace exceed this fraction of available slots.
+_COLLISION_WARN_THRESHOLD = 0.1  # 10 %
+
+
+def check_collision_warnings(hash_len: int, fmt: str) -> None:
+    """Print a single warning line per namespace that exceeds the threshold.
+
+    Called once at the end of the run by ``main()``.
+    """
+    slots = (10 ** hash_len) if fmt == "int" else (16 ** hash_len)
+    threshold = int(slots * _COLLISION_WARN_THRESHOLD)
+    for ns, iris in _hashed_iris_per_ns.items():
+        count = len(iris)
+        if count >= threshold:
+            print(
+                f"  WARNING: Collision risk — {count:,} unique IRIs under <{ns}> "
+                f"({count / slots:.1%} of {slots:,} slots, "
+                f"hash-len={hash_len}, format={fmt}). "
+                "Consider increasing --hash-len."
+            )
 
 
 def short_hash(text: str, length: int, fmt: str = "hex") -> str:
@@ -93,6 +121,8 @@ def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> s
             local = iri[len(ns):]
             if not local:
                 return iri
+            # Track unique IRIs per namespace for end-of-run collision warning.
+            _hashed_iris_per_ns.setdefault(ns, set()).add(iri)
             return f"{ns}{short_hash(iri, hash_len, fmt)}"
     return iri
 
@@ -463,6 +493,7 @@ def main() -> int:
     print(f"  Processed:    {transformed_count}")
     print(f"  Copied:       {copied_count}")
     print(f"  Skipped:      {skipped_count}")
+    check_collision_warnings(args.hash_len, args.hash_format)
 
     return 0
 
