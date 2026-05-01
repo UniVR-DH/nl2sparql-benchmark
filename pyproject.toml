@@ -4,16 +4,8 @@ version = "0.1.0"
 description = "NL to SPARQL benchmarking toolkit"
 requires-python = ">=3.10"
 dependencies = [
-    "pyproject-toml>=0.1.0",
     "rdflib>=7.0.0",
 ]
-
-[project.scripts]
-classify-questions = "nl2s_bench.classify_questions:main"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [

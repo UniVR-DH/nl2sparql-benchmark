@@ -11,16 +11,21 @@ The project is expected to evolve over time. Structure can grow, but a few conve
 ├── .external/              # Vendored external vocabularies
 │   ├── lsq-vocab.ttl        
 │   └── ...
-├── .github/                # GitHub-specific files)
+├── .github/                # GitHub-specific files
 ├── GUIDELINE.md            # Canonical encoding guidance for test data
 ├── LICENSE
 ├── README.md
+├── scripts/
+│   ├── sparql-annotator/   # SPARQL annotation & classification CLI
+│   └── ...
 └── graphs/                 # Core benchmark graph assets
     ├── ck25/
     │   ├── ck25-*.graph
     │   ├── ck25-*.ttl
     │   ├── ck25.graph
     │   └── ck25.ttl
+    ├── ck25-h/             # CK25 variant with hashed IRIs
+    │   └── ck25-h-*.ttl
     └── gptkb/
         ├── gptkb-*.graph
         ├── gptkb-*.ttl
@@ -179,37 +184,37 @@ qat:SemanticIssue
 
 ---
 
-## Question Classification Script
+## Question Classification
 
-The script `scripts/classify_questions.py` classifies LSQ-annotated SPARQL queries using the ontology rules in `graphs/qa-types.ttl`.
+Query classification is handled by the `sparql-annotator` CLI in `scripts/sparql-annotator/`.
+See [`scripts/sparql-annotator/README.md`](scripts/sparql-annotator/README.md) for full documentation.
 
-### Usage
-
-The classifier does three things:
-
-1. reads ontology constraints from `graphs/qa-types.ttl`,
-2. validates and classifies queries from `*-queries.ttl`,
-3. writes typed output and a validation log.
-
-Run:
+Quick start:
 
 ```bash
-python scripts/classify_questions.py \
+cd scripts/sparql-annotator
+uv venv .venv && uv pip install -e .
+source .venv/bin/activate
+
+# Classify queries
+python -m sparql_annotator.cli classify \
     --query-file graphs/ck25/ck25-queries.ttl \
-    --ontology graphs/qa-types.ttl \
-    --output .temp/classified_queries.ttl \
-    --log-file .temp/classification.log
+    --ontology   graphs/qa-types.ttl \
+    --output     .temp/classified.ttl \
+    --log-file   .temp/classification.log
+
+# List ambiguous queries only
+python -m sparql_annotator.cli classify \
+    --query-file graphs/ck25/ck25-queries.ttl \
+    --ontology   graphs/qa-types.ttl \
+    --ambiguous-only
+
+# List queries with antipatterns only
+python -m sparql_annotator.cli classify \
+    --query-file graphs/ck25/ck25-queries.ttl \
+    --ontology   graphs/qa-types.ttl \
+    --ap-only
 ```
-
-Useful flags:
-
-- `--verbose` for per-query debug details.
-- `--debug` to print extracted ontology rules.
-
-Outputs:
-
-- `--output`: Turtle with inferred `rdf:type qat:*` assertions.
-- `--log-file`: syntax errors, classification warnings/errors, and final validation status.
 
 ## Development
 
@@ -238,7 +243,7 @@ source .venv/bin/activate
 Or prefix any command with `uv run` to run it inside the venv without activating:
 
 ```bash
-uv run python classify_questions.py --help
+uv run python -m sparql_annotator.cli --help
 ```
 
 

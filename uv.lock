@@ -162,7 +162,7 @@ wheels = [
 [[package]]
 name = "nl2s-bench"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "rdflib" },
 ]
