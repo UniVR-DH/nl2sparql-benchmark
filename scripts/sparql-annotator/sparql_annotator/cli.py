@@ -499,7 +499,7 @@ def classify_cmd(
 @click.option(
     "--output-dir",
     required=True,
-    type=click.Path(path_type=Path),
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     help="Directory for output files (created if missing).",
 )
 @click.option("--prefix", default="report", show_default=True, help="Filename prefix.")
