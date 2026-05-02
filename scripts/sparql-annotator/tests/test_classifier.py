@@ -453,6 +453,7 @@ WHERE {
 def test_comparative_classified(tmp_path, mini_clf):
     """Comparative query with aggregation in subqueries must classify as Comparative."""
     import textwrap
+
     ttl = textwrap.dedent(f"""
         @prefix lsqv: <http://lsq.aksw.org/vocab#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -472,6 +473,7 @@ def test_comparative_classified(tmp_path, mini_clf):
 def test_comparative_classified_full_ontology(tmp_path, clf):
     """Comparative query must classify as Comparative with the real ontology."""
     import textwrap
+
     ttl = textwrap.dedent(f"""
         @prefix lsqv: <http://lsq.aksw.org/vocab#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .

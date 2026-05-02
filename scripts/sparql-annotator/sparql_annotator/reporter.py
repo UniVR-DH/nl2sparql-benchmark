@@ -35,12 +35,28 @@ _log = logging.getLogger(__name__)
 
 # Canonical SPARQL operator names (subset of LSQ features)
 _OPERATOR_FEATURES: Set[str] = {
-    "Select", "Ask", "Construct", "Describe",
-    "Distinct", "Reduced", "Limit", "Offset", "OrderBy",
-    "Filter", "Optional", "Union", "Minus", "Graph", "Service",
-    "Aggregators", "GroupBy", "Having",
-    "SubQuery", "PropertyPath",
-    "Bind", "Values",
+    "Select",
+    "Ask",
+    "Construct",
+    "Describe",
+    "Distinct",
+    "Reduced",
+    "Limit",
+    "Offset",
+    "OrderBy",
+    "Filter",
+    "Optional",
+    "Union",
+    "Minus",
+    "Graph",
+    "Service",
+    "Aggregators",
+    "GroupBy",
+    "Having",
+    "SubQuery",
+    "PropertyPath",
+    "Bind",
+    "Values",
 }
 
 _ALL_AP_CODES = ["AP01", "AP02", "AP03", "AP04", "AP05", "AP06", "AP07", "AP08", "AP09"]
@@ -144,9 +160,15 @@ class ReportGenerator:
             self._write_antipatterns_csv(data, out / f"{prefix}_antipatterns.csv")
             self._write_metrics_csv(data, out / f"{prefix}_metrics.csv")
             self._write_summary_csv(data, out / f"{prefix}_summary.csv")
-            self._write_count_by_question_type_csv(data, out / f"{prefix}_count_by_question_type.csv")
-            self._write_count_by_feature_csv(data, out / f"{prefix}_count_by_feature.csv")
-            self._write_count_by_operator_csv(data, out / f"{prefix}_count_by_operator.csv")
+            self._write_count_by_question_type_csv(
+                data, out / f"{prefix}_count_by_question_type.csv"
+            )
+            self._write_count_by_feature_csv(
+                data, out / f"{prefix}_count_by_feature.csv"
+            )
+            self._write_count_by_operator_csv(
+                data, out / f"{prefix}_count_by_operator.csv"
+            )
 
         if do_latex:
             self._write_features_latex(data, out / f"{prefix}_features.tex")
@@ -175,7 +197,13 @@ class ReportGenerator:
         classify_results = self.classifier.classify_queries_from_file(path)
 
         rows = []
-        for uri_str, (qtypes, features, label, warnings, counts) in classify_results.items():
+        for uri_str, (
+            qtypes,
+            features,
+            label,
+            warnings,
+            counts,
+        ) in classify_results.items():
             uri = URIRef(uri_str)
             query_id = uri_str.split("/")[-1]
 
@@ -206,20 +234,22 @@ class ReportGenerator:
             else:
                 status = "classified"
 
-            rows.append({
-                "query_id": query_id,
-                "uri": uri_str,
-                "label": label or "",
-                "text": text or "",
-                "parse_ok": parse_ok,
-                "features": features,
-                "qtypes": qtypes,
-                "status": status,
-                "counts": counts,
-                "op_set": op_set,
-                "issues": issues,
-                "warnings": warnings,
-            })
+            rows.append(
+                {
+                    "query_id": query_id,
+                    "uri": uri_str,
+                    "label": label or "",
+                    "text": text or "",
+                    "parse_ok": parse_ok,
+                    "features": features,
+                    "qtypes": qtypes,
+                    "status": status,
+                    "counts": counts,
+                    "op_set": op_set,
+                    "issues": issues,
+                    "warnings": warnings,
+                }
+            )
 
         return rows
 
@@ -228,16 +258,15 @@ class ReportGenerator:
     # ------------------------------------------------------------------
 
     def _write_features_csv(self, data: List[Dict], path: Path) -> None:
-        all_features: List[str] = sorted(
-            {f for row in data for f in row["features"]}
-        )
+        all_features: List[str] = sorted({f for row in data for f in row["features"]})
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
             w.writerow(["query_id"] + all_features)
             for row in data:
-                w.writerow([row["query_id"]] + [
-                    1 if f in row["features"] else 0 for f in all_features
-                ])
+                w.writerow(
+                    [row["query_id"]]
+                    + [1 if f in row["features"] else 0 for f in all_features]
+                )
         self.logger.info(f"Wrote {path}")
 
     def _write_operators_csv(self, data: List[Dict], path: Path) -> None:
@@ -245,16 +274,30 @@ class ReportGenerator:
         # graph_patterns/solution_modifiers use uppercase tokens in .raw
         # aggregates uses uppercase names in .aggregates
         _raw_map = {
-            "Optional": "OPTIONAL", "Union": "UNION", "Filter": "FILTER",
-            "Bind": "BIND", "Values": "VALUES", "Minus": "MINUS",
-            "Graph": "GRAPH", "Service": "SERVICE", "Distinct": "DISTINCT",
-            "Reduced": "REDUCED", "OrderBy": "ORDER BY", "GroupBy": "GROUP BY",
-            "Having": "HAVING", "Limit": "LIMIT", "Offset": "OFFSET",
-            "SubQuery": "SUBQUERY", "PropertyPath": "PROPERTY PATH",
+            "Optional": "OPTIONAL",
+            "Union": "UNION",
+            "Filter": "FILTER",
+            "Bind": "BIND",
+            "Values": "VALUES",
+            "Minus": "MINUS",
+            "Graph": "GRAPH",
+            "Service": "SERVICE",
+            "Distinct": "DISTINCT",
+            "Reduced": "REDUCED",
+            "OrderBy": "ORDER BY",
+            "GroupBy": "GROUP BY",
+            "Having": "HAVING",
+            "Limit": "LIMIT",
+            "Offset": "OFFSET",
+            "SubQuery": "SUBQUERY",
+            "PropertyPath": "PROPERTY PATH",
         }
         _agg_map = {
-            "Count": "COUNT", "Sum": "SUM", "Avg": "AVG",
-            "Min": "MIN", "Max": "MAX",
+            "Count": "COUNT",
+            "Sum": "SUM",
+            "Avg": "AVG",
+            "Min": "MIN",
+            "Max": "MAX",
         }
         op_cols = list(_raw_map) + list(_agg_map)
 
@@ -266,10 +309,9 @@ class ReportGenerator:
                 if ops is None:
                     w.writerow([row["query_id"]] + [""] * (len(op_cols) + 1) + [""])
                     continue
-                flags = (
-                    [1 if _raw_map[c] in ops.raw else 0 for c in _raw_map]
-                    + [1 if _agg_map[c] in ops.aggregates else 0 for c in _agg_map]
-                )
+                flags = [1 if _raw_map[c] in ops.raw else 0 for c in _raw_map] + [
+                    1 if _agg_map[c] in ops.aggregates else 0 for c in _agg_map
+                ]
                 w.writerow(
                     [row["query_id"], ops.query_form]
                     + flags
@@ -280,7 +322,14 @@ class ReportGenerator:
     def _write_question_types_csv(self, data: List[Dict], path: Path) -> None:
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
-            w.writerow(["query_id", "question_types", "classification_status", "ambiguity_reason"])
+            w.writerow(
+                [
+                    "query_id",
+                    "question_types",
+                    "classification_status",
+                    "ambiguity_reason",
+                ]
+            )
             for row in data:
                 qtypes_str = ",".join(sorted(row["qtypes"]))
                 ambiguity = qtypes_str if row["status"] == "ambiguous" else ""
@@ -291,9 +340,7 @@ class ReportGenerator:
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
             w.writerow(
-                ["query_id", "antipatterns"]
-                + _ALL_AP_CODES
-                + ["antipattern_messages"]
+                ["query_id", "antipatterns"] + _ALL_AP_CODES + ["antipattern_messages"]
             )
             for row in data:
                 issues = row["issues"]
@@ -301,8 +348,10 @@ class ReportGenerator:
                 codes_str = ",".join(sorted(codes))
                 flags = [1 if c in codes else 0 for c in _ALL_AP_CODES]
                 msgs = json.dumps(
-                    [{"code": i.code, "message": i.message, "hint": i.hint}
-                     for i in issues]
+                    [
+                        {"code": i.code, "message": i.message, "hint": i.hint}
+                        for i in issues
+                    ]
                 )
                 w.writerow([row["query_id"], codes_str] + flags + [msgs])
         self.logger.info(f"Wrote {path}")
@@ -313,12 +362,14 @@ class ReportGenerator:
             w.writerow(["query_id", "bgp_count", "triple_count", "projected_var_count"])
             for row in data:
                 c = row["counts"]
-                w.writerow([
-                    row["query_id"],
-                    c.get("bgpCount", ""),
-                    c.get("tpCount", ""),
-                    c.get("projectVarCount", ""),
-                ])
+                w.writerow(
+                    [
+                        row["query_id"],
+                        c.get("bgpCount", ""),
+                        c.get("tpCount", ""),
+                        c.get("projectVarCount", ""),
+                    ]
+                )
         self.logger.info(f"Wrote {path}")
 
     def _write_summary_csv(self, data: List[Dict], path: Path) -> None:
@@ -335,7 +386,7 @@ class ReportGenerator:
         pv_vals = [r["counts"].get("projectVarCount", 0) for r in data if r["counts"]]
 
         def avg(lst):
-            return f"{sum(lst)/len(lst):.2f}" if lst else ""
+            return f"{sum(lst) / len(lst):.2f}" if lst else ""
 
         rows = [
             ("total_queries", total),
@@ -348,7 +399,9 @@ class ReportGenerator:
             ("avg_bgp_count", avg(bgp_vals)),
             ("avg_triple_count", avg(tp_vals)),
             ("avg_projected_vars", avg(pv_vals)),
-        ] + [(f"queries_with_{code}", ap_counter.get(code, 0)) for code in _ALL_AP_CODES]
+        ] + [
+            (f"queries_with_{code}", ap_counter.get(code, 0)) for code in _ALL_AP_CODES
+        ]
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
             w.writerow(["metric", "value"])
@@ -397,12 +450,17 @@ class ReportGenerator:
         all_features = sorted({f for row in data for f in row["features"]})
         headers = ["Query"] + all_features
         rows = [
-            [row["query_id"]] + [_latex_bool(f in row["features"]) for f in all_features]
+            [row["query_id"]]
+            + [_latex_bool(f in row["features"]) for f in all_features]
             for row in data
         ]
         transpose = len(data) > 20
         tex = _latex_table(
-            "LSQ Feature Presence Matrix", "features", headers, rows, transpose=transpose
+            "LSQ Feature Presence Matrix",
+            "features",
+            headers,
+            rows,
+            transpose=transpose,
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
@@ -411,14 +469,16 @@ class ReportGenerator:
         op_cols = sorted(_OPERATOR_FEATURES)
         headers = ["Query"] + op_cols
         rows = [
-            [row["query_id"]] + [
-                _latex_bool(op in row["features"]) for op in op_cols
-            ]
+            [row["query_id"]] + [_latex_bool(op in row["features"]) for op in op_cols]
             for row in data
         ]
         transpose = len(data) > 20
         tex = _latex_table(
-            "SPARQL Operator Usage Matrix", "operators", headers, rows, transpose=transpose
+            "SPARQL Operator Usage Matrix",
+            "operators",
+            headers,
+            rows,
+            transpose=transpose,
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
@@ -439,17 +499,26 @@ class ReportGenerator:
             ["Unclassified", str(unclassified)],
             ["Ambiguous", str(ambiguous)],
             ["With antipatterns", str(with_ap)],
-            ["Most common feature", feat_counter.most_common(1)[0][0] if feat_counter else "—"],
-            ["Most common type", type_counter.most_common(1)[0][0] if type_counter else "—"],
+            [
+                "Most common feature",
+                feat_counter.most_common(1)[0][0] if feat_counter else "—",
+            ],
+            [
+                "Most common type",
+                type_counter.most_common(1)[0][0] if type_counter else "—",
+            ],
         ]
-        tex = _latex_table("Dataset Summary", "summary", ["Metric", "Value"], summary_rows)
+        tex = _latex_table(
+            "Dataset Summary", "summary", ["Metric", "Value"], summary_rows
+        )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
 
     def _write_antipatterns_latex(self, data: List[Dict], path: Path) -> None:
         headers = ["Query"] + _ALL_AP_CODES
         rows = [
-            [row["query_id"]] + [
+            [row["query_id"]]
+            + [
                 _latex_bool(any(i.code == c for i in row["issues"]), antipattern=True)
                 for c in _ALL_AP_CODES
             ]
@@ -457,7 +526,11 @@ class ReportGenerator:
         ]
         transpose = len(data) > 20
         tex = _latex_table(
-            "Antipattern Detection Summary", "antipatterns", headers, rows, transpose=transpose
+            "Antipattern Detection Summary",
+            "antipatterns",
+            headers,
+            rows,
+            transpose=transpose,
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")

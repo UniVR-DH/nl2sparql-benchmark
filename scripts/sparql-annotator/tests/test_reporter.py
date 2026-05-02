@@ -1,7 +1,6 @@
 """Tests for sparql_annotator.reporter — ReportGenerator."""
 
 import csv
-import json
 import textwrap
 from pathlib import Path
 
@@ -58,7 +57,7 @@ def _write_query_ttl(path: Path, queries: list[dict]) -> None:
         # Each usesFeature must be a separate triple inside the blank node
         feat_lines = " ;\n        ".join(f"lsqv:usesFeature lsqv:{f}" for f in features)
         lines += [
-            f'<http://example.org/{q["id"]}> a lsqv:Query ;',
+            f"<http://example.org/{q['id']}> a lsqv:Query ;",
             f'    rdfs:label "{q["label"]}" ;',
             f'    lsqv:text """{q["sparql"]}""" ;',
             f"    lsqv:hasStructuralFeatures [ {feat_lines} ] .",
@@ -77,26 +76,29 @@ def onto(tmp_path_factory) -> Path:
 @pytest.fixture(scope="module")
 def query_file(tmp_path_factory) -> Path:
     p = tmp_path_factory.mktemp("queries") / "queries.ttl"
-    _write_query_ttl(p, [
-        {
-            "id": "q1",
-            "label": "Simple select",
-            "sparql": "SELECT ?s WHERE { ?s ?p ?o }",
-            "features": ["Select"],
-        },
-        {
-            "id": "q2",
-            "label": "Ask query",
-            "sparql": "ASK { ?s ?p ?o }",
-            "features": ["Ask"],
-        },
-        {
-            "id": "q3",
-            "label": "Select with filter",
-            "sparql": "SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 1) }",
-            "features": ["Select", "Filter"],
-        },
-    ])
+    _write_query_ttl(
+        p,
+        [
+            {
+                "id": "q1",
+                "label": "Simple select",
+                "sparql": "SELECT ?s WHERE { ?s ?p ?o }",
+                "features": ["Select"],
+            },
+            {
+                "id": "q2",
+                "label": "Ask query",
+                "sparql": "ASK { ?s ?p ?o }",
+                "features": ["Ask"],
+            },
+            {
+                "id": "q3",
+                "label": "Select with filter",
+                "sparql": "SELECT ?s WHERE { ?s ?p ?o . FILTER(?o > 1) }",
+                "features": ["Select", "Filter"],
+            },
+        ],
+    )
     return p
 
 
@@ -104,7 +106,9 @@ def query_file(tmp_path_factory) -> Path:
 def reports(tmp_path_factory, onto, query_file) -> Path:
     out = tmp_path_factory.mktemp("reports")
     gen = ReportGenerator(str(onto))
-    gen.generate_reports(str(query_file), str(out), prefix="test", formats=["csv", "latex"])
+    gen.generate_reports(
+        str(query_file), str(out), prefix="test", formats=["csv", "latex"]
+    )
     return out
 
 
@@ -125,9 +129,10 @@ def test_features_csv_columns(reports):
 
 
 def test_features_csv_values(reports):
-    rows = {r["query_id"]: r for r in csv.DictReader(
-        (reports / "test_features.csv").open(encoding="utf-8")
-    )}
+    rows = {
+        r["query_id"]: r
+        for r in csv.DictReader((reports / "test_features.csv").open(encoding="utf-8"))
+    }
     assert rows["q1"]["Select"] == "1"
     assert rows["q2"]["Ask"] == "1"
     assert rows["q2"]["Select"] == "0"
@@ -145,9 +150,12 @@ def test_operators_csv_has_query_form(reports):
 
 
 def test_question_types_csv(reports):
-    rows = {r["query_id"]: r for r in csv.DictReader(
-        (reports / "test_question_types.csv").open(encoding="utf-8")
-    )}
+    rows = {
+        r["query_id"]: r
+        for r in csv.DictReader(
+            (reports / "test_question_types.csv").open(encoding="utf-8")
+        )
+    }
     assert rows["q1"]["question_types"] == "Factoid"
     assert rows["q1"]["classification_status"] == "classified"
     assert rows["q2"]["question_types"] == "Confirmation"
@@ -158,44 +166,60 @@ def test_antipatterns_csv_exists(reports):
 
 
 def test_antipatterns_csv_columns(reports):
-    rows = list(csv.DictReader((reports / "test_antipatterns.csv").open(encoding="utf-8")))
+    rows = list(
+        csv.DictReader((reports / "test_antipatterns.csv").open(encoding="utf-8"))
+    )
     assert "AP01" in rows[0]
     assert "antipattern_messages" in rows[0]
 
 
 def test_metrics_csv(reports):
-    rows = {r["query_id"]: r for r in csv.DictReader(
-        (reports / "test_metrics.csv").open(encoding="utf-8")
-    )}
+    rows = {
+        r["query_id"]: r
+        for r in csv.DictReader((reports / "test_metrics.csv").open(encoding="utf-8"))
+    }
     assert "bgp_count" in rows["q1"]
     assert rows["q1"]["bgp_count"] != ""
 
 
 def test_summary_csv(reports):
-    rows = {r["metric"]: r["value"] for r in csv.DictReader(
-        (reports / "test_summary.csv").open(encoding="utf-8")
-    )}
+    rows = {
+        r["metric"]: r["value"]
+        for r in csv.DictReader((reports / "test_summary.csv").open(encoding="utf-8"))
+    }
     assert rows["total_queries"] == "3"
     assert rows["classified_queries"] == "3"
     assert rows["unclassified_queries"] == "0"
     # per-AP count rows must be present for all codes
-    for code in ["AP01","AP02","AP03","AP04","AP05","AP06","AP07","AP08","AP09"]:
+    for code in [
+        "AP01",
+        "AP02",
+        "AP03",
+        "AP04",
+        "AP05",
+        "AP06",
+        "AP07",
+        "AP08",
+        "AP09",
+    ]:
         assert f"queries_with_{code}" in rows
 
 
 def test_count_by_question_type_csv(reports):
-    rows = list(csv.DictReader(
-        (reports / "test_count_by_question_type.csv").open(encoding="utf-8")
-    ))
+    rows = list(
+        csv.DictReader(
+            (reports / "test_count_by_question_type.csv").open(encoding="utf-8")
+        )
+    )
     types = {r["question_type"]: int(r["count"]) for r in rows}
-    assert types.get("Factoid", 0) == 2   # q1 and q3
+    assert types.get("Factoid", 0) == 2  # q1 and q3
     assert types.get("Confirmation", 0) == 1
 
 
 def test_count_by_feature_csv(reports):
-    rows = list(csv.DictReader(
-        (reports / "test_count_by_feature.csv").open(encoding="utf-8")
-    ))
+    rows = list(
+        csv.DictReader((reports / "test_count_by_feature.csv").open(encoding="utf-8"))
+    )
     feats = {r["feature"]: int(r["count"]) for r in rows}
     assert feats.get("Select", 0) == 2
     assert feats.get("Ask", 0) == 1
@@ -273,7 +297,9 @@ def test_empty_query_file(tmp_path, onto):
 def test_missing_query_file_raises(tmp_path, onto):
     gen = ReportGenerator(str(onto))
     with pytest.raises(FileNotFoundError, match="not found"):
-        gen.generate_reports(str(tmp_path / "nonexistent.ttl"), str(tmp_path), formats=["csv"])
+        gen.generate_reports(
+            str(tmp_path / "nonexistent.ttl"), str(tmp_path), formats=["csv"]
+        )
 
 
 def test_invalid_ttl_raises(tmp_path, onto):

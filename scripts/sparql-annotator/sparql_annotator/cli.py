@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import click
 from rdflib import Graph, URIRef, Literal, BNode
-from rdflib.namespace import RDF, OWL
+from rdflib.namespace import RDF
 
 from .annotator import Annotator
 from .adapters import CSVAdapter, JSONAdapter, TTLAdapter
@@ -194,6 +194,7 @@ def _print_results(
     n_amb = len(ambiguous)
     n_unc = len(unclassifiable)
     n_warn = len(queries_with_warnings)
+
     def pct(n):
         return f"{100 * n // total if total else 0}%"
 
@@ -241,12 +242,28 @@ def _print_results(
     print("Summary: queries per SPARQL operator (via LSQ features)")
     print("-" * W)
     _operator_features = {
-        "Select", "Ask", "Construct", "Describe",
-        "Distinct", "Reduced", "Limit", "Offset", "OrderBy",
-        "Filter", "Optional", "Union", "Minus", "Graph", "Service",
-        "Aggregators", "GroupBy", "Having",
-        "SubQuery", "PropertyPath",
-        "Bind", "Values",
+        "Select",
+        "Ask",
+        "Construct",
+        "Describe",
+        "Distinct",
+        "Reduced",
+        "Limit",
+        "Offset",
+        "OrderBy",
+        "Filter",
+        "Optional",
+        "Union",
+        "Minus",
+        "Graph",
+        "Service",
+        "Aggregators",
+        "GroupBy",
+        "Having",
+        "SubQuery",
+        "PropertyPath",
+        "Bind",
+        "Values",
     }
     for feat, cnt in sorted(
         ((f, c) for f, c in feature_counter.items() if f in _operator_features),
@@ -295,7 +312,17 @@ def _generate_type_assertions(
     for s, p, o in list(out.triples((None, LSQV.text, None))):
         if isinstance(o, Literal) and "\r\n" in str(o):
             out.remove((s, p, o))
-            out.add((s, p, Literal(str(o).replace("\r\n", "\n"), datatype=o.datatype, lang=o.language)))
+            out.add(
+                (
+                    s,
+                    p,
+                    Literal(
+                        str(o).replace("\r\n", "\n"),
+                        datatype=o.datatype,
+                        lang=o.language,
+                    ),
+                )
+            )
 
     count = 0
     updated_bgp = updated_tp = updated_pv = 0
@@ -401,10 +428,13 @@ def _generate_type_assertions(
     is_flag=True,
     help="Print only queries with antipatterns (id, AP codes, messages), then exit.",
 )
-def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguous_only, ap_only):
+def classify_cmd(
+    query_file, ontology, output, log_file, verbose, debug, ambiguous_only, ap_only
+):
     """Classify SPARQL queries by question type using LSQ features."""
     if ambiguous_only or ap_only:
         import logging as _logging
+
         _logging.disable(_logging.CRITICAL)
     logger = _setup_logging(log_file, verbose)
     try:
@@ -422,6 +452,7 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguo
         if ap_only:
             # Load query texts from the TTL to run antipattern detection
             from rdflib import Graph as _Graph
+
             g = _Graph()
             g.parse(str(query_file), format="turtle")
             for uri_str in results:

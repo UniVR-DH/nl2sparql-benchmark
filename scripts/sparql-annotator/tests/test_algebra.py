@@ -481,6 +481,7 @@ def test_referenced_terms(text, expected_iris):
         expected_iris <= terms
     )  # expected is a subset (PREFIX declarations may add more)
 
+
 # ---------------------------------------------------------------------------
 # detect_lsq_features — subquery feature propagation
 # ---------------------------------------------------------------------------

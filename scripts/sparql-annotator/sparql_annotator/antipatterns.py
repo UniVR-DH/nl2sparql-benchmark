@@ -242,7 +242,9 @@ def _ap06_aggregate_in_filter(alg: CompValue) -> Optional[AntipatternIssue]:
             expr = node.get("expr")
             if expr is not None:
                 for expr_node in _walk_algebra(expr):
-                    if isinstance(expr_node, CompValue) and expr_node.name.startswith("Aggregate_"):
+                    if isinstance(expr_node, CompValue) and expr_node.name.startswith(
+                        "Aggregate_"
+                    ):
                         return AntipatternIssue(
                             code="AP06",
                             message="Aggregate function used in FILTER instead of HAVING.",
