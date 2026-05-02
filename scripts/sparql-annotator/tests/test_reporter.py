@@ -318,3 +318,26 @@ def test_invalid_format_ignored(tmp_path, onto, query_file):
     gen.generate_reports(str(query_file), str(out), prefix="x", formats=["unknown"])
     # No files written, but no exception either
     assert not list(out.glob("*.csv"))
+
+
+def test_latex_escaping(tmp_path, onto):
+    """Query IDs with _ and & must be escaped in LaTeX output."""
+    qf = tmp_path / "q.ttl"
+    _write_query_ttl(
+        qf,
+        [
+            {
+                "id": "q_1&2",
+                "label": "test_label",
+                "sparql": "SELECT ?s WHERE { ?s ?p ?o }",
+                "features": ["Select"],
+            }
+        ],
+    )
+    out = tmp_path / "out"
+    gen = ReportGenerator(str(onto))
+    gen.generate_reports(str(qf), str(out), prefix="x", formats=["latex"])
+    tex = (out / "x_features.tex").read_text(encoding="utf-8")
+    assert r"q\_1\&2" in tex
+    assert r"\checkmark" in tex or r"$\times$" in tex
+    assert "✓" not in tex and "✗" not in tex

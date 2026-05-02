@@ -66,19 +66,37 @@ _ALL_AP_CODES = ["AP01", "AP02", "AP03", "AP04", "AP05", "AP06", "AP07", "AP08",
 # LaTeX helpers
 # ---------------------------------------------------------------------------
 
-_LATEX_PREAMBLE_COMMENT = (
-    "% Required packages:\n%   \\usepackage{xcolor}\n%   \\usepackage{booktabs}\n%\n"
-)
+_LATEX_PREAMBLE_COMMENT = "% Required packages:\n%   \\usepackage{xcolor}\n%   \\usepackage{booktabs}\n%   \\usepackage{amssymb}  % for \\checkmark\n%\n"
 
 _GREEN = r"\cellcolor{green!20}"
 _RED = r"\cellcolor{red!10}"
 _ORANGE = r"\cellcolor{orange!30}"
 
+# Characters that must be escaped in LaTeX text mode
+_LATEX_ESCAPE = str.maketrans(
+    {
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+    }
+)
+
+
+def _tex(s: str) -> str:
+    """Escape a plain-text string for safe use in a LaTeX table cell."""
+    return s.translate(_LATEX_ESCAPE)
+
 
 def _latex_bool(val: bool, antipattern: bool = False) -> str:
     if antipattern:
-        return f"{_ORANGE}✓" if val else f"{_RED}✗"
-    return f"{_GREEN}✓" if val else f"{_RED}✗"
+        return f"{_ORANGE}\\checkmark" if val else f"{_RED}$\\times$"
+    return f"{_GREEN}\\checkmark" if val else f"{_RED}$\\times$"
 
 
 def _latex_table(
@@ -101,15 +119,17 @@ def _latex_table(
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        f"\\caption{{{caption}}}",
+        f"\\caption{{{_tex(caption)}}}",
         f"\\label{{tab:{label}}}",
         f"\\begin{{tabular}}{{{col_spec}}}",
         r"\toprule",
-        " & ".join(headers) + r" \\",
+        " & ".join(_tex(h) for h in headers) + r" \\",
         r"\midrule",
     ]
     for row in rows:
-        lines.append(" & ".join(row) + r" \\")
+        # Cells that start with \ are already LaTeX commands (e.g. \cellcolor{...})
+        escaped = [c if c.startswith("\\") else _tex(c) for c in row]
+        lines.append(" & ".join(escaped) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     return _LATEX_PREAMBLE_COMMENT + "\n".join(lines) + "\n"
 
