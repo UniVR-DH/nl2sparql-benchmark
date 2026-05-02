@@ -171,7 +171,7 @@ $SA report \
 | `question_types.csv` | Classification status and assigned `qat:*` types per query |
 | `antipatterns.csv` | AP01–AP09 flags + JSON messages per query |
 | `metrics.csv` | `bgp_count`, `triple_count`, `projected_var_count` per query |
-| `summary.csv` | Aggregate statistics (totals, averages, most-common values) |
+| `summary.csv` | Aggregate statistics (totals, averages, per-AP counts) |
 | `count_by_question_type.csv` | Frequency table: queries per question type |
 | `count_by_feature.csv` | Frequency table: queries per LSQ structural feature |
 | `count_by_operator.csv` | Frequency table: queries per SPARQL operator |

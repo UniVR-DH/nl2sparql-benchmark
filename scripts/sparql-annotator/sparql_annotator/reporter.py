@@ -12,7 +12,7 @@ Output files (all prefixed with <prefix>_):
   8. count_by_feature.csv       — frequency table: queries per LSQ feature
   9. count_by_operator.csv      — frequency table: queries per SPARQL operator
 
-LaTeX equivalents are generated for files 1, 2, 6 when format includes "latex".
+LaTeX equivalents are generated for files 1, 2, 4, 6 when format includes "latex".
 """
 
 from __future__ import annotations
@@ -24,17 +24,12 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from rdflib import Graph
-from rdflib.namespace import RDFS, RDF
+from rdflib import Graph, URIRef
 
 from .antipatterns import detect_antipatterns, AntipatternIssue
 from .classifier import QuestionTypeClassifier
 from .algebra import parse_query, extract_operators
 from .namespaces import LSQV
-
-import rdflib.plugins.sparql.parser as _sparql_parser
-import rdflib.plugins.sparql.algebra as _sparql_algebra
-from .algebra import compute_metrics
 
 _log = logging.getLogger(__name__)
 
@@ -131,11 +126,13 @@ class ReportGenerator:
         formats: Optional[List[str]] = None,
     ) -> None:
         formats = [f.strip().lower() for f in (formats or ["csv"])]
-        out = Path(output_dir)
-        out.mkdir(parents=True, exist_ok=True)
 
+        # Validate inputs before creating any output directories
         self.logger.info(f"Loading queries from {query_file}")
         data = self._collect(query_file)
+
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
 
         do_csv = "csv" in formats
         do_latex = "latex" in formats
@@ -179,7 +176,6 @@ class ReportGenerator:
 
         rows = []
         for uri_str, (qtypes, features, label, warnings, counts) in classify_results.items():
-            from rdflib import URIRef
             uri = URIRef(uri_str)
             query_id = uri_str.split("/")[-1]
 
@@ -189,10 +185,12 @@ class ReportGenerator:
                 text = str(lit)
                 break
 
-            # Operators via OperatorSet
+            # Operators via OperatorSet; track whether parse succeeded
             op_set = None
+            parse_ok = False
             if text:
                 ok, parsed, _ = parse_query(text)
+                parse_ok = ok
                 op_set = extract_operators(text, parsed if ok else None)
 
             # Antipatterns
@@ -213,6 +211,7 @@ class ReportGenerator:
                 "uri": uri_str,
                 "label": label or "",
                 "text": text or "",
+                "parse_ok": parse_ok,
                 "features": features,
                 "qtypes": qtypes,
                 "status": status,
@@ -242,26 +241,38 @@ class ReportGenerator:
         self.logger.info(f"Wrote {path}")
 
     def _write_operators_csv(self, data: List[Dict], path: Path) -> None:
-        op_cols = [
-            "query_form", "Optional", "Union", "Filter", "Bind", "Values",
-            "Minus", "Graph", "Service", "Distinct", "Reduced", "OrderBy",
-            "GroupBy", "Having", "Limit", "Offset", "SubQuery", "PropertyPath",
-            "Count", "Sum", "Avg", "Min", "Max",
-        ]
+        # Map CSV column name → how to check presence in OperatorSet
+        # graph_patterns/solution_modifiers use uppercase tokens in .raw
+        # aggregates uses uppercase names in .aggregates
+        _raw_map = {
+            "Optional": "OPTIONAL", "Union": "UNION", "Filter": "FILTER",
+            "Bind": "BIND", "Values": "VALUES", "Minus": "MINUS",
+            "Graph": "GRAPH", "Service": "SERVICE", "Distinct": "DISTINCT",
+            "Reduced": "REDUCED", "OrderBy": "ORDER BY", "GroupBy": "GROUP BY",
+            "Having": "HAVING", "Limit": "LIMIT", "Offset": "OFFSET",
+            "SubQuery": "SUBQUERY", "PropertyPath": "PROPERTY PATH",
+        }
+        _agg_map = {
+            "Count": "COUNT", "Sum": "SUM", "Avg": "AVG",
+            "Min": "MIN", "Max": "MAX",
+        }
+        op_cols = list(_raw_map) + list(_agg_map)
+
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
-            w.writerow(["query_id"] + op_cols + ["filter_functions"])
+            w.writerow(["query_id", "query_form"] + op_cols + ["filter_functions"])
             for row in data:
                 ops = row["op_set"]
                 if ops is None:
-                    w.writerow([row["query_id"]] + [""] * len(op_cols) + [""])
+                    w.writerow([row["query_id"]] + [""] * (len(op_cols) + 1) + [""])
                     continue
-                raw = ops.raw
-                aggs = ops.aggregates
+                flags = (
+                    [1 if _raw_map[c] in ops.raw else 0 for c in _raw_map]
+                    + [1 if _agg_map[c] in ops.aggregates else 0 for c in _agg_map]
+                )
                 w.writerow(
-                    [row["query_id"]]
-                    + [ops.query_form]
-                    + [1 if c in raw else 0 for c in op_cols[1:]]
+                    [row["query_id"], ops.query_form]
+                    + flags
                     + [",".join(sorted(ops.filter_functions))]
                 )
         self.logger.info(f"Wrote {path}")
@@ -312,7 +323,7 @@ class ReportGenerator:
 
     def _write_summary_csv(self, data: List[Dict], path: Path) -> None:
         total = len(data)
-        valid = sum(1 for r in data if r["text"])
+        valid = sum(1 for r in data if r["parse_ok"])
         classified = sum(1 for r in data if r["status"] == "classified")
         unclassified = sum(1 for r in data if r["status"] == "unclassified")
         ambiguous = sum(1 for r in data if r["status"] == "ambiguous")
