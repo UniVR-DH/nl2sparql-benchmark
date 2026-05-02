@@ -263,3 +263,31 @@ def test_empty_query_file(tmp_path, onto):
     rows = list(csv.DictReader((out / "empty_summary.csv").open(encoding="utf-8")))
     totals = {r["metric"]: r["value"] for r in rows}
     assert totals["total_queries"] == "0"
+
+
+# ---------------------------------------------------------------------------
+# Error handling
+# ---------------------------------------------------------------------------
+
+
+def test_missing_query_file_raises(tmp_path, onto):
+    gen = ReportGenerator(str(onto))
+    with pytest.raises(FileNotFoundError, match="not found"):
+        gen.generate_reports(str(tmp_path / "nonexistent.ttl"), str(tmp_path), formats=["csv"])
+
+
+def test_invalid_ttl_raises(tmp_path, onto):
+    bad = tmp_path / "bad.ttl"
+    bad.write_text("this is not valid turtle @@@@", encoding="utf-8")
+    gen = ReportGenerator(str(onto))
+    with pytest.raises(ValueError, match="Failed to parse"):
+        gen.generate_reports(str(bad), str(tmp_path), formats=["csv"])
+
+
+def test_invalid_format_ignored(tmp_path, onto, query_file):
+    """Unknown format strings are silently ignored (no csv/latex output, no crash)."""
+    out = tmp_path / "out"
+    gen = ReportGenerator(str(onto))
+    gen.generate_reports(str(query_file), str(out), prefix="x", formats=["unknown"])
+    # No files written, but no exception either
+    assert not list(out.glob("*.csv"))

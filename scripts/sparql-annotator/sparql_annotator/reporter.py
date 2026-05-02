@@ -165,10 +165,17 @@ class ReportGenerator:
 
     def _collect(self, query_file: str) -> List[Dict]:
         """Load TTL, classify, annotate, detect antipatterns. Returns list of row dicts."""
-        g = Graph()
-        g.parse(query_file, format="turtle")
+        path = Path(query_file)
+        if not path.exists():
+            raise FileNotFoundError(f"Query file not found: {query_file}")
 
-        classify_results = self.classifier.classify_queries_from_file(Path(query_file))
+        g = Graph()
+        try:
+            g.parse(str(path), format="turtle")
+        except Exception as exc:
+            raise ValueError(f"Failed to parse query file {query_file}: {exc}") from exc
+
+        classify_results = self.classifier.classify_queries_from_file(path)
 
         rows = []
         for uri_str, (qtypes, features, label, warnings, counts) in classify_results.items():
