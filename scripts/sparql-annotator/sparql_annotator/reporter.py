@@ -61,6 +61,36 @@ _OPERATOR_FEATURES: Set[str] = {
 
 _ALL_AP_CODES = ["AP01", "AP02", "AP03", "AP04", "AP05", "AP06", "AP07", "AP08", "AP09"]
 
+# Operator column name → canonical token in OperatorSet.raw
+_RAW_MAP: Dict[str, str] = {
+    "Optional": "OPTIONAL",
+    "Union": "UNION",
+    "Filter": "FILTER",
+    "Bind": "BIND",
+    "Values": "VALUES",
+    "Minus": "MINUS",
+    "Graph": "GRAPH",
+    "Service": "SERVICE",
+    "Distinct": "DISTINCT",
+    "Reduced": "REDUCED",
+    "OrderBy": "ORDER BY",
+    "GroupBy": "GROUP BY",
+    "Having": "HAVING",
+    "Limit": "LIMIT",
+    "Offset": "OFFSET",
+    "SubQuery": "SUBQUERY",
+    "PropertyPath": "PROPERTY PATH",
+}
+
+# Aggregate column name → canonical token in OperatorSet.aggregates
+_AGG_MAP: Dict[str, str] = {
+    "Count": "COUNT",
+    "Sum": "SUM",
+    "Avg": "AVG",
+    "Min": "MIN",
+    "Max": "MAX",
+}
+
 
 # ---------------------------------------------------------------------------
 # LaTeX helpers
@@ -298,33 +328,7 @@ class ReportGenerator:
         # Map CSV column name → how to check presence in OperatorSet
         # graph_patterns/solution_modifiers use uppercase tokens in .raw
         # aggregates uses uppercase names in .aggregates
-        _raw_map = {
-            "Optional": "OPTIONAL",
-            "Union": "UNION",
-            "Filter": "FILTER",
-            "Bind": "BIND",
-            "Values": "VALUES",
-            "Minus": "MINUS",
-            "Graph": "GRAPH",
-            "Service": "SERVICE",
-            "Distinct": "DISTINCT",
-            "Reduced": "REDUCED",
-            "OrderBy": "ORDER BY",
-            "GroupBy": "GROUP BY",
-            "Having": "HAVING",
-            "Limit": "LIMIT",
-            "Offset": "OFFSET",
-            "SubQuery": "SUBQUERY",
-            "PropertyPath": "PROPERTY PATH",
-        }
-        _agg_map = {
-            "Count": "COUNT",
-            "Sum": "SUM",
-            "Avg": "AVG",
-            "Min": "MIN",
-            "Max": "MAX",
-        }
-        op_cols = list(_raw_map) + list(_agg_map)
+        op_cols = list(_RAW_MAP) + list(_AGG_MAP)
 
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
@@ -334,8 +338,8 @@ class ReportGenerator:
                 if ops is None:
                     w.writerow([row["query_id"]] + [""] * (len(op_cols) + 1) + [""])
                     continue
-                flags = [1 if _raw_map[c] in ops.raw else 0 for c in _raw_map] + [
-                    1 if _agg_map[c] in ops.aggregates else 0 for c in _agg_map
+                flags = [1 if _RAW_MAP[c] in ops.raw else 0 for c in _RAW_MAP] + [
+                    1 if _AGG_MAP[c] in ops.aggregates else 0 for c in _AGG_MAP
                 ]
                 w.writerow(
                     [row["query_id"], ops.query_form]
@@ -491,12 +495,18 @@ class ReportGenerator:
         self.logger.info(f"Wrote {path}")
 
     def _write_operators_latex(self, data: List[Dict], path: Path) -> None:
-        op_cols = sorted(_OPERATOR_FEATURES)
-        headers = ["Query"] + op_cols
-        rows = [
-            [row["query_id"]] + [_latex_bool(op in row["features"]) for op in op_cols]
-            for row in data
-        ]
+        op_cols = list(_RAW_MAP) + list(_AGG_MAP)
+        headers = ["Query", "Form"] + op_cols
+        rows = []
+        for row in data:
+            ops = row["op_set"]
+            if ops is None:
+                rows.append([row["query_id"], ""] + [""] * len(op_cols))
+            else:
+                flags = [_latex_bool(_RAW_MAP[c] in ops.raw) for c in _RAW_MAP] + [
+                    _latex_bool(_AGG_MAP[c] in ops.aggregates) for c in _AGG_MAP
+                ]
+                rows.append([row["query_id"], ops.query_form] + flags)
         transpose = len(data) > 20
         tex = _latex_table(
             "SPARQL Operator Usage Matrix",
