@@ -248,6 +248,7 @@ def test_features_latex_content(reports):
     assert r"\begin{table}" in tex
     assert r"\toprule" in tex
     assert r"\cellcolor" in tex
+    assert r"\usepackage{xcolor}" in tex
 
 
 def test_operators_latex_exists(reports):

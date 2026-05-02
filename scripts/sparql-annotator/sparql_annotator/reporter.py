@@ -66,9 +66,9 @@ _ALL_AP_CODES = ["AP01", "AP02", "AP03", "AP04", "AP05", "AP06", "AP07", "AP08",
 # LaTeX helpers
 # ---------------------------------------------------------------------------
 
-_LATEX_PREAMBLE = r"""\usepackage{xcolor}
-\usepackage{booktabs}
-"""
+_LATEX_PREAMBLE_COMMENT = (
+    "% Required packages:\n%   \\usepackage{xcolor}\n%   \\usepackage{booktabs}\n%\n"
+)
 
 _GREEN = r"\cellcolor{green!20}"
 _RED = r"\cellcolor{red!10}"
@@ -111,7 +111,7 @@ def _latex_table(
     for row in rows:
         lines.append(" & ".join(row) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
-    return "\n".join(lines) + "\n"
+    return _LATEX_PREAMBLE_COMMENT + "\n".join(lines) + "\n"
 
 
 # ---------------------------------------------------------------------------
