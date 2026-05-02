@@ -79,7 +79,7 @@ _RAW_MAP: Dict[str, str] = {
     "Limit": "LIMIT",
     "Offset": "OFFSET",
     "SubQuery": "SUBQUERY",
-    "PropertyPath": "PROPERTY PATH",
+    "PropertyPath": "PROPERTY_PATH",
 }
 
 # Aggregate column name → canonical token in OperatorSet.aggregates
