@@ -318,13 +318,9 @@ def _generate_type_assertions(
                         pass
 
         for sf in list(out.objects(uri, LSQV.hasStructuralFeatures)):
-            for prop_local in ("bgpCount", "tpCount", "projectVarCount"):
-                for val in list(out.objects(sf, LSQV[prop_local])):
-                    out.remove((sf, LSQV[prop_local], val))
-            for uses in list(out.objects(sf, LSQV.usesFeature)):
-                for val in list(out.objects(uses, OWL.hasValue)):
-                    out.remove((uses, OWL.hasValue, val))
-                out.remove((sf, LSQV.usesFeature, uses))
+            # Remove all triples where the old SF blank node is subject
+            for p, o in list(out.predicate_objects(sf)):
+                out.remove((sf, p, o))
             out.remove((uri, LSQV.hasStructuralFeatures, sf))
 
         sf_node = BNode()
