@@ -183,7 +183,12 @@ class ReportGenerator:
     # ------------------------------------------------------------------
 
     def _collect(self, query_file: str) -> List[Dict]:
-        """Load TTL, classify, annotate, detect antipatterns. Returns list of row dicts."""
+        """Load TTL, classify, annotate, detect antipatterns. Returns list of row dicts.
+
+        Note: the TTL is parsed twice — once here to read lsqv:text literals, and once
+        inside classify_queries_from_file. A future refactor could pass the pre-parsed
+        Graph to the classifier to avoid the redundant I/O.
+        """
         path = Path(query_file)
         if not path.exists():
             raise FileNotFoundError(f"Query file not found: {query_file}")
