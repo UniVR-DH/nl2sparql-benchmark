@@ -136,10 +136,11 @@ def _latex_table(
     headers: List[str],
     rows: List[List[str]],
     transpose: bool = False,
+    transpose_header: str = "Feature",
 ) -> str:
     if transpose and rows:
         # rows become columns: first col is header name, rest are query values
-        col_headers = ["Feature"] + [r[0] for r in rows]
+        col_headers = [transpose_header] + [r[0] for r in rows]
         data_rows = []
         for i, h in enumerate(headers[1:], start=1):
             data_rows.append([h] + [r[i] for r in rows])
@@ -491,6 +492,7 @@ class ReportGenerator:
             headers,
             rows,
             transpose=transpose,
+            transpose_header="Feature",
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
@@ -515,6 +517,7 @@ class ReportGenerator:
             headers,
             rows,
             transpose=transpose,
+            transpose_header="Operator",
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
@@ -567,6 +570,7 @@ class ReportGenerator:
             headers,
             rows,
             transpose=transpose,
+            transpose_header="Antipattern",
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")

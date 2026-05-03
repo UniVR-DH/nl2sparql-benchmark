@@ -59,7 +59,6 @@ Add a `--validate` flag to `classify` / `report` that surfaces annotation qualit
 **Planned checks:**
 - `VAL_SYNTAX` — SPARQL parse errors
 - `VAL_COUNT_MISMATCH` — declared LSQ counts differ from `compute_metrics`
-- `VAL_UNBOUND_VAR` — projected variable never bound (currently AP09; promote to validation)
 - `VAL_ANTIPATTERN_*` — selected antipatterns as validation warnings
 
 **CLI additions:**
