@@ -114,6 +114,7 @@ _LATEX_ESCAPE = str.maketrans(
         "}": r"\}",
         "~": r"\textasciitilde{}",
         "^": r"\textasciicircum{}",
+        "\\": r"\textbackslash{}",
     }
 )
 
