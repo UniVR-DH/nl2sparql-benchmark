@@ -365,28 +365,43 @@ echo "============================================================"
 echo "  Converting to TTL"
 echo "============================================================"
 
-if [ ! -f "$SOURCE_TTL" ]; then
-    echo "  Skipping — source TTL not found: $SOURCE_TTL"
-    echo "  To convert manually:"
-    echo "    riot --output=turtle prefixes.ttl $VOCAB_OUT > ${VOCAB_OUT%.nt}.ttl"
-    echo "    riot --output=turtle prefixes.ttl $INSTANCES_OUT > ${INSTANCES_OUT%.nt}.ttl"
-else
-    PREFIXES_OUT="$OUTPUT_DIR/prefixes.ttl"
-    VOCAB_TTL="${VOCAB_OUT%.nt}.ttl"
-    INSTANCES_TTL="${INSTANCES_OUT%.nt}.ttl"
+# Create prefixes file with ALL needed prefixes
+PREFIXES_OUT="$OUTPUT_DIR/prefixes.ttl"
+VOCAB_TTL="${VOCAB_OUT%.nt}.ttl"
+INSTANCES_TTL="${INSTANCES_OUT%.nt}.ttl"
 
-    echo "  Extracting prefixes from $SOURCE_TTL ..."
-    grep '^@prefix' "$SOURCE_TTL" > "$PREFIXES_OUT"
-    echo "  Found $(wc -l < "$PREFIXES_OUT") prefix declarations"
+# Write complete prefix declarations (always include these)
+cat > "$PREFIXES_OUT" <<'EOF'
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix gptkb: <https://gptkb.org/entity/> .
+@prefix gptkbp: <https://gptkb.org/prop/> .
+EOF
 
+# Optionally add any extra prefixes from source TTL
+if [ -f "$SOURCE_TTL" ]; then
+    echo "  Adding extra prefixes from $SOURCE_TTL ..."
+    grep '^@prefix' "$SOURCE_TTL" | grep -v -E '(rdf:|rdfs:|owl:|xsd:|gptkb:|gptkbp:)' >> "$PREFIXES_OUT" || true
+fi
+
+echo "  Prefixes: $(grep -c '^@prefix' "$PREFIXES_OUT")"
+
+# Convert using riot
+if command -v riot &> /dev/null; then
     echo "  Converting $VOCAB_OUT → $VOCAB_TTL ..."
     cat "$PREFIXES_OUT" "$VOCAB_OUT" | riot --output=turtle --syntax=turtle > "$VOCAB_TTL"
-
+    
     echo "  Converting $INSTANCES_OUT → $INSTANCES_TTL ..."
     cat "$PREFIXES_OUT" "$INSTANCES_OUT" | riot --output=turtle --syntax=turtle > "$INSTANCES_TTL"
-
+    
     echo "  Written: $VOCAB_TTL"
     echo "  Written: $INSTANCES_TTL"
+else
+    echo "  ERROR: riot not found - cannot convert to TTL"
+    echo "  Install Apache Jena or use manual conversion:"
+    exit 1
 fi
 
 echo ""
