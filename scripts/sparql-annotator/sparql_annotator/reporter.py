@@ -66,6 +66,8 @@ _RAW_MAP: Dict[str, str] = {
     "Optional": "OPTIONAL",
     "Union": "UNION",
     "Filter": "FILTER",
+    "FilterExists": "FILTER EXISTS",
+    "FilterNotExists": "FILTER NOT EXISTS",
     "Bind": "BIND",
     "Values": "VALUES",
     "Minus": "MINUS",
@@ -194,6 +196,15 @@ class ReportGenerator:
         formats: Optional[List[str]] = None,
     ) -> None:
         formats = [f.strip().lower() for f in (formats or ["csv"])]
+        unknown = [f for f in formats if f not in ("csv", "latex")]
+        if unknown:
+            raise ValueError(
+                f"Unknown report format(s): {unknown}. Supported: csv, latex"
+            )
+        if Path(prefix).name != prefix:
+            raise ValueError(
+                f"prefix must be a plain filename with no path separators, got: {prefix!r}"
+            )
 
         # Validate inputs before creating any output directories
         self.logger.info(f"Loading queries from {query_file}")
@@ -223,10 +234,12 @@ class ReportGenerator:
             )
 
         if do_latex:
-            self._write_features_latex(data, out / f"{prefix}_features.tex")
-            self._write_operators_latex(data, out / f"{prefix}_operators.tex")
-            self._write_summary_latex(data, out / f"{prefix}_summary.tex")
-            self._write_antipatterns_latex(data, out / f"{prefix}_antipatterns.tex")
+            self._write_features_latex(data, out / f"{prefix}_features.tex", prefix)
+            self._write_operators_latex(data, out / f"{prefix}_operators.tex", prefix)
+            self._write_summary_latex(data, out / f"{prefix}_summary.tex", prefix)
+            self._write_antipatterns_latex(
+                data, out / f"{prefix}_antipatterns.tex", prefix
+            )
 
         self.logger.info(f"Reports written to {out}")
 
@@ -477,7 +490,7 @@ class ReportGenerator:
     # LaTeX writers
     # ------------------------------------------------------------------
 
-    def _write_features_latex(self, data: List[Dict], path: Path) -> None:
+    def _write_features_latex(self, data: List[Dict], path: Path, prefix: str) -> None:
         all_features = sorted({f for row in data for f in row["features"]})
         headers = ["Query"] + all_features
         rows = [
@@ -488,7 +501,7 @@ class ReportGenerator:
         transpose = len(data) > 20
         tex = _latex_table(
             "LSQ Feature Presence Matrix",
-            "features",
+            f"{prefix}:features",
             headers,
             rows,
             transpose=transpose,
@@ -497,7 +510,7 @@ class ReportGenerator:
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
 
-    def _write_operators_latex(self, data: List[Dict], path: Path) -> None:
+    def _write_operators_latex(self, data: List[Dict], path: Path, prefix: str) -> None:
         op_cols = list(_RAW_MAP) + list(_AGG_MAP)
         headers = ["Query", "Form"] + op_cols
         rows = []
@@ -513,7 +526,7 @@ class ReportGenerator:
         transpose = len(data) > 20
         tex = _latex_table(
             "SPARQL Operator Usage Matrix",
-            "operators",
+            f"{prefix}:operators",
             headers,
             rows,
             transpose=transpose,
@@ -522,7 +535,7 @@ class ReportGenerator:
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
 
-    def _write_summary_latex(self, data: List[Dict], path: Path) -> None:
+    def _write_summary_latex(self, data: List[Dict], path: Path, prefix: str) -> None:
         # Re-use summary CSV data by building rows inline
         total = len(data)
         classified = sum(1 for r in data if r["status"] == "classified")
@@ -548,12 +561,14 @@ class ReportGenerator:
             ],
         ]
         tex = _latex_table(
-            "Dataset Summary", "summary", ["Metric", "Value"], summary_rows
+            "Dataset Summary", f"{prefix}:summary", ["Metric", "Value"], summary_rows
         )
         path.write_text(tex, encoding="utf-8")
         self.logger.info(f"Wrote {path}")
 
-    def _write_antipatterns_latex(self, data: List[Dict], path: Path) -> None:
+    def _write_antipatterns_latex(
+        self, data: List[Dict], path: Path, prefix: str
+    ) -> None:
         headers = ["Query"] + _ALL_AP_CODES
         rows = [
             [row["query_id"]]
@@ -566,7 +581,7 @@ class ReportGenerator:
         transpose = len(data) > 20
         tex = _latex_table(
             "Antipattern Detection Summary",
-            "antipatterns",
+            f"{prefix}:antipatterns",
             headers,
             rows,
             transpose=transpose,
