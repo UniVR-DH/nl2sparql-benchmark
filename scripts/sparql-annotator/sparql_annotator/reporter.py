@@ -338,7 +338,7 @@ class ReportGenerator:
             for row in data:
                 ops = row["op_set"]
                 if ops is None:
-                    w.writerow([row["query_id"]] + [""] * (len(op_cols) + 1) + [""])
+                    w.writerow([row["query_id"], ""] + [""] * len(op_cols) + [""])
                     continue
                 flags = [1 if _RAW_MAP[c] in ops.raw else 0 for c in _RAW_MAP] + [
                     1 if _AGG_MAP[c] in ops.aggregates else 0 for c in _AGG_MAP
