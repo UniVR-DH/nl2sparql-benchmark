@@ -177,7 +177,7 @@ $SA report \
 | `count_by_operator.csv` | Frequency table: queries per SPARQL operator |
 
 LaTeX output (when `--format` includes `latex`): `features.tex`, `operators.tex`,
-`summary.tex`, `antipatterns.tex` — uses `xcolor`, `booktabs`, and `amssymb`; matrices are
+`summary.tex`, `antipatterns.tex` — uses `xcolor` (with the `table` option for `\cellcolor`), `booktabs`, and `amssymb`; matrices are
 auto-transposed when the dataset has more than 20 queries.
 
 ---

@@ -226,17 +226,10 @@ class QuestionTypeClassifier:
     # File-level classification
     # ------------------------------------------------------------------
 
-    def classify_queries_from_file(
-        self, query_file: Path
+    def classify_queries_from_graph(
+        self, g: Graph
     ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
-        g = Graph()
-        try:
-            g.parse(str(query_file), format="turtle")
-            self.logger.info(f"Loaded {len(g)} triples from {query_file}")
-        except Exception as exc:
-            self.logger.error(f"Failed to parse {query_file}: {exc}")
-            raise
-
+        """Classify queries from an already-parsed RDF graph (avoids re-parsing the TTL)."""
         query_uris = list(g.subjects(RDF.type, LSQV.Query))
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
@@ -285,3 +278,15 @@ class QuestionTypeClassifier:
             results[str(uri)] = (qtypes, features, label, warnings, counts)
 
         return results
+
+    def classify_queries_from_file(
+        self, query_file: Path
+    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
+        g = Graph()
+        try:
+            g.parse(str(query_file), format="turtle")
+            self.logger.info(f"Loaded {len(g)} triples from {query_file}")
+        except Exception as exc:
+            self.logger.error(f"Failed to parse {query_file}: {exc}")
+            raise
+        return self.classify_queries_from_graph(g)

@@ -98,7 +98,7 @@ _AGG_MAP: Dict[str, str] = {
 # LaTeX helpers
 # ---------------------------------------------------------------------------
 
-_LATEX_PREAMBLE_COMMENT = "% Required packages:\n%   \\usepackage{xcolor}\n%   \\usepackage{booktabs}\n%   \\usepackage{amssymb}  % for \\checkmark\n%\n"
+_LATEX_PREAMBLE_COMMENT = "% Required packages:\n%   \\usepackage[table]{xcolor}\n%   \\usepackage{booktabs}\n%   \\usepackage{amssymb}  % for \\checkmark\n%\n"
 
 _GREEN = r"\cellcolor{green!20}"
 _RED = r"\cellcolor{red!10}"
@@ -198,9 +198,8 @@ class ReportGenerator:
         formats = [f.strip().lower() for f in (formats or ["csv"])]
         unknown = [f for f in formats if f not in ("csv", "latex")]
         if unknown:
-            raise ValueError(
-                f"Unknown report format(s): {unknown}. Supported: csv, latex"
-            )
+            self.logger.warning(f"Ignoring unknown report format(s): {unknown}")
+        formats = [f for f in formats if f in ("csv", "latex")]
         if Path(prefix).name != prefix:
             raise ValueError(
                 f"prefix must be a plain filename with no path separators, got: {prefix!r}"
@@ -248,12 +247,7 @@ class ReportGenerator:
     # ------------------------------------------------------------------
 
     def _collect(self, query_file: str) -> List[Dict]:
-        """Load TTL, classify, annotate, detect antipatterns. Returns list of row dicts.
-
-        Note: the TTL is parsed twice — once here to read lsqv:text literals, and once
-        inside classify_queries_from_file. A future refactor could pass the pre-parsed
-        Graph to the classifier to avoid the redundant I/O.
-        """
+        """Load TTL once, classify, annotate, detect antipatterns. Returns list of row dicts."""
         path = Path(query_file)
         if not path.exists():
             raise FileNotFoundError(f"Query file not found: {query_file}")
@@ -264,7 +258,7 @@ class ReportGenerator:
         except Exception as exc:
             raise ValueError(f"Failed to parse query file {query_file}: {exc}") from exc
 
-        classify_results = self.classifier.classify_queries_from_file(path)
+        classify_results = self.classifier.classify_queries_from_graph(g)
 
         rows = []
         for uri_str, (
@@ -476,6 +470,9 @@ class ReportGenerator:
         self.logger.info(f"Wrote {path}")
 
     def _write_count_by_operator_csv(self, data: List[Dict], path: Path) -> None:
+        # Counts are derived from LSQ structural features (row["features"]), not from
+        # op_set.raw, so they reflect what the TTL declares rather than what the SPARQL
+        # parser extracted. This is intentional: it stays consistent with features.csv.
         counter: Counter = Counter(
             f for row in data for f in row["features"] if f in _OPERATOR_FEATURES
         )
@@ -517,7 +514,7 @@ class ReportGenerator:
         for row in data:
             ops = row["op_set"]
             if ops is None:
-                rows.append([row["query_id"], ""] + [""] * len(op_cols))
+                rows.append([row["query_id"], ""] + [_latex_bool(False)] * len(op_cols))
             else:
                 flags = [_latex_bool(_RAW_MAP[c] in ops.raw) for c in _RAW_MAP] + [
                     _latex_bool(_AGG_MAP[c] in ops.aggregates) for c in _AGG_MAP

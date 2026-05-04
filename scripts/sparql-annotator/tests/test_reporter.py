@@ -248,7 +248,7 @@ def test_features_latex_content(reports):
     assert r"\begin{table}" in tex
     assert r"\toprule" in tex
     assert r"\cellcolor" in tex
-    assert r"\usepackage{xcolor}" in tex
+    assert r"\usepackage[table]{xcolor}" in tex
 
 
 def test_operators_latex_exists(reports):
@@ -318,6 +318,35 @@ def test_invalid_format_ignored(tmp_path, onto, query_file):
     gen.generate_reports(str(query_file), str(out), prefix="x", formats=["unknown"])
     # No files written, but no exception either
     assert not list(out.glob("*.csv"))
+
+
+def test_prefix_path_traversal_raises(tmp_path, onto, query_file):
+    """prefix containing path separators must be rejected."""
+    gen = ReportGenerator(str(onto))
+    with pytest.raises(ValueError, match="path separators"):
+        gen.generate_reports(str(query_file), str(tmp_path), prefix="../evil")
+
+
+def test_operators_latex_unparseable_query(tmp_path, onto):
+    """Queries that fail SPARQL parsing (ops is None) must render \\cellcolor cells, not blanks."""
+    qf = tmp_path / "q.ttl"
+    _write_query_ttl(
+        qf,
+        [
+            {
+                "id": "bad",
+                "label": "bad",
+                "sparql": "NOT VALID SPARQL !!!!",
+                "features": ["Select"],
+            }
+        ],
+    )
+    out = tmp_path / "out"
+    gen = ReportGenerator(str(onto))
+    gen.generate_reports(str(qf), str(out), prefix="x", formats=["latex"])
+    tex = (out / "x_operators.tex").read_text(encoding="utf-8")
+    # Every operator cell must be a \cellcolor command, not an empty cell
+    assert r"\cellcolor" in tex
 
 
 def test_latex_escaping(tmp_path, onto):
