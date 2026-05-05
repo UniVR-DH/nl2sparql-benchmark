@@ -1,18 +1,22 @@
 {
   "@context": {
-    "@vocab": "https://mlcommons.org/croissant/",
-    "dct": "http://purl.org/dc/terms/",
-    "lsqv": "http://lsq.aksw.org/vocab#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "schema": "http://schema.org/",
-    "sc": "http://schema.org/",
-    "sp": "http://spinrdf.org/sp#"
+  "@base": "https://text2sparql.aksw.org/2025/corporate/",
+  "@vocab": "https://mlcommons.org/croissant/",
+  "@language": "en",
+  "dct": "http://purl.org/dc/terms/",
+  "lsqv": "http://lsq.aksw.org/vocab#",
+  "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+  "sc": "https://schema.org/",
+  "sp": "http://spinrdf.org/sp#"
   },
-  "@type": "Dataset",
+  "@type": "sc:Dataset",
   "@id": "https://text2sparql.aksw.org/2025/corporate/",
-  "name": "TEXT2SPARQL Benchmark — Corporate Knowledge Graph",
-  "description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads.",
-  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "sc:name": "TEXT2SPARQL-Benchmark-Corporate-Knowledge-Graph",
+  "sc:description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads.",
+  "sc:license": "https://creativecommons.org/licenses/by/4.0/",
+  "sc:datePublished": "2025-01-01",
+  "sc:version": "1.0",
+  "sc:citation": "ref",
 
   "distribution": [
     { "@type": "FileObject", "@id": "entrypoint", "name": "ck25.ttl", "contentUrl": "ck25.ttl", "encodingFormat": "text/turtle" },
@@ -40,14 +44,16 @@
   "recordSet": [
     {
       "@type": "RecordSet",
+      "@id": "query-benchmark",
       "name": "Query Benchmark",
       "field": [
         {
           "@type": "Field",
+          "@id": "label",
           "name": "rdfs:label",
-          "dataType": "sc:Text",
+          "dataType": "Text",
           "source": {
-            "fileObject": "queries",
+            "fileObject": {"@id": "queries" },
             "extract": {
               "@type": "sp:TriplePattern",
               "sp:subject": "?s",
@@ -59,10 +65,11 @@
         },
         {
           "@type": "Field",
+          "@id": "text",
           "name": "lsqv:text",
-          "dataType": "sc:Text",
+          "dataType": "Text",
           "source": {
-            "fileObject": "queries",
+            "fileObject": {"@id": "queries" },
             "extract": {
               "@type": "sp:TriplePattern",
               "sp:subject": "?s",
