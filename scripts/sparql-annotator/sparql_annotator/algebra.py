@@ -26,6 +26,33 @@ import rdflib.plugins.sparql.algebra as _sparql_algebra
 
 _log = logging.getLogger(__name__)
 
+# Canonical LSQ feature names that correspond to SPARQL operators/clauses.
+# Single source of truth — imported by reporter.py and cli.py.
+OPERATOR_FEATURES: Set[str] = {
+    "Select",
+    "Ask",
+    "Construct",
+    "Describe",
+    "Distinct",
+    "Reduced",
+    "Limit",
+    "Offset",
+    "OrderBy",
+    "Filter",
+    "Optional",
+    "Union",
+    "Minus",
+    "Graph",
+    "Service",
+    "Aggregators",
+    "GroupBy",
+    "Having",
+    "SubQuery",
+    "PropertyPath",
+    "Bind",
+    "Values",
+}
+
 
 # ---------------------------------------------------------------------------
 # Parsing
@@ -301,8 +328,37 @@ def detect_lsq_features(algebra_node: CompValue, parsed: object) -> Set[str]:
 # ---------------------------------------------------------------------------
 
 
-def extract_operators(text: str, parsed: object):
+def extract_operators(text: str, parsed: object, alg=None):
     """Walk the algebra tree and return a populated OperatorSet.
+
+    Parameters
+    ----------
+    text:
+        The raw SPARQL query string. Used for query-form fallback when *parsed*
+        is None, and for HAVING detection via the parse tree.
+    parsed:
+        The rdflib parse tree produced by ``_sparql_parser.parseQuery(text)``.
+        Pass None to get a best-effort result from text inspection only.
+    alg:
+        A pre-translated algebra object produced by
+        ``_sparql_algebra.translateQuery(parsed)`` for the **same** *parsed*
+        tree.  When provided, ``translateQuery`` is not called again, saving
+        one redundant translation per query.
+
+    .. warning:: Caller coherence contract
+        *parsed* and *alg* **must** correspond to the same *text*.
+        rdflib mutates the parse tree in-place during ``translateQuery``, so
+        once ``translateQuery`` has been called on a *parsed* object that object
+        is no longer a valid input for a second ``translateQuery`` call.
+        Passing a *parsed* tree that was already translated (without supplying
+        the matching *alg*) will produce silently wrong results.
+        There is no cheap way to assert coherence at runtime; the caller is
+        solely responsible for maintaining it.  The canonical safe pattern is::
+
+            parsed = _sparql_parser.parseQuery(text)
+            alg    = _sparql_algebra.translateQuery(parsed)
+            ops    = extract_operators(text, parsed, alg=alg)
+            # do NOT call translateQuery(parsed) again after this point
 
     Imports OperatorSet locally to avoid a circular import with model.py.
     """
@@ -326,10 +382,11 @@ def extract_operators(text: str, parsed: object):
         )
         return ops
 
-    try:
-        alg = _sparql_algebra.translateQuery(parsed)
-    except Exception:
-        return ops
+    if alg is None:
+        try:
+            alg = _sparql_algebra.translateQuery(parsed)
+        except Exception:
+            return ops
 
     root_name = alg.algebra.name
     if root_name == "SelectQuery":

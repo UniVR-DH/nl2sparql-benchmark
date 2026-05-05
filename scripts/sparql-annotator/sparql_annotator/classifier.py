@@ -9,10 +9,16 @@ from rdflib.term import Variable as _Variable
 import rdflib.plugins.sparql.parser as _sparql_parser
 import rdflib.plugins.sparql.algebra as _sparql_algebra
 
-from .model import QuestionTypeDefinition
+from .model import QuestionTypeDefinition, OperatorSet
 from .ontology import build_type_definitions, build_depth_cache, _uri_to_local
-from .algebra import detect_lsq_features, compute_metrics
+from .algebra import detect_lsq_features, compute_metrics, extract_operators
 from .namespaces import LSQV
+
+# Return type for classify_queries_from_graph / classify_queries_from_file:
+# (qtypes, features, label, warnings, counts, op_set)
+QueryResult = Tuple[
+    Set[str], Set[str], Optional[str], List[str], Dict[str, int], Optional[OperatorSet]
+]
 
 
 class QuestionTypeClassifier:
@@ -101,7 +107,11 @@ class QuestionTypeClassifier:
             return False
 
     def extract_features(
-        self, query_graph: Graph, query_uri: URIRef
+        self,
+        query_graph: Graph,
+        query_uri: URIRef,
+        parsed: object = None,
+        alg: object = None,
     ) -> Tuple[Set[str], List[str]]:
         short_uri = str(query_uri).split("/")[-1]
         features: Set[str] = set()
@@ -113,18 +123,26 @@ class QuestionTypeClassifier:
                 if name:
                     features.add(name)
 
-        for sparql_lit in query_graph.objects(query_uri, LSQV.text):
+        sparql_lits = list(query_graph.objects(query_uri, LSQV.text))
+        if len(sparql_lits) > 1:
+            self.logger.warning(
+                f"Query {short_uri!r}: {len(sparql_lits)} lsqv:text values found; "
+                f"only the first will be used"
+            )
+        for sparql_lit in sparql_lits[:1]:
             text = str(sparql_lit)
-            if not self._check_sparql_syntax(text, short_uri):
-                continue
-            try:
-                parsed = _sparql_parser.parseQuery(text)
-                algebra = _sparql_algebra.translateQuery(parsed)
-            except Exception as exc:
-                self.logger.error(
-                    f"Query {short_uri!r}: algebra translation failed — {exc}"
-                )
-                continue
+            # Use pre-parsed objects when provided (avoids redundant parse/translate)
+            if parsed is None or alg is None:
+                if not self._check_sparql_syntax(text, short_uri):
+                    continue
+                try:
+                    parsed = _sparql_parser.parseQuery(text)
+                    alg = _sparql_algebra.translateQuery(parsed)
+                except Exception as exc:
+                    self.logger.error(
+                        f"Query {short_uri!r}: algebra translation failed — {exc}"
+                    )
+                    continue
 
             # Pure-aggregate Distinct stripping
             if (
@@ -149,7 +167,7 @@ class QuestionTypeClassifier:
                 except Exception:
                     pass
 
-            implied = detect_lsq_features(algebra.algebra, parsed)
+            implied = detect_lsq_features(alg.algebra, parsed)
             missing = implied - features
             if missing:
                 for feat_name in sorted(missing):
@@ -163,7 +181,7 @@ class QuestionTypeClassifier:
 
             warnings.extend(
                 self._check_count_annotations(
-                    query_graph, query_uri, algebra.algebra, short_uri
+                    query_graph, query_uri, alg.algebra, short_uri
                 )
             )
 
@@ -226,30 +244,51 @@ class QuestionTypeClassifier:
     # File-level classification
     # ------------------------------------------------------------------
 
-    def classify_queries_from_file(
-        self, query_file: Path
-    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
-        g = Graph()
-        try:
-            g.parse(str(query_file), format="turtle")
-            self.logger.info(f"Loaded {len(g)} triples from {query_file}")
-        except Exception as exc:
-            self.logger.error(f"Failed to parse {query_file}: {exc}")
-            raise
-
-        query_uris = list(g.subjects(RDF.type, LSQV.Query))
+    def classify_queries_from_graph(self, g: Graph) -> Dict[str, QueryResult]:
+        """Classify queries from an already-parsed RDF graph (avoids re-parsing the TTL)."""
+        query_uris = sorted(set(g.subjects(RDF.type, LSQV.Query)), key=str)
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
-        results: Dict[
-            str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
-        ] = {}
+        results: Dict[str, QueryResult] = {}
         for uri in query_uris:
             if not any(True for _ in g.objects(uri, LSQV.text)):
                 short = str(uri).split("/")[-1]
                 self.logger.info(f"Skipping {short!r}: no lsqv:text present")
                 continue
 
-            features, warnings = self.extract_features(g, uri)
+            # Parse once per query and reuse for features, metrics, and operators
+            text: Optional[str] = None
+            parsed = None
+            alg = None
+            for sparql_lit in g.objects(uri, LSQV.text):
+                text = str(sparql_lit)
+                try:
+                    parsed = _sparql_parser.parseQuery(text)
+                    alg = _sparql_algebra.translateQuery(parsed)
+                except Exception as exc:
+                    short = str(uri).split("/")[-1]
+                    self.logger.error(
+                        f"Query {short!r}: parse/translate failed — {exc}"
+                    )
+                break
+
+            if not text or not alg:
+                # Parse/translate failed — still collect TTL-declared features
+                features, warnings = self.extract_features(g, uri)
+                if text and not alg:
+                    short = str(uri).split("/")[-1]
+                    warnings.append(
+                        "SPARQL parse/translate failed; algebra-derived features unavailable"
+                    )
+                qtypes = self.classify_query(uri, features)
+                label: Optional[str] = None
+                for lit in g.objects(uri, RDFS.label):
+                    label = str(lit)
+                    break
+                results[str(uri)] = (qtypes, features, label, warnings, {}, None)
+                continue
+
+            features, warnings = self.extract_features(g, uri, parsed=parsed, alg=alg)
             qtypes = self.classify_query(uri, features)
 
             label: Optional[str] = None
@@ -267,21 +306,31 @@ class QuestionTypeClassifier:
                 )
 
             counts: Dict[str, int] = {}
-            for sparql_lit in g.objects(uri, LSQV.text):
-                text = str(sparql_lit)
-                try:
-                    parsed = _sparql_parser.parseQuery(text)
-                    algebra = _sparql_algebra.translateQuery(parsed)
-                    bgp_c, tp_c, pv_c = compute_metrics(algebra.algebra)
-                    counts = {
-                        "bgpCount": bgp_c,
-                        "tpCount": tp_c,
-                        "projectVarCount": pv_c,
-                    }
-                except Exception:
-                    counts = {}
-                break
+            op_set = None
+            try:
+                bgp_c, tp_c, pv_c = compute_metrics(alg.algebra)
+                counts = {"bgpCount": bgp_c, "tpCount": tp_c, "projectVarCount": pv_c}
+            except Exception as exc:
+                self.logger.error(
+                    f"Query {short!r}: metrics computation failed — {exc}"
+                )
+            try:
+                op_set = extract_operators(text, parsed, alg=alg)
+            except Exception as exc:
+                self.logger.error(
+                    f"Query {short!r}: operator extraction failed — {exc}"
+                )
 
-            results[str(uri)] = (qtypes, features, label, warnings, counts)
+            results[str(uri)] = (qtypes, features, label, warnings, counts, op_set)
 
         return results
+
+    def classify_queries_from_file(self, query_file: Path) -> Dict[str, QueryResult]:
+        g = Graph()
+        try:
+            g.parse(str(query_file), format="turtle")
+            self.logger.info(f"Loaded {len(g)} triples from {query_file}")
+        except Exception as exc:
+            self.logger.error(f"Failed to parse {query_file}: {exc}")
+            raise
+        return self.classify_queries_from_graph(g)

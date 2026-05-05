@@ -2,6 +2,8 @@
 
 Purpose: define a compact, reusable approach to model benchmark queries using summary metadata (LSQ + DCT) without storing the full SP syntax tree.
 
+These guidelines are based on the existing `text2sparql` encoding and explain how to encode the same information in a more LSQ-compatible way, with explicit structural features and schema term annotations. The goal is to create a consistent and extensible encoding for SPARQL queries that can be used for annotation, classification, and reporting.
+
 ## Scope
 
 - Input: natural-language question + SPARQL query text.

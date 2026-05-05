@@ -2,18 +2,20 @@ import logging
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
 from rdflib import Graph, URIRef, Literal, BNode
-from rdflib.namespace import RDF, OWL
+from rdflib.namespace import RDF
 
 from .annotator import Annotator
 from .adapters import CSVAdapter, JSONAdapter, TTLAdapter
-from .classifier import QuestionTypeClassifier
+from .algebra import OPERATOR_FEATURES
+from .classifier import QuestionTypeClassifier, QueryResult
 from .namespaces import LSQV, QAT, QA
 from .inspect_query import inspect_cmd
 from .antipatterns import detect_antipatterns
+from .reporter import ReportGenerator
 
 
 def _detect_format(path: str):
@@ -79,8 +81,12 @@ def annotate(input_path, fmt, output_path):
 # ---------------------------------------------------------------------------
 
 
-def _setup_logging(log_file: Optional[Path], verbose: bool) -> logging.Logger:
-    logger = logging.getLogger("sparql_annotator.classify")
+def _setup_logging(
+    log_file: Optional[Path],
+    verbose: bool,
+    logger_name: str = "sparql_annotator.classify",
+) -> logging.Logger:
+    logger = logging.getLogger(logger_name)
     if logger.handlers:
         return logger
     level = logging.DEBUG if verbose else logging.INFO
@@ -102,9 +108,7 @@ def _setup_logging(log_file: Optional[Path], verbose: bool) -> logging.Logger:
 
 def _print_results(
     classifier: QuestionTypeClassifier,
-    results: Dict[
-        str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
-    ],
+    results: Dict[str, QueryResult],
     logger: logging.Logger,
 ) -> None:
     W = 80
@@ -134,7 +138,7 @@ def _print_results(
     total_tp = 0
     n_counts = 0
 
-    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+    for uri_str, (qtypes, features, label, warnings, counts, *_) in results.items():
         short = uri_str.split("/")[-1]
         if warnings:
             queries_with_warnings.append((short, label, warnings))
@@ -193,6 +197,7 @@ def _print_results(
     n_amb = len(ambiguous)
     n_unc = len(unclassifiable)
     n_warn = len(queries_with_warnings)
+
     def pct(n):
         return f"{100 * n // total if total else 0}%"
 
@@ -208,7 +213,7 @@ def _print_results(
 
     # --- Summary: counts per question type ---
     type_counter: Counter = Counter()
-    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+    for uri_str, (qtypes, features, label, warnings, counts, *_) in results.items():
         for qt in qtypes:
             type_counter[qt] += 1
         if not qtypes:
@@ -223,7 +228,7 @@ def _print_results(
 
     # --- Summary: counts per LSQ feature ---
     feature_counter: Counter = Counter()
-    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+    for uri_str, (qtypes, features, label, warnings, counts, *_) in results.items():
         for feat in features:
             feature_counter[feat] += 1
 
@@ -239,16 +244,8 @@ def _print_results(
     print("=" * W)
     print("Summary: queries per SPARQL operator (via LSQ features)")
     print("-" * W)
-    _operator_features = {
-        "Select", "Ask", "Construct", "Describe",
-        "Distinct", "Reduced", "Limit", "Offset", "OrderBy",
-        "Filter", "Optional", "Union", "Minus", "Graph", "Service",
-        "Aggregators", "GroupBy", "Having",
-        "SubQuery", "PropertyPath",
-        "Bind", "Values",
-    }
     for feat, cnt in sorted(
-        ((f, c) for f, c in feature_counter.items() if f in _operator_features),
+        ((f, c) for f, c in feature_counter.items() if f in OPERATOR_FEATURES),
         key=lambda x: (-x[1], x[0]),
     ):
         print(f"  {cnt:4d}  {feat}")
@@ -277,9 +274,7 @@ def _print_results(
 
 def _generate_type_assertions(
     query_file: Path,
-    results: Dict[
-        str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
-    ],
+    results: Dict[str, QueryResult],
     classifier: QuestionTypeClassifier,
     logger: logging.Logger,
 ) -> Graph:
@@ -294,12 +289,22 @@ def _generate_type_assertions(
     for s, p, o in list(out.triples((None, LSQV.text, None))):
         if isinstance(o, Literal) and "\r\n" in str(o):
             out.remove((s, p, o))
-            out.add((s, p, Literal(str(o).replace("\r\n", "\n"), datatype=o.datatype, lang=o.language)))
+            out.add(
+                (
+                    s,
+                    p,
+                    Literal(
+                        str(o).replace("\r\n", "\n"),
+                        datatype=o.datatype,
+                        lang=o.language,
+                    ),
+                )
+            )
 
     count = 0
     updated_bgp = updated_tp = updated_pv = 0
 
-    for uri_str, (qtypes, features, _label, _warnings, counts) in results.items():
+    for uri_str, (qtypes, features, _label, _warnings, counts, *_) in results.items():
         uri = URIRef(uri_str)
 
         for qtype in qtypes:
@@ -400,10 +405,13 @@ def _generate_type_assertions(
     is_flag=True,
     help="Print only queries with antipatterns (id, AP codes, messages), then exit.",
 )
-def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguous_only, ap_only):
+def classify_cmd(
+    query_file, ontology, output, log_file, verbose, debug, ambiguous_only, ap_only
+):
     """Classify SPARQL queries by question type using LSQ features."""
     if ambiguous_only or ap_only:
         import logging as _logging
+
         _logging.disable(_logging.CRITICAL)
     logger = _setup_logging(log_file, verbose)
     try:
@@ -421,6 +429,7 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguo
         if ap_only:
             # Load query texts from the TTL to run antipattern detection
             from rdflib import Graph as _Graph
+
             g = _Graph()
             g.parse(str(query_file), format="turtle")
             for uri_str in results:
@@ -442,6 +451,51 @@ def classify_cmd(query_file, ontology, output, log_file, verbose, debug, ambiguo
             )
             out_graph.serialize(destination=str(output), format="turtle")
             logger.info(f"Saved classified queries to {output}")
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# report sub-command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("report")
+@click.option(
+    "--query-file",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="LSQ query file (Turtle).",
+)
+@click.option(
+    "--ontology",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="qa-types.ttl ontology file.",
+)
+@click.option(
+    "--output-dir",
+    required=True,
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    help="Directory for output files (created if missing).",
+)
+@click.option("--prefix", default="report", show_default=True, help="Filename prefix.")
+@click.option(
+    "--format",
+    "formats",
+    default="csv",
+    show_default=True,
+    help="Output format(s): csv, latex, or csv,latex.",
+)
+def report_cmd(query_file, ontology, output_dir, prefix, formats):
+    """Generate CSV/LaTeX reports for a query dataset."""
+    logger = _setup_logging(None, verbose=False, logger_name="sparql_annotator.report")
+    format_list = [f.strip() for f in formats.split(",")]
+    try:
+        generator = ReportGenerator(str(ontology), logger=logger)
+        generator.generate_reports(
+            str(query_file), str(output_dir), prefix=prefix, formats=format_list
+        )
     except Exception as exc:
         raise click.ClickException(str(exc)) from exc
 
