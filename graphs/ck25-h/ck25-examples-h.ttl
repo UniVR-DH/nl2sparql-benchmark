@@ -2,924 +2,649 @@
 
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix schema: <https://schema.org/> .
+@prefix ex: <http://ld.company.org/example#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix spex: <https://purl.expasy.org/sparql-examples/ontology#> .
 
 
-<http://ld.company.org/example#case_0_3d039c23>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
 
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show employees and their email addresses.";
+ex:case_0_3d039c23
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
+  rdfs:comment "Show employees and their email addresses.";
 
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?email WHERE { ?employee a pv:236555 ; pv:e1dbec ?email }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT ?employee ?email WHERE { ?employee a pv:235391 ; pv:681037 ?email }
+""" ;
+
+  schema:target <http://157.27.26.146:7001/> .
+
+ex:case_1_9549048a
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
+
+  rdfs:comment "List suppliers from Germany.";
+
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT ?supplier WHERE { ?supplier a pv:173093 ; pv:187270 "Germany" }
+""" ;
+
+  schema:target <http://157.27.26.146:7001/> .
+
+ex:case_2_05053c1f
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
+
+  rdfs:comment "Show product categories and their associated products.";
+
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category ?product WHERE { ?product pv:426669 ?category }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_0.ttl" ;
+ex:case_3_0d6c5512
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_0.ttl" ;
+  rdfs:comment "List departments responsible for services.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_1_9549048a>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List suppliers from Germany.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?supplier a pv:df4ad3 ; pv:2f6a8b "Germany" }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept WHERE { ?dept pv:423093 ?product . ?product a pv:530512 }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_1.ttl" ;
+ex:case_4_a67ed7cb
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_1.ttl" ;
+  rdfs:comment "List BOM parts requiring quantity greater than 100.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_2_05053c1f>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product categories and their associated products.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category ?product WHERE { ?product pv:5e848e ?category }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?part WHERE { ?bomPart a pv:599482 ; pv:054052 ?qty FILTER(?qty > 100) }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_2.ttl" ;
+ex:case_5_7dd56eab
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_2.ttl" ;
+  rdfs:comment "List employees and their managers.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_3_0d6c5512>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List departments responsible for services.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept WHERE { ?dept pv:cd5184 ?product . ?product a pv:979522 }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?manager WHERE { ?employee pv:897919 ?manager }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_3.ttl" ;
+ex:case_6_6c601c39
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_3.ttl" ;
+  rdfs:comment "List service products and their eligible hardware.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_4_a67ed7cb>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List BOM parts requiring quantity greater than 100.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?part WHERE { ?bomPart a pv:13078c ; pv:e90f57 ?qty FILTER(?qty > 100) }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service ?hardware WHERE { ?service a pv:530512 ; pv:944906 ?hardware . ?hardware a pv:592850 }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_4.ttl" ;
+ex:case_7_0ae55250
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_4.ttl" ;
+  rdfs:comment "Find average weight of hardware products.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_5_7dd56eab>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List employees and their managers.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?manager WHERE { ?employee pv:f6909e ?manager }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (AVG(?weight) as ?avgWeight) WHERE { ?hardware a pv:592850 ; pv:749841 ?weight }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_5.ttl" ;
+ex:case_8_734886f5
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_5.ttl" ;
+  rdfs:comment "List departments and their responsible product categories.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_6_6c601c39>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List service products and their eligible hardware.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service ?hardware WHERE { ?service a pv:979522 ; pv:798bd6 ?hardware . ?hardware a pv:1b4d3f }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept ?category WHERE { ?dept pv:423093 ?product . ?product pv:426669 ?category }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_6.ttl" ;
+ex:case_9_b766bd0d
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_6.ttl" ;
+  rdfs:comment "Show product names with prices over $500.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_7_0ae55250>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find average weight of hardware products.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (AVG(?weight) as ?avgWeight) WHERE { ?hardware a pv:1b4d3f ; pv:c4bb1c ?weight }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:095940 ?name ; pv:310044 ?price . ?price pv:261910 ?amt FILTER(?amt > 500) }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_7.ttl" ;
+ex:case_10_aeb73afd
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_7.ttl" ;
+  rdfs:comment "Find total quantity of part RTY456 in all BOMs.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_8_734886f5>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List departments and their responsible product categories.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept ?category WHERE { ?dept pv:cd5184 ?product . ?product pv:5e848e ?category }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?qty) as ?total) WHERE { ?bomPart pv:343130 ?part ; pv:054052 ?qty . ?part pv:869502 "RTY456" }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_8.ttl" ;
+ex:case_11_871e287f
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_8.ttl" ;
+  rdfs:comment "Show average price per product category.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_9_b766bd0d>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product names with prices over $500.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:704fde ?name ; pv:e462e7 ?price . ?price pv:af5cae ?amt FILTER(?amt > 500) }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?amt) as ?avgPrice) WHERE { ?product pv:426669 ?category ; pv:310044/pv:261910 ?amt } GROUP BY ?category
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_9.ttl" ;
+ex:case_12_082b8798
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_9.ttl" ;
+  rdfs:comment "Find products with both hardware and service variants.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_10_aeb73afd>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find total quantity of part RTY456 in all BOMs.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?qty) as ?total) WHERE { ?bomPart pv:d25624 ?part ; pv:e90f57 ?qty . ?part pv:ac9b7e "RTY456" }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:095940 ?name . { ?variant a pv:592850 } UNION { ?variant a pv:530512 } }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_10.ttl" ;
+ex:case_13_a21a96bd
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_10.ttl" ;
+  rdfs:comment "List suppliers with country DBpedia links.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_11_871e287f>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show average price per product category.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?amt) as ?avgPrice) WHERE { ?product pv:5e848e ?category ; pv:e462e7/pv:af5cae ?amt } GROUP BY ?category
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> PREFIX dbo: <http://dbpedia.org/ontology/> SELECT ?supplier ?country WHERE { ?supplier pv:347609 ?country . ?country a dbo:Country }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_11.ttl" ;
+ex:case_14_20f4a421
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_11.ttl" ;
+  rdfs:comment "Find products with reliability index below 5.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_12_082b8798>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find products with both hardware and service variants.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name WHERE { ?product pv:704fde ?name . { ?variant a pv:1b4d3f } UNION { ?variant a pv:979522 } }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:592850 ; pv:544420 ?index FILTER(?index < 5) }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_12.ttl" ;
+ex:case_15_84cb5b42
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_12.ttl" ;
+  rdfs:comment "Show product managers and their departments.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_13_a21a96bd>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List suppliers with country DBpedia links.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> PREFIX dbo: <http://dbpedia.org/ontology/> SELECT ?supplier ?country WHERE { ?supplier pv:14d94c ?country . ?country a dbo:Country }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager ?dept WHERE { ?product pv:760454 ?manager . ?manager pv:973576 ?dept }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_13.ttl" ;
+ex:case_16_e13634ee
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_13.ttl" ;
+  rdfs:comment "Find total weight of BOM components for product X.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_14_20f4a421>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find products with reliability index below 5.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:1b4d3f ; pv:7a26d1 ?index FILTER(?index < 5) }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?weight * ?qty) as ?totalWeight) WHERE { ?bom pv:427858 [ pv:343130 ?component ; pv:054052 ?qty ] . ?component pv:749841 ?weight }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_14.ttl" ;
+ex:case_17_83ebeb74
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_14.ttl" ;
+  rdfs:comment "Show agents with multiple areas of expertise.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_15_84cb5b42>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product managers and their departments.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager ?dept WHERE { ?product pv:d55029 ?manager . ?manager pv:8c4b73 ?dept }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?agent (COUNT(?expertise) as ?expertiseCount) WHERE { ?agent pv:050057 ?expertise } GROUP BY ?agent HAVING(COUNT(?expertise) > 1)
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_15.ttl" ;
+ex:case_18_85be47db
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_15.ttl" ;
+  rdfs:comment "Show product names and their supplier countries.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_16_e13634ee>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find total weight of BOM components for product X.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT (SUM(?weight * ?qty) as ?totalWeight) WHERE { ?bom pv:0607c7 [ pv:d25624 ?component ; pv:e90f57 ?qty ] . ?component pv:c4bb1c ?weight }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name ?country WHERE { ?product pv:095940 ?name ; pv:238286/pv:187270 ?country }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_16.ttl" ;
+ex:case_19_d5f34e5f
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_16.ttl" ;
+  rdfs:comment "List BOM parts with their quantities and component names.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_17_83ebeb74>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show agents with multiple areas of expertise.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?agent (COUNT(?expertise) as ?expertiseCount) WHERE { ?agent pv:76f55e ?expertise } GROUP BY ?agent HAVING(COUNT(?expertise) > 1)
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?partName ?quantity WHERE { ?bomPart pv:343130 ?part ; pv:054052 ?quantity . ?part pv:095940 ?partName }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_17.ttl" ;
+ex:case_20_5e7e4ec3
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_17.ttl" ;
+  rdfs:comment "List hardware dimensions in descending order of weight.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_18_85be47db>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product names and their supplier countries.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?name ?country WHERE { ?product pv:704fde ?name ; pv:1bade2/pv:2f6a8b ?country }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?width ?height ?depth ?weight WHERE { ?product a pv:592850 ; pv:036775 ?width ; pv:580393 ?height ; pv:328410 ?depth ; pv:749841 ?weight } ORDER BY DESC(?weight)
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_18.ttl" ;
+ex:case_21_95ca265f
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_18.ttl" ;
+  rdfs:comment "List product managers responsible for products with reliability index below 6.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_19_d5f34e5f>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List BOM parts with their quantities and component names.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?partName ?quantity WHERE { ?bomPart pv:d25624 ?part ; pv:e90f57 ?quantity . ?part pv:704fde ?partName }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager WHERE { ?product pv:760454 ?manager ; pv:544420 ?index FILTER(?index < 6) }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_19.ttl" ;
+ex:case_22_c1ae2319
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_19.ttl" ;
+  rdfs:comment "Show compatible hardware pairs that share the same product category.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_20_5e7e4ec3>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List hardware dimensions in descending order of weight.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?width ?height ?depth ?weight WHERE { ?product a pv:1b4d3f ; pv:4811a9 ?width ; pv:9eefc0 ?height ; pv:807b0b ?depth ; pv:c4bb1c ?weight } ORDER BY DESC(?weight)
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prod1 ?prod2 ?category WHERE { ?prod1 pv:980975 ?prod2 ; pv:426669 ?category . ?prod2 pv:426669 ?category }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_20.ttl" ;
+ex:case_23_f4c87d23
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_20.ttl" ;
+  rdfs:comment "Find BOMs where all parts have suppliers in Germany.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_21_95ca265f>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List product managers responsible for products with reliability index below 6.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager WHERE { ?product pv:d55029 ?manager ; pv:7a26d1 ?index FILTER(?index < 6) }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom WHERE { ?bom pv:427858/pv:343130/pv:238286 ?supplier . ?supplier pv:187270 "Germany" }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_21.ttl" ;
+ex:case_24_0a3ec9ca
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_21.ttl" ;
+  rdfs:comment "Show product categories with the most hardware products.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_22_c1ae2319>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show compatible hardware pairs that share the same product category.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prod1 ?prod2 ?category WHERE { ?prod1 pv:a6d551 ?prod2 ; pv:5e848e ?category . ?prod2 pv:5e848e ?category }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (COUNT(?hw) as ?count) WHERE { ?hw a pv:592850 ; pv:426669 ?category } GROUP BY ?category ORDER BY DESC(COUNT(?hw))
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_22.ttl" ;
+ex:case_25_af4b7b69
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_22.ttl" ;
+  rdfs:comment "List services eligible for products that weigh less than 300g.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_23_f4c87d23>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find BOMs where all parts have suppliers in Germany.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom WHERE { ?bom pv:0607c7/pv:d25624/pv:1bade2 ?supplier . ?supplier pv:2f6a8b "Germany" }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:944906 ?product . ?product pv:749841 ?weight FILTER(?weight < 300) }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_23.ttl" ;
+ex:case_26_cbbba349
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_23.ttl" ;
+  rdfs:comment "Show product managers and the number of products they manage.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_24_0a3ec9ca>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product categories with the most hardware products.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (COUNT(?hw) as ?count) WHERE { ?hw a pv:1b4d3f ; pv:5e848e ?category } GROUP BY ?category ORDER BY DESC(COUNT(?hw))
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager (COUNT(?product) as ?count) WHERE { ?product pv:760454 ?manager } GROUP BY ?manager
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_24.ttl" ;
+ex:case_27_0a8f82dc
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_24.ttl" ;
+  rdfs:comment "List suppliers that provide parts for products managed by 'Engineering' department.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_25_af4b7b69>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List services eligible for products that weigh less than 300g.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:798bd6 ?product . ?product pv:c4bb1c ?weight FILTER(?weight < 300) }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?dept pv:095940 "Engineering" ; pv:423093/pv:238286 ?supplier }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_25.ttl" ;
+ex:case_28_22889409
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_25.ttl" ;
+  rdfs:comment "Show products with compatibility chains (product A compatible with B compatible with C).";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_26_cbbba349>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product managers and the number of products they manage.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?manager (COUNT(?product) as ?count) WHERE { ?product pv:d55029 ?manager } GROUP BY ?manager
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prodA ?prodB ?prodC WHERE { ?prodA pv:980975 ?prodB . ?prodB pv:980975 ?prodC }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_26.ttl" ;
+ex:case_29_8a386188
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_26.ttl" ;
+  rdfs:comment "List departments and their most expensive product.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_27_0a8f82dc>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List suppliers that provide parts for products managed by 'Engineering' department.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?supplier WHERE { ?dept pv:704fde "Engineering" ; pv:cd5184/pv:1bade2 ?supplier }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (SAMPLE(?product) as ?mostExpensive) WHERE { ?dept pv:423093 ?product . ?product pv:310044/pv:261910 ?price } GROUP BY ?dept ORDER BY DESC(MAX(?price))
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_27.ttl" ;
+ex:case_30_772e5a5b
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_27.ttl" ;
+  rdfs:comment "Find services that require hardware from specific country suppliers.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_28_22889409>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show products with compatibility chains (product A compatible with B compatible with C).";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?prodA ?prodB ?prodC WHERE { ?prodA pv:a6d551 ?prodB . ?prodB pv:a6d551 ?prodC }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:944906 ?hw . ?hw pv:238286 ?supplier . ?supplier pv:187270 "Japan" }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_28.ttl" ;
+ex:case_31_82cc8631
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_28.ttl" ;
+  rdfs:comment "List BOMs and their total part count.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_29_8a386188>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List departments and their most expensive product.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (SAMPLE(?product) as ?mostExpensive) WHERE { ?dept pv:cd5184 ?product . ?product pv:e462e7/pv:af5cae ?price } GROUP BY ?dept ORDER BY DESC(MAX(?price))
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom (COUNT(?part) as ?partCount) WHERE { ?bom pv:427858 ?part } GROUP BY ?bom
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_29.ttl" ;
+ex:case_32_f62c8663
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_29.ttl" ;
+  rdfs:comment "Show employees who manage products in their area of expertise.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_30_772e5a5b>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find services that require hardware from specific country suppliers.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?service WHERE { ?service pv:798bd6 ?hw . ?hw pv:1bade2 ?supplier . ?supplier pv:2f6a8b "Japan" }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?employee pv:050057 ?expertise . ?product pv:760454 ?employee ; pv:426669 ?expertise }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_30.ttl" ;
+ex:case_33_ebaa5d0d
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_30.ttl" ;
+  rdfs:comment "List hardware products by volume (width × height × depth).";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_31_82cc8631>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List BOMs and their total part count.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?bom (COUNT(?part) as ?partCount) WHERE { ?bom pv:0607c7 ?part } GROUP BY ?bom
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (?width * ?height * ?depth as ?volume) WHERE { ?product pv:036775 ?width ; pv:580393 ?height ; pv:328410 ?depth } ORDER BY DESC(?volume)
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_31.ttl" ;
+ex:case_34_87ea64ba
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_31.ttl" ;
+  rdfs:comment "Find departments with products from more than 3 different suppliers.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_32_f62c8663>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show employees who manage products in their area of expertise.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?employee pv:76f55e ?expertise . ?product pv:d55029 ?employee ; pv:5e848e ?expertise }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (COUNT(DISTINCT ?supplier) as ?suppliers) WHERE { ?dept pv:423093/pv:238286 ?supplier } GROUP BY ?dept HAVING(COUNT(DISTINCT ?supplier) > 3)
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_32.ttl" ;
+ex:case_35_8fa5f965
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_32.ttl" ;
+  rdfs:comment "Show product lifecycle status based on reliability index.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_33_ebaa5d0d>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List hardware products by volume (width × height × depth).";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (?width * ?height * ?depth as ?volume) WHERE { ?product pv:4811a9 ?width ; pv:9eefc0 ?height ; pv:807b0b ?depth } ORDER BY DESC(?volume)
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?index > 8, "Active", "Phase-out") as ?status) WHERE { ?product pv:544420 ?index }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_33.ttl" ;
+ex:case_36_d65854ae
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_33.ttl" ;
+  rdfs:comment "Show product price in EUR equivalent using fixed conversion rate.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_34_87ea64ba>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find departments with products from more than 3 different suppliers.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (COUNT(DISTINCT ?supplier) as ?suppliers) WHERE { ?dept pv:cd5184/pv:1bade2 ?supplier } GROUP BY ?dept HAVING(COUNT(DISTINCT ?supplier) > 3)
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?curr="USD", ?amt*0.85, ?amt) as ?eurPrice) WHERE { ?product pv:310044 [ pv:261910 ?amt; pv:020472 ?curr ] }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_34.ttl" ;
+ex:case_37_86f40e53
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_34.ttl" ;
+  rdfs:comment "Find products that are both hardware and have associated services.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_35_8fa5f965>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product lifecycle status based on reliability index.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?index > 8, "Active", "Phase-out") as ?status) WHERE { ?product pv:7a26d1 ?index }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:592850 . ?service pv:944906 ?product }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_35.ttl" ;
+ex:case_38_d6831875
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_35.ttl" ;
+  rdfs:comment "List products with supplier country risk assessment.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_36_d65854ae>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product price in EUR equivalent using fixed conversion rate.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?curr="USD", ?amt*0.85, ?amt) as ?eurPrice) WHERE { ?product pv:e462e7 [ pv:af5cae ?amt; pv:d7f276 ?curr ] }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?country IN("CountryA","CountryB"), "High Risk", "Low Risk") as ?risk) WHERE { ?product pv:238286/pv:187270 ?country }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_36.ttl" ;
+ex:case_39_d98320e8
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_36.ttl" ;
+  rdfs:comment "Show product categories sorted by average reliability index.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_37_86f40e53>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find products that are both hardware and have associated services.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product a pv:1b4d3f . ?service pv:798bd6 ?product }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?index) as ?avgReliability) WHERE { ?product pv:426669 ?category ; pv:544420 ?index } GROUP BY ?category ORDER BY DESC(AVG(?index))
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_37.ttl" ;
+ex:case_40_7bc5a875
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_37.ttl" ;
+  rdfs:comment "Find products that share suppliers with their compatible products.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_38_d6831875>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List products with supplier country risk assessment.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product (IF(?country IN("CountryA","CountryB"), "High Risk", "Low Risk") as ?risk) WHERE { ?product pv:1bade2/pv:2f6a8b ?country }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?compatible WHERE { ?product pv:980975 ?compatible ; pv:238286 ?supplier . ?compatible pv:238286 ?supplier }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_38.ttl" ;
+ex:case_41_b796c85a
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_38.ttl" ;
+  rdfs:comment "List hardware products with cubic dimensions (width = height = depth).";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_39_d98320e8>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product categories sorted by average reliability index.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?category (AVG(?index) as ?avgReliability) WHERE { ?product pv:5e848e ?category ; pv:7a26d1 ?index } GROUP BY ?category ORDER BY DESC(AVG(?index))
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product pv:036775 ?dim ; pv:580393 ?dim ; pv:328410 ?dim }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_39.ttl" ;
+ex:case_42_7a0340d8
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_39.ttl" ;
+  rdfs:comment "Show product manager email distribution lists by department.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_40_7bc5a875>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find products that share suppliers with their compatible products.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?compatible WHERE { ?product pv:a6d551 ?compatible ; pv:1bade2 ?supplier . ?compatible pv:1bade2 ?supplier }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (GROUP_CONCAT(?email; SEPARATOR=";") as ?emails) WHERE { ?manager pv:973576 ?dept ; pv:681037 ?email . ?product pv:760454 ?manager } GROUP BY ?dept
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_40.ttl" ;
+ex:case_43_711b32da
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_40.ttl" ;
+  rdfs:comment "Find products with price higher than average in their category.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_41_b796c85a>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "List hardware products with cubic dimensions (width = height = depth).";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product WHERE { ?product pv:4811a9 ?dim ; pv:9eefc0 ?dim ; pv:807b0b ?dim }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?price WHERE { ?product pv:426669 ?category ; pv:310044/pv:261910 ?price . { SELECT ?category (AVG(?amt) as ?avg) WHERE { ?p pv:426669 ?category ; pv:310044/pv:261910 ?amt } GROUP BY ?category } FILTER(?price > ?avg) }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_41.ttl" ;
+ex:case_44_8aa3bb7c
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_41.ttl" ;
+  rdfs:comment "Find employees who are experts for products they manage.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_42_7a0340d8>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product manager email distribution lists by department.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?dept (GROUP_CONCAT(?email; SEPARATOR=";") as ?emails) WHERE { ?manager pv:8c4b73 ?dept ; pv:e1dbec ?email . ?product pv:d55029 ?manager } GROUP BY ?dept
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?product pv:760454 ?employee . ?employee pv:050057 ?expertise . ?product pv:426669 ?expertise }
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
+  schema:target <http://157.27.26.146:7001/> .
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_42.ttl" ;
+ex:case_45_6b8e94b5
+  a sh:SPARQLExecutable,
+    sh:SPARQLSelectExecutable;
 
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_42.ttl" ;
+  rdfs:comment "Show product volume to weight ratio for shipping optimization.";
 
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_43_711b32da>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find products with price higher than average in their category.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ?price WHERE { ?product pv:5e848e ?category ; pv:e462e7/pv:af5cae ?price . { SELECT ?category (AVG(?amt) as ?avg) WHERE { ?p pv:5e848e ?category ; pv:e462e7/pv:af5cae ?amt } GROUP BY ?category } FILTER(?price > ?avg) }
+  sh:select """
+PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ((?width * ?height * ?depth) / ?weight as ?ratio) WHERE { ?product pv:036775 ?width ; pv:580393 ?height ; pv:328410 ?depth ; pv:749841 ?weight } ORDER BY ?ratio
 
 
 """ ;
 
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_43.ttl" ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_43.ttl" ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_44_8aa3bb7c>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Find employees who are experts for products they manage.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?employee ?product WHERE { ?product pv:d55029 ?employee . ?employee pv:76f55e ?expertise . ?product pv:5e848e ?expertise }
-
-
-""" ;
-
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_44.ttl" ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_44.ttl" ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
-
-<http://ld.company.org/example#case_45_6b8e94b5>
-  a <http://www.w3.org/ns/shacl#SPARQLExecutable>,
-    <http://www.w3.org/ns/shacl#SPARQLSelectExecutable>;
-
-  <http://www.w3.org/2000/01/rdf-schema#comment> "Show product volume to weight ratio for shipping optimization.";
-
-  <http://www.w3.org/ns/shacl#select> """
-PREFIX pv: <http://ld.company.org/prod-vocab/> SELECT ?product ((?width * ?height * ?depth) / ?weight as ?ratio) WHERE { ?product pv:4811a9 ?width ; pv:9eefc0 ?height ; pv:807b0b ?depth ; pv:c4bb1c ?weight } ORDER BY ?ratio
-
-
-""" ;
-
-  <https://schema.org/target> <http://157.27.26.146:7001/> ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#file_name> "case_45.ttl" ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/case_45.ttl" ;
-
-  <https://purl.expasy.org/sparql-examples/ontology#project> "corporate-examples" .
+  schema:target <http://157.27.26.146:7001/> .
