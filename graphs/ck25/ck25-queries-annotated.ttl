@@ -21,7 +21,7 @@
     lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 ASK
 WHERE {
-  ?product pv:hasSupplier ?supplier .
+  ?result a pv:Supplier .
   ?supplier pv:addressLocality "Toulouse" .
 }""" ;
     dct:created "2026-03-30T16:02:31.732295+00:00"^^xsd:dateTime ;
@@ -42,7 +42,7 @@ WHERE {
     lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
-  ?product pv:hasSupplier ?result .
+  ?result a pv:Supplier .
   ?result pv:addressLocality "Toulouse" .
 }""" ;
     dct:created "2026-03-30T16:02:31.732321+00:00"^^xsd:dateTime ;
@@ -146,32 +146,6 @@ WHERE {
     dct:modified "2026-03-30T16:02:31.731867+00:00"^^xsd:dateTime ;
     dct:subject <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org>,
         pv:hasManager .
-
-:4 a lsqv:Query,
-        qat:Enumeration ;
-    rdfs:label "What is the email of Sabrina from Marketing?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 4 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Filter,
-                lsqv:Select,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?department pv:name "Marketing" .
-  ?person pv:memberOf ?department .
-  ?person pv:email ?result .
-  ?person pv:name ?name .
-  FILTER (CONTAINS(?name, "Sabrina"))
-}""" ;
-    dct:created "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
-    dct:subject pv:email,
-        pv:memberOf,
-        pv:name .
 
 :41 a lsqv:Query,
         qat:AggregateEnumeration ;
@@ -504,6 +478,12 @@ WHERE {
     dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
     skos:closeMatch :50 .
 
+:93 a lsqv:Query ;
+    rdfs:label "What is the email of Sabrina from the department with name Marketing?" ;
+    dct:created "2026-05-05T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-05T16:10:20.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :4 .
+
 :1 a lsqv:Query,
         qat:Enumeration ;
     rdfs:label "In which department is Ms. Brant?" ;
@@ -581,11 +561,13 @@ WHERE {
                 lsqv:TriplePattern,
                 lsqv:agg-count ] ;
     lsqv:resultCount 1 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+    lsqv:text """PREFIX dbPedia: <http://dbpedia.org/resource/> 
+PREFIX pv: <http://ld.company.org/prod-vocab/> 
+
 SELECT (COUNT(DISTINCT ?supplier) as ?result)
 WHERE {
   ?product pv:hasSupplier ?supplier .
-  ?supplier pv:addressCountry "France" .
+  ?supplier pv:country dbPedia:France .
 }""" ;
     dct:created "2026-03-30T16:02:31.732186+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.732186+00:00"^^xsd:dateTime ;
@@ -603,11 +585,13 @@ WHERE {
                 lsqv:TriplePattern ] ;
     lsqv:resultCount 3 ;
     lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+PREFIX dbPedia: <http://dbpedia.org/resource/> 
+
 SELECT DISTINCT ?result
 WHERE {
   ?product pv:hasSupplier ?result .
   ?product pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Compensator> .
-  ?result pv:addressCountry "France" .
+  ?result pv:country dbPedia:France .
 }""" ;
     dct:created "2026-03-30T16:02:31.732213+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.732213+00:00"^^xsd:dateTime ;
@@ -1871,6 +1855,32 @@ ORDER BY DESC(SUM(?qty))""" ;
         pv:hasBomPart,
         pv:quantity .
 
+:4 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What is the email of Sabrina from Marketing?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?department pv:name "Marketing" .
+  ?person pv:memberOf ?department .
+  ?person pv:email ?result .
+  ?person pv:name ?name .
+  FILTER (CONTAINS(?name, "Sabrina"))
+}""" ;
+    dct:created "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
+    dct:subject pv:email,
+        pv:memberOf,
+        pv:name .
+
 :6 a lsqv:Query,
         qat:Enumeration ;
     rdfs:label "Who is our Sensor expert?" ;
@@ -1982,6 +1992,14 @@ WHERE {
 [] a qa:AnnotationQuestion ;
     oa:hasBody [ a qat:LinguisticIssue ] ;
     oa:hasTarget :50 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :4 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :4 .
 
 [] a qa:AnnotationQuestion ;
     oa:hasBody [ a qat:SemanticIssue ] ;
