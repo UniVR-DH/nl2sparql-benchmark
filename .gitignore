@@ -207,6 +207,16 @@ SPIN_ENCODER.md
 .cursorignore
 .cursorindexingignore
 
+# GPTKB generated artifacts — ignored by suffix
+# *-vocab.ttl    → tracked via Git LFS (see .gitattributes)
+# *-vocab.nt     → too large for LFS, regenerate with extract.sh
+# *-instances.ttl → too large for LFS, regenerate with extract.sh
+# *-instances.nt  → too large for LFS, regenerate with extract.sh
+# *-predicates_*.txt and *-prefixes.ttl are small and ARE committed
+graphs/gptkb/*-vocab.nt
+graphs/gptkb/*-instances.ttl
+graphs/gptkb/*-instances.nt
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
