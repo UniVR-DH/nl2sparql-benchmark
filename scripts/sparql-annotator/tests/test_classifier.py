@@ -301,7 +301,7 @@ def test_algebra_enriches_missing_optional(clf, tmp_path):
         ["Select", "TriplePattern"],
     )  # Optional deliberately omitted
     results = clf.classify_queries_from_file(p)
-    _, features, _, warnings, _ = next(iter(results.values()))
+    _, features, _, warnings, _, *_ = next(iter(results.values()))
     assert "Optional" in features
     assert any("Optional" in w for w in warnings)
 
@@ -315,7 +315,7 @@ def test_algebra_enriches_missing_filter(clf, tmp_path):
         ["Select", "TriplePattern"],
     )
     results = clf.classify_queries_from_file(p)
-    _, features, _, warnings, _ = next(iter(results.values()))
+    _, features, _, warnings, _, *_ = next(iter(results.values()))
     assert "Filter" in features
     assert any("Filter" in w for w in warnings)
 
@@ -341,7 +341,7 @@ LIMIT 3""",
         ],
     )
     results = clf.classify_queries_from_file(p)
-    _, features, _, warnings, _ = next(iter(results.values()))
+    _, features, _, warnings, _, *_ = next(iter(results.values()))
     assert "Bind" not in features
     assert not any("Bind" in w for w in warnings)
 
@@ -366,7 +366,7 @@ HAVING (COUNT(?emp) > 5)""",
         ],
     )
     results = clf.classify_queries_from_file(p)
-    _, features, _, warnings, _ = next(iter(results.values()))
+    _, features, _, warnings, _, *_ = next(iter(results.values()))
     assert "Filter" not in features
     assert not any("Filter" in w for w in warnings)
 
@@ -393,7 +393,7 @@ def test_count_mismatch_produces_warning(clf, tmp_path):
     p = tmp_path / "q.ttl"
     p.write_text(ttl)
     results = clf.classify_queries_from_file(p)
-    _, _, _, warnings, _ = next(iter(results.values()))
+    _, _, _, warnings, _, *_ = next(iter(results.values()))
     assert any("bgpCount" in w and "99" in w for w in warnings)
 
 
@@ -416,7 +416,7 @@ def test_count_match_no_warning(clf, tmp_path):
     p = tmp_path / "q.ttl"
     p.write_text(ttl)
     results = clf.classify_queries_from_file(p)
-    _, _, _, warnings, _ = next(iter(results.values()))
+    _, _, _, warnings, _, *_ = next(iter(results.values()))
     count_warnings = [
         w
         for w in warnings

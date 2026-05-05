@@ -10,6 +10,7 @@ from rdflib.namespace import RDF
 
 from .annotator import Annotator
 from .adapters import CSVAdapter, JSONAdapter, TTLAdapter
+from .algebra import OPERATOR_FEATURES
 from .classifier import QuestionTypeClassifier
 from .namespaces import LSQV, QAT, QA
 from .inspect_query import inspect_cmd
@@ -139,7 +140,7 @@ def _print_results(
     total_tp = 0
     n_counts = 0
 
-    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+    for uri_str, (qtypes, features, label, warnings, counts, *_) in results.items():
         short = uri_str.split("/")[-1]
         if warnings:
             queries_with_warnings.append((short, label, warnings))
@@ -214,7 +215,7 @@ def _print_results(
 
     # --- Summary: counts per question type ---
     type_counter: Counter = Counter()
-    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+    for uri_str, (qtypes, features, label, warnings, counts, *_) in results.items():
         for qt in qtypes:
             type_counter[qt] += 1
         if not qtypes:
@@ -229,7 +230,7 @@ def _print_results(
 
     # --- Summary: counts per LSQ feature ---
     feature_counter: Counter = Counter()
-    for uri_str, (qtypes, features, label, warnings, counts) in results.items():
+    for uri_str, (qtypes, features, label, warnings, counts, *_) in results.items():
         for feat in features:
             feature_counter[feat] += 1
 
@@ -245,32 +246,8 @@ def _print_results(
     print("=" * W)
     print("Summary: queries per SPARQL operator (via LSQ features)")
     print("-" * W)
-    _operator_features = {
-        "Select",
-        "Ask",
-        "Construct",
-        "Describe",
-        "Distinct",
-        "Reduced",
-        "Limit",
-        "Offset",
-        "OrderBy",
-        "Filter",
-        "Optional",
-        "Union",
-        "Minus",
-        "Graph",
-        "Service",
-        "Aggregators",
-        "GroupBy",
-        "Having",
-        "SubQuery",
-        "PropertyPath",
-        "Bind",
-        "Values",
-    }
     for feat, cnt in sorted(
-        ((f, c) for f, c in feature_counter.items() if f in _operator_features),
+        ((f, c) for f, c in feature_counter.items() if f in OPERATOR_FEATURES),
         key=lambda x: (-x[1], x[0]),
     ):
         print(f"  {cnt:4d}  {feat}")
@@ -331,7 +308,7 @@ def _generate_type_assertions(
     count = 0
     updated_bgp = updated_tp = updated_pv = 0
 
-    for uri_str, (qtypes, features, _label, _warnings, counts) in results.items():
+    for uri_str, (qtypes, features, _label, _warnings, counts, *_) in results.items():
         uri = URIRef(uri_str)
 
         for qtype in qtypes:

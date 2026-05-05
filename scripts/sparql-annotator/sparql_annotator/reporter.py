@@ -23,42 +23,16 @@ import logging
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from rdflib import Graph, URIRef
 
 from .antipatterns import detect_antipatterns, AntipatternIssue
 from .classifier import QuestionTypeClassifier
-from .algebra import parse_query, extract_operators
+from .algebra import OPERATOR_FEATURES
 from .namespaces import LSQV
 
 _log = logging.getLogger(__name__)
-
-# Canonical SPARQL operator names (subset of LSQ features)
-_OPERATOR_FEATURES: Set[str] = {
-    "Select",
-    "Ask",
-    "Construct",
-    "Describe",
-    "Distinct",
-    "Reduced",
-    "Limit",
-    "Offset",
-    "OrderBy",
-    "Filter",
-    "Optional",
-    "Union",
-    "Minus",
-    "Graph",
-    "Service",
-    "Aggregators",
-    "GroupBy",
-    "Having",
-    "SubQuery",
-    "PropertyPath",
-    "Bind",
-    "Values",
-}
 
 _ALL_AP_CODES = ["AP01", "AP02", "AP03", "AP04", "AP05", "AP06", "AP07", "AP08", "AP09"]
 
@@ -201,6 +175,9 @@ class ReportGenerator:
         if unknown:
             self.logger.warning(f"Ignoring unknown report format(s): {unknown}")
         formats = [f for f in formats if f in ("csv", "latex")]
+        if not formats:
+            self.logger.info("No valid formats requested; nothing to write.")
+            return
         if not re.fullmatch(r"[A-Za-z0-9_\-]+", prefix):
             raise ValueError(
                 f"prefix must contain only letters, digits, hyphens, and underscores, got: {prefix!r}"
@@ -268,6 +245,7 @@ class ReportGenerator:
             label,
             warnings,
             counts,
+            op_set,
         ) in classify_results.items():
             uri = URIRef(uri_str)
             query_id = uri_str.split("/")[-1]
@@ -278,13 +256,7 @@ class ReportGenerator:
                 text = str(lit)
                 break
 
-            # Operators via OperatorSet; track whether parse succeeded
-            op_set = None
-            parse_ok = False
-            if text:
-                ok, parsed, _ = parse_query(text)
-                parse_ok = ok
-                op_set = extract_operators(text, parsed if ok else None)
+            parse_ok = op_set is not None
 
             # Antipatterns
             issues: List[AntipatternIssue] = []
@@ -475,7 +447,7 @@ class ReportGenerator:
         # op_set.raw, so they reflect what the TTL declares rather than what the SPARQL
         # parser extracted. This is intentional: it stays consistent with features.csv.
         counter: Counter = Counter(
-            f for row in data for f in row["features"] if f in _OPERATOR_FEATURES
+            f for row in data for f in row["features"] if f in OPERATOR_FEATURES
         )
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)

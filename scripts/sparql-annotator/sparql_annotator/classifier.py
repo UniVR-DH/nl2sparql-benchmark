@@ -11,7 +11,7 @@ import rdflib.plugins.sparql.algebra as _sparql_algebra
 
 from .model import QuestionTypeDefinition
 from .ontology import build_type_definitions, build_depth_cache, _uri_to_local
-from .algebra import detect_lsq_features, compute_metrics
+from .algebra import detect_lsq_features, compute_metrics, extract_operators
 from .namespaces import LSQV
 
 
@@ -228,13 +228,31 @@ class QuestionTypeClassifier:
 
     def classify_queries_from_graph(
         self, g: Graph
-    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
+    ) -> Dict[
+        str,
+        Tuple[
+            Set[str],
+            Set[str],
+            Optional[str],
+            List[str],
+            Dict[str, int],
+            Optional[object],
+        ],
+    ]:
         """Classify queries from an already-parsed RDF graph (avoids re-parsing the TTL)."""
         query_uris = sorted(g.subjects(RDF.type, LSQV.Query), key=str)
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
         results: Dict[
-            str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
+            str,
+            Tuple[
+                Set[str],
+                Set[str],
+                Optional[str],
+                List[str],
+                Dict[str, int],
+                Optional[object],
+            ],
         ] = {}
         for uri in query_uris:
             if not any(True for _ in g.objects(uri, LSQV.text)):
@@ -260,22 +278,25 @@ class QuestionTypeClassifier:
                 )
 
             counts: Dict[str, int] = {}
+            op_set = None
             for sparql_lit in g.objects(uri, LSQV.text):
                 text = str(sparql_lit)
                 try:
                     parsed = _sparql_parser.parseQuery(text)
-                    algebra = _sparql_algebra.translateQuery(parsed)
-                    bgp_c, tp_c, pv_c = compute_metrics(algebra.algebra)
+                    alg = _sparql_algebra.translateQuery(parsed)
+                    bgp_c, tp_c, pv_c = compute_metrics(alg.algebra)
                     counts = {
                         "bgpCount": bgp_c,
                         "tpCount": tp_c,
                         "projectVarCount": pv_c,
                     }
+                    # reuse the already-translated algebra — no second translateQuery
+                    op_set = extract_operators(text, parsed, alg=alg)
                 except Exception:
                     counts = {}
                 break
 
-            results[str(uri)] = (qtypes, features, label, warnings, counts)
+            results[str(uri)] = (qtypes, features, label, warnings, counts, op_set)
 
         return results
 

@@ -266,7 +266,7 @@ clf = QuestionTypeClassifier(Path("graphs/qa-types.ttl"))
 # Classify all queries in a file
 results = clf.classify_queries_from_file(Path("graphs/ck25/ck25-queries.ttl"))
 
-for uri, (qtypes, features, label, warnings, counts) in results.items():
+for uri, (qtypes, features, label, warnings, counts, *_) in results.items():
     print(f"{uri.split('/')[-1]}: {qtypes}")
     print(f"  features: {sorted(features)}")
     print(f"  counts:   {counts}")
@@ -396,4 +396,62 @@ uv run pytest              # run tests (182 tests)
 uv run pytest -x -q        # stop on first failure
 uv run ruff check .        # lint
 uv run ruff format .       # format
+```
+
+### Architectural decisions and guidelines
+
+#### rdflib parse-tree mutation
+
+`rdflib.plugins.sparql.algebra.translateQuery(parsed)` **mutates the parse
+tree in-place**.  After it returns, the `parsed` object is no longer a valid
+input for a second `translateQuery` call — doing so produces silently wrong
+results (wrong query form, missing operators, etc.).
+
+Rules that follow from this:
+
+1. **Parse fresh for every independent translation.**  If two subsystems both
+   need to translate the same query text, each must call `parseQuery` on its
+   own copy of the text.
+2. **Share the algebra, not the parse tree.**  When a single call site needs
+   both the algebra (for metrics / operator extraction) and the parse tree (for
+   HAVING detection), translate once and pass the resulting `alg` object to
+   every consumer.  `extract_operators(text, parsed, alg=alg)` supports this
+   pattern explicitly.
+3. **`detect_antipatterns` always re-parses.**  It calls `parseQuery` internally
+   and ignores any `parsed` argument for this reason.  Do not try to share a
+   parse tree with it.
+
+#### Single-parse pipeline
+
+`QuestionTypeClassifier.classify_queries_from_graph` is the single entry point
+for per-query SPARQL analysis.  It:
+
+- parses the query text once (`parseQuery`),
+- translates once (`translateQuery`),
+- computes metrics and extracts operators from the same `alg` object,
+- returns the `OperatorSet` as the 6th element of the result tuple.
+
+`ReportGenerator._collect` unpacks the `OperatorSet` directly from the
+classifier result and does **not** re-parse.  `detect_antipatterns` is called
+separately (it re-parses internally, which is unavoidable).
+
+If you add a new analysis step that needs the algebra, add it inside
+`classify_queries_from_graph` alongside the existing metrics/operator
+extraction — do not add a new `parseQuery` / `translateQuery` call in
+`_collect` or any downstream consumer.
+
+#### Classifier result tuple
+
+`classify_queries_from_graph` returns a dict mapping URI strings to 6-tuples:
+
+```
+(qtypes, features, label, warnings, counts, op_set)
+```
+
+Unpack with `*_` for any elements you do not need, so that adding a 7th
+element in the future does not break callers:
+
+```python
+for uri, (qtypes, features, label, warnings, counts, *_) in results.items():
+    ...
 ```
