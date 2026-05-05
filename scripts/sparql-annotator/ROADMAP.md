@@ -26,7 +26,7 @@ sparql-annotator/
 │   ├── model.py
 │   ├── namespaces.py
 │   └── adapters/           # TTL, CSV, JSON
-└── tests/                  # 182 tests
+└── tests/                  # 185 tests
 ```
 
 ---
@@ -48,7 +48,7 @@ sparql-annotator/
 - CLI: `report --query-file --ontology --output-dir [--prefix] [--format csv,latex]`
 - Output: features, operators, question_types, antipatterns, metrics, summary (with per-AP counts), count_by_question_type, count_by_feature, count_by_operator
 - Error handling: `FileNotFoundError` for missing files, `ValueError` for invalid TTL
-- 182 tests passing
+- 185 tests passing
 
 ---
 

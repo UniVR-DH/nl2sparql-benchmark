@@ -123,7 +123,13 @@ class QuestionTypeClassifier:
                 if name:
                     features.add(name)
 
-        for sparql_lit in query_graph.objects(query_uri, LSQV.text):
+        sparql_lits = list(query_graph.objects(query_uri, LSQV.text))
+        if len(sparql_lits) > 1:
+            self.logger.warning(
+                f"Query {short_uri!r}: {len(sparql_lits)} lsqv:text values found; "
+                f"only the first will be used"
+            )
+        for sparql_lit in sparql_lits[:1]:
             text = str(sparql_lit)
             # Use pre-parsed objects when provided (avoids redundant parse/translate)
             if parsed is None or alg is None:
@@ -267,8 +273,19 @@ class QuestionTypeClassifier:
                 break
 
             if not text or not alg:
-                # No valid SPARQL text or parse failed
-                results[str(uri)] = (set(), set(), None, [], {}, None)
+                # Parse/translate failed — still collect TTL-declared features
+                features, warnings = self.extract_features(g, uri)
+                if text and not alg:
+                    short = str(uri).split("/")[-1]
+                    warnings.append(
+                        "SPARQL parse/translate failed; algebra-derived features unavailable"
+                    )
+                qtypes = self.classify_query(uri, features)
+                label: Optional[str] = None
+                for lit in g.objects(uri, RDFS.label):
+                    label = str(lit)
+                    break
+                results[str(uri)] = (qtypes, features, label, warnings, {}, None)
                 continue
 
             features, warnings = self.extract_features(g, uri, parsed=parsed, alg=alg)
@@ -293,9 +310,16 @@ class QuestionTypeClassifier:
             try:
                 bgp_c, tp_c, pv_c = compute_metrics(alg.algebra)
                 counts = {"bgpCount": bgp_c, "tpCount": tp_c, "projectVarCount": pv_c}
+            except Exception as exc:
+                self.logger.error(
+                    f"Query {short!r}: metrics computation failed — {exc}"
+                )
+            try:
                 op_set = extract_operators(text, parsed, alg=alg)
-            except Exception:
-                counts = {}
+            except Exception as exc:
+                self.logger.error(
+                    f"Query {short!r}: operator extraction failed — {exc}"
+                )
 
             results[str(uri)] = (qtypes, features, label, warnings, counts, op_set)
 

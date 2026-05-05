@@ -147,6 +147,10 @@ def test_operators_csv_has_query_form(reports):
     forms = {r["query_id"]: r["query_form"] for r in rows}
     assert forms["q1"] == "SELECT"
     assert forms["q2"] == "ASK"
+    # parse_ok must be present and numeric
+    parse_ok = {r["query_id"]: r["parse_ok"] for r in rows}
+    assert parse_ok["q1"] == "1"
+    assert parse_ok["q2"] == "1"
 
 
 def test_question_types_csv(reports):

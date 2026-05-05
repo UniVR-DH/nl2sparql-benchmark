@@ -320,17 +320,19 @@ class ReportGenerator:
 
         with open(path, "w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh)
-            w.writerow(["query_id", "query_form"] + op_cols + ["filter_functions"])
+            w.writerow(
+                ["query_id", "parse_ok", "query_form"] + op_cols + ["filter_functions"]
+            )
             for row in data:
                 ops = row["op_set"]
                 if ops is None:
-                    w.writerow([row["query_id"], ""] + [""] * len(op_cols) + [""])
+                    w.writerow([row["query_id"], 0, ""] + [0] * len(op_cols) + [""])
                     continue
                 flags = [1 if _RAW_MAP[c] in ops.raw else 0 for c in _RAW_MAP] + [
                     1 if _AGG_MAP[c] in ops.aggregates else 0 for c in _AGG_MAP
                 ]
                 w.writerow(
-                    [row["query_id"], ops.query_form]
+                    [row["query_id"], 1, ops.query_form]
                     + flags
                     + [",".join(sorted(ops.filter_functions))]
                 )
