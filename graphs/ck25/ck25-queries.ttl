@@ -1,323 +1,619 @@
 @prefix : <https://text2sparql.aksw.org/2025/corporate/queries/> .
-@prefix qa: <https://w3id.org/wdaqua/qanary#> .
-@prefix oa: <http://www.w3.org/ns/oa#> .
-@prefix qat: <https://w3id.org/univr-qa/qatypes#> .
-@prefix lsqv: <http://lsq.aksw.org/vocab#> .
 @prefix dct: <http://purl.org/dc/terms/> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix lsqv: <http://lsq.aksw.org/vocab#> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
 @prefix pv: <http://ld.company.org/prod-vocab/> .
+@prefix qa: <https://w3id.org/wdaqua/qanary#> .
+@prefix qat: <https://w3id.org/univr-qa/qatypes#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-:1 a lsqv:Query ;
-  rdfs:label "In which department is Ms. Brant?" ;
-  dct:created "2026-03-30T16:02:31.731362Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731362Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:16 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Do we have suppliers in Toulouse?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Ask,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+ASK
+WHERE {
+  ?result a pv:Supplier .
+  ?supplier pv:addressLocality "Toulouse" .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732295+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732295+00:00"^^xsd:dateTime ;
+    dct:subject pv:addressLocality,
+        pv:hasSupplier .
+
+:17 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which suppliers do we have in Toulouse?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?result a pv:Supplier .
+  ?result pv:addressLocality "Toulouse" .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732321+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732321+00:00"^^xsd:dateTime ;
+    dct:subject pv:addressLocality,
+        pv:hasSupplier .
+
+:18 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the cheapest Oscillator we have?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result 
+WHERE {
+  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
+  ?result pv:price ?priceR .
+  ?priceR pv:amount ?price .
+
+  {
+    SELECT (MIN(?p) AS ?minPrice)
+    WHERE {
+      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
+      ?r pv:price ?pr .
+      ?pr pv:amount ?p .
+    }
+  }
+
+  FILTER (?price = ?minPrice)
+}""" ;
+    dct:created "2026-03-30T16:02:31.732348+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732348+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Oscillator>,
+        pv:amount,
+        pv:hasCategory,
+        pv:price .
+
+:19 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the most expensive service we offer?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result 
+WHERE {
+  ?result a pv:Service .
+  ?result pv:price ?priceR .
+  ?priceR pv:amount ?price .
+
+  {
+    SELECT (MAX(?p) AS ?maxPrice)
+    WHERE {
+      ?r a pv:Service .
+      ?r pv:price ?pr .
+      ?pr pv:amount ?p .
+    }
+  }
+
+  FILTER (?price = ?maxPrice)
+}""" ;
+    dct:created "2026-03-30T16:02:31.732382+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732382+00:00"^^xsd:dateTime ;
+    dct:subject pv:Service,
+        pv:amount,
+        pv:price .
+
+:3 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Who is the manager of Heinrich Hoch?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org> pv:hasManager ?result .
+}""" ;
+    dct:created "2026-03-30T16:02:31.731867+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731867+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org>,
+        pv:hasManager .
+
+:41 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "For each manager, what percentage of their entire team work in the same department as the manager?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:resultCount 6 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT ?m ?name (?deptTeam / ?fullteam * 100 AS ?pct)
+WHERE {
+
+  ?m pv:name ?name .
+
+  { # full team
+    SELECT ?m (COUNT(*) AS ?fullteam) WHERE {
+      ?e pv:hasManager ?m .
+    } GROUP BY ?m
+  }
+
+  { # team in same dept
+    SELECT ?m (COUNT(*) AS ?deptTeam) WHERE {
+      ?m pv:memberOf ?dept .
+      ?e pv:hasManager ?m .
+      ?e pv:memberOf ?dept .
+    } GROUP BY ?m
+  }
+}""" ;
+    dct:created "2026-03-30T16:02:31.733366+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733366+00:00"^^xsd:dateTime ;
+    dct:subject pv:hasManager,
+        pv:memberOf,
+        pv:name .
+
+:45 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "Which supplier delivers the most reliable Inductor?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result
+WHERE {
+  ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
+  ?hardware pv:reliabilityIndex ?reliabilityIndex .
+  ?hardware pv:hasSupplier ?result .
+
+  {
+    SELECT (MAX(?ri) AS ?maxRI)
+    WHERE {
+      ?h pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
+      ?h pv:reliabilityIndex ?ri .
+    }
+  }
+
+  FILTER(?reliabilityIndex = ?maxRI)
+}""" ;
+    dct:created "2026-03-30T16:02:31.733565+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733565+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Inductor>,
+        pv:hasCategory,
+        pv:hasSupplier,
+        pv:reliabilityIndex .
+
+:51 a lsqv:Query ;
+    rdfs:label "In which department is Karen Brant?" ;
+    dct:created "2026-04-09T16:02:31.731362+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T16:02:31.731362+00:00"^^xsd:dateTime ;
+    skos:closeMatch :1 .
+
+:52 a lsqv:Query ;
+    rdfs:label "What is the phone number of Baldwin Dirksen?" ;
+    dct:created "2026-04-09T16:02:31.731362+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T16:02:31.731362+00:00"^^xsd:dateTime ;
+    skos:closeMatch :2 .
+
+:53 a lsqv:Query ;
+    rdfs:label "Who has area of expertise in Transistors?" ;
+    dct:created "2026-04-09T23:02:23.631368+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T23:02:23.631368+00:00"^^xsd:dateTime ;
+    skos:closeMatch :5 .
+
+:54 a lsqv:Query ;
+    rdfs:label "Who has area of expertise in Sensor?" ;
+    dct:created "2026-04-09T23:05:02.931564+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T23:05:02.931564+00:00"^^xsd:dateTime ;
+    skos:closeMatch :6 .
+
+:55 a lsqv:Query ;
+    rdfs:label "Who manages the people that are members of the Data Services department?" ;
+    dct:created "2026-04-09T23:09:50.151567+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T23:09:50.151567+00:00"^^xsd:dateTime ;
+    skos:closeMatch :7 .
+
+:56 a lsqv:Query ;
+    rdfs:label "Which department is responsible for the M558-2275045 - Sensor Switch?" ;
+    dct:created "2026-04-09T23:14:12.531564+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T23:14:12.531564+00:00"^^xsd:dateTime ;
+    skos:closeMatch :8 .
+
+:57 a lsqv:Query ;
+    rdfs:label "How many items have both the Sensor and Switch categories?" ;
+    dct:created "2026-04-09T23:18:34.901564+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T23:18:34.901564+00:00"^^xsd:dateTime ;
+    skos:closeMatch :9 .
+
+:58 a lsqv:Query ;
+    rdfs:label "What are the names of employees with area of expertise in Network in the Marketing department?" ;
+    dct:created "2026-04-09T23:22:14.301564+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-09T23:22:14.301564+00:00"^^xsd:dateTime ;
+    skos:closeMatch :10 .
+
+:59 a lsqv:Query ;
+    rdfs:label "Which departments have employees with an area of expertise in Transducer?" ;
+    dct:created "2026-04-10T10:22:24.131564+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-10T10:22:24.131564+00:00"^^xsd:dateTime ;
+    skos:closeMatch :11 .
+
+:60 a lsqv:Query ;
+    rdfs:label "Which suppliers are available to deliver Compensators?" ;
+    dct:created "2026-04-16T16:02:31.732156+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:31.732156+00:00"^^xsd:dateTime ;
+    skos:closeMatch :12 .
+
+:61 a lsqv:Query ;
+    rdfs:label "How many suppliers in France supply at least one product?" ;
+    dct:created "2026-04-16T16:02:34.132158+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:34.132158+00:00"^^xsd:dateTime ;
+    skos:closeMatch :13 .
+
+:62 a lsqv:Query ;
+    rdfs:label "Which suppliers in France delivers Compensators?" ;
+    dct:created "2026-04-16T16:02:37.812142+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:37.812142+00:00"^^xsd:dateTime ;
+    skos:closeMatch :14 .
+
+:63 a lsqv:Query ;
+    rdfs:label "What is the cheapest Encoder we can get from a supplier in France or Germany?" ;
+    dct:created "2026-04-16T16:02:40.135154+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:40.135154+00:00"^^xsd:dateTime ;
+    skos:closeMatch :15 .
+
+:64 a lsqv:Query ;
+    rdfs:label "Who is the product manager of the most expensive service we offer?" ;
+    dct:created "2026-04-16T16:02:42.637152+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:42.637152+00:00"^^xsd:dateTime ;
+    skos:closeMatch :20 .
+
+:65 a lsqv:Query ;
+    rdfs:label "What is the heaviest item in the Coil category with width and depth each at most 15 mm?" ;
+    dct:created "2026-04-16T16:02:45.232156+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:45.232156+00:00"^^xsd:dateTime ;
+    skos:closeMatch :21 .
+
+:66 a lsqv:Query ;
+    rdfs:label "What products are compatible with the U990-5234138 - LCD Inductor?" ;
+    dct:created "2026-04-16T16:02:47.732131+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:47.732131+00:00"^^xsd:dateTime ;
+    skos:closeMatch :22 .
+
+:67 a lsqv:Query ;
+    rdfs:label "What products can I get from suppliers in United States that are compatible with the U990-5234138 - LCD Inductor?" ;
+    dct:created "2026-04-16T16:02:49.132143+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:49.132143+00:00"^^xsd:dateTime ;
+    skos:closeMatch :23 .
+
+:68 a lsqv:Query ;
+    rdfs:label "What is the Potentiometer with the smallest volume?" ;
+    dct:created "2026-04-16T16:02:51.432146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-16T16:02:51.432146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :24 .
+
+:69 a lsqv:Query ;
+    rdfs:label "Which item in the Coil category has the highest density measured in kilograms per cubic meter?" ;
+    dct:created "2026-04-17T16:09:14.432541+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:14.432541+00:00"^^xsd:dateTime ;
+    skos:closeMatch :25 .
+
+:70 a lsqv:Query ;
+    rdfs:label "What are the address localities of suppliers in the United States that supply LCDs?" ;
+    dct:created "2026-04-17T16:09:16.832845+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:16.832845+00:00"^^xsd:dateTime ;
+    skos:closeMatch :26 .
+
+:71 a lsqv:Query ;
+    rdfs:label "Give me IRI, name, email, and phone number of all employees who do not manage anyone, sorted by name." ;
+    dct:created "2026-04-17T16:09:20.332846+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:20.332846+00:00"^^xsd:dateTime ;
+    skos:closeMatch :27 .
+
+:72 a lsqv:Query ;
+    rdfs:label "Is there any service that is eligible for at least one part used in a bill of material (BOM) that includes parts supplied by suppliers in Russia?" ;
+    dct:created "2026-04-17T16:09:23.632866+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:23.632866+00:00"^^xsd:dateTime ;
+    skos:closeMatch :28 .
+
+:73 a lsqv:Query ;
+    rdfs:label "List the names and countries of suppliers and the prices of hardware items ranked from 11th to 15th highest by price (in EUR).”" ;
+    dct:created "2026-04-17T16:09:25.332766+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:25.332766+00:00"^^xsd:dateTime ;
+    skos:closeMatch :29 .
+
+:74 a lsqv:Query ;
+    rdfs:label "Which departments have more than 5 employees? List each department name and its employee count." ;
+    dct:created "2026-04-17T16:09:27.432766+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:27.432766+00:00"^^xsd:dateTime ;
+    skos:closeMatch :30 .
+
+:75 a lsqv:Query ;
+    rdfs:label "For each product category, what are the minimum and maximum weights (in grams) of hardware items?" ;
+    dct:created "2026-04-17T16:09:30.432146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:30.432146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :31 .
+
+:76 a lsqv:Query ;
+    rdfs:label "For each supplier, return the supplier’s name and the average price in EUR of the hardware items they supply, rounded to two decimal places." ;
+    dct:created "2026-04-17T16:09:32.042145+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:32.042145+00:00"^^xsd:dateTime ;
+    skos:closeMatch :32 .
+
+:77 a lsqv:Query ;
+    rdfs:label "Are there any departments that have no members of type Manager?" ;
+    dct:created "2026-04-17T16:09:34.262143+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:34.262143+00:00"^^xsd:dateTime ;
+    skos:closeMatch :33 .
+
+:78 a lsqv:Query ;
+    rdfs:label "List all suppliers with their names and available address information, including locality, country code, and country." ;
+    dct:created "2026-04-17T16:09:37.862143+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:37.862143+00:00"^^xsd:dateTime ;
+    skos:closeMatch :34 .
+
+:79 a lsqv:Query ;
+    rdfs:label "For each product, list all products that are compatible with it and compute the difference in EUR price between the two products." ;
+    dct:created "2026-04-17T16:09:40.602137+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:40.602137+00:00"^^xsd:dateTime ;
+    skos:closeMatch :35 .
+
+:80 a lsqv:Query ;
+    rdfs:label "What are the top three product categories based on the number of hardware items they include? Return the category IRI and the category name." ;
+    dct:created "2026-04-17T16:09:45.302136+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:45.302136+00:00"^^xsd:dateTime ;
+    skos:closeMatch :36 .
+
+:81 a lsqv:Query ;
+    rdfs:label "For each Bill of Material (BOM), return its IRI, the count of its BOM parts, and the sum of their quantities. Include only Bill of Materials where the total quantity exceeds 600, and order results by total quantity in descending order." ;
+    dct:created "2026-04-17T16:09:44.124136+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:44.124136+00:00"^^xsd:dateTime ;
+    skos:closeMatch :37 .
+
+:82 a lsqv:Query ;
+    rdfs:label "For each employee including also  all subclasses, return the name, email, phone number, the name of the department they belong to, and the name of their manager." ;
+    dct:created "2026-04-17T16:09:47.702136+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:47.702136+00:00"^^xsd:dateTime ;
+    skos:closeMatch :38 .
+
+:83 a lsqv:Query ;
+    rdfs:label "Which hardware items have a width greater than their height and a depth less than 50 mm? Return their IRIs and dimensions (width, height, and depth)." ;
+    dct:created "2026-04-17T16:09:50.135196+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:50.135196+00:00"^^xsd:dateTime ;
+    skos:closeMatch :39 .
+
+:84 a lsqv:Query ;
+    rdfs:label "Which hardware items (with their ID and name) do not have an assigned name for the product manager?" ;
+    dct:created "2026-04-17T16:09:52.752190+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:52.752190+00:00"^^xsd:dateTime ;
+    skos:closeMatch :40 .
+
+:85 a lsqv:Query ;
+    rdfs:label "Which Bill of Material has the highest weighted average unit cost of its hardware parts, and what is that value?" ;
+    dct:created "2026-04-17T16:09:55.032196+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:55.032196+00:00"^^xsd:dateTime ;
+    skos:closeMatch :42 .
+
+:86 a lsqv:Query ;
+    rdfs:label "List all product pairs where the first product is compatible with the second product." ;
+    dct:created "2026-04-17T16:09:58.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:09:58.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :43 .
+
+:87 a lsqv:Query ;
+    rdfs:label "Which hardware items have widths in the top 10% of the width range (based on minimum and maximum widths), and what are their IDs, names, and widths?" ;
+    dct:created "2026-04-17T16:10:01.402147+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:01.402147+00:00"^^xsd:dateTime ;
+    skos:closeMatch :44 .
+
+:88 a lsqv:Query ;
+    rdfs:label "What are the top 5 suppliers with the highest average reliability index across the hardware items they supply?" ;
+    dct:created "2026-04-17T16:10:05.252147+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:05.252147+00:00"^^xsd:dateTime ;
+    skos:closeMatch :46 .
+
+:89 a lsqv:Query ;
+    rdfs:label "From which countries do the suppliers of the BOM parts of SkySync MechWave come?" ;
+    dct:created "2026-04-17T16:10:12.242146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:12.242146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :47 .
+
+:90 a lsqv:Query ;
+    rdfs:label "Which Bill of Materials (BOMs) have at least one part supplied by a supplier from Poland?" ;
+    dct:created "2026-04-17T16:10:15.632746+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:15.632746+00:00"^^xsd:dateTime ;
+    skos:closeMatch :48 .
+
+:91 a lsqv:Query ;
+    rdfs:label "How many suppliers provide products that are compatible with the K367-1320550 - Strain Encoder?" ;
+    dct:created "2026-04-17T16:10:18.572149+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:18.572149+00:00"^^xsd:dateTime ;
+    skos:closeMatch :49 .
+
+:92 a lsqv:Query ;
+    rdfs:label "Which department is responsible for the most products, and how many products does it handle?" ;
+    dct:created "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :50 .
+
+:93 a lsqv:Query ;
+    rdfs:label "What is the email of Sabrina from the department with name Marketing?" ;
+    dct:created "2026-05-05T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-05T16:10:20.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :4 .
+
+:1 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "In which department is Ms. Brant?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org> pv:memberOf ?result .
   ?result a pv:Department .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf1 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:Department, pv:memberOf,
-  <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org> .
+    dct:created "2026-03-30T16:02:31.731362+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731362+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org>,
+        pv:Department,
+        pv:memberOf .
 
-_:sf1 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Department, pv:memberOf, <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org> .
-
-:2 a lsqv:Query ;
-  rdfs:label "What is the telephone of Baldwin Dirksen?" ;
-  dct:created "2026-03-30T16:02:31.731825Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731825Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  <http://ld.company.org/prod-instances/empl-Baldwin.Dirksen%40company.org> pv:phone ?result .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf2 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:phone, <http://ld.company.org/prod-instances/empl-Baldwin.Dirksen%40company.org> .
-
-_:sf2 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:phone, <http://ld.company.org/prod-instances/empl-Baldwin.Dirksen%40company.org> .
-
-:3 a lsqv:Query ;
-  rdfs:label "Who is the manager of Heinrich Hoch?" ;
-  dct:created "2026-03-30T16:02:31.731867Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731867Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org> pv:hasManager ?result .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf3 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:hasManager, <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org> .
-
-_:sf3 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:hasManager, <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org> .
-
-:4 a lsqv:Query ;
-  rdfs:label "What is the email of Sabrina from Marketing?" ;
-  dct:created "2026-03-30T16:02:31.731899Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731899Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?department pv:name "Marketing" .
-  ?person pv:memberOf ?department .
-  ?person pv:email ?result .
-  ?person pv:name ?name .
-  FILTER (CONTAINS(?name, "Sabrina"))
-}""" ;
-  lsqv:hasStructuralFeatures _:sf4 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:email, pv:memberOf,
-  pv:name .
-
-_:sf4 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:email, pv:memberOf, pv:name .
-
-:5 a lsqv:Query ;
-  rdfs:label "Who has expertise in Transistors?" ;
-  dct:created "2026-03-30T16:02:31.731943Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731943Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Transistor> .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf5 ;
-  lsqv:resultCount "4"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, <http://ld.company.org/prod-instances/prod-cat-Transistor> .
-
-_:sf5 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, <http://ld.company.org/prod-instances/prod-cat-Transistor> .
-
-:6 a lsqv:Query ;
-  rdfs:label "Who is our Sensor expert?" ;
-  dct:created "2026-03-30T16:02:31.731971Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731971Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Sensor> .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf6 ;
-  lsqv:resultCount "7"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, <http://ld.company.org/prod-instances/prod-cat-Sensor> .
-
-_:sf6 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, <http://ld.company.org/prod-instances/prod-cat-Sensor> .
-
-:7 a lsqv:Query ;
-  rdfs:label "Who is the manager of the Data Services department?" ;
-  dct:created "2026-03-30T16:02:31.731998Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.731998Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?person pv:memberOf <http://ld.company.org/prod-instances/dept-41622> .
-  ?person pv:hasManager ?result .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf7 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:hasManager, pv:memberOf,
-  <http://ld.company.org/prod-instances/dept-41622> .
-
-_:sf7 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:hasManager, pv:memberOf, <http://ld.company.org/prod-instances/dept-41622> .
-
-:8 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the Sensor Switch M558-2275045?" ;
-  dct:created "2026-03-30T16:02:31.732030Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732030Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?result pv:responsibleFor <http://ld.company.org/prod-instances/hw-M558-2275045> .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf8 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:responsibleFor, <http://ld.company.org/prod-instances/hw-M558-2275045> .
-
-_:sf8 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:responsibleFor, <http://ld.company.org/prod-instances/hw-M558-2275045> .
-
-:9 a lsqv:Query ;
-  rdfs:label "How many Sensor Switches do we offer?" ;
-  dct:created "2026-03-30T16:02:31.732055Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732055Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT (COUNT(DISTINCT ?resultR) as ?result)
-WHERE {
-  ?resultR pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Sensor> .
-  ?resultR pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Switch> .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf9 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:hasCategory, <http://ld.company.org/prod-instances/prod-cat-Sensor>,
-  <http://ld.company.org/prod-instances/prod-cat-Switch> .
-
-_:sf9 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:hasCategory, <http://ld.company.org/prod-instances/prod-cat-Sensor>, <http://ld.company.org/prod-instances/prod-cat-Switch> .
-
-:10 a lsqv:Query ;
-  rdfs:label "What is the name of the Network expert from the Marketing Department?" ;
-  dct:created "2026-03-30T16:02:31.732089Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732089Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?employee pv:memberOf <http://ld.company.org/prod-instances/dept-85880> .
-  ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Network> .
-  ?employee pv:name ?result .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf10 ;
-  lsqv:resultCount "2"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, pv:memberOf, pv:name, <http://ld.company.org/prod-instances/dept-85880>,
-  <http://ld.company.org/prod-instances/prod-cat-Network> .
-
-_:sf10 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "3"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, pv:memberOf, pv:name, <http://ld.company.org/prod-instances/dept-85880>, <http://ld.company.org/prod-instances/prod-cat-Network> .
-
-:11 a lsqv:Query ;
-  rdfs:label "Which departments have Transducer Experts?" ;
-  dct:created "2026-03-30T16:02:31.732126Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732126Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:11 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which departments have Transducer Experts?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 2 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   ?employee pv:memberOf ?result .
   ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Transducer> .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf11 ;
-  lsqv:resultCount "2"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, pv:memberOf,
-  <http://ld.company.org/prod-instances/prod-cat-Transducer> .
+    dct:created "2026-03-30T16:02:31.732126+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732126+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Transducer>,
+        pv:areaOfExpertise,
+        pv:memberOf .
 
-_:sf11 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:areaOfExpertise, pv:memberOf, <http://ld.company.org/prod-instances/prod-cat-Transducer> .
-
-:12 a lsqv:Query ;
-  rdfs:label "Which supplier are available to deliver Compensators?" ;
-  dct:created "2026-03-30T16:02:31.732156Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732156Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:12 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which supplier are available to deliver Compensators?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 90 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   ?hardware pv:hasSupplier ?result .
   ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Compensator> .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf12 ;
-  lsqv:resultCount "90"^^xsd:integer ;
-  dct:subject pv:hasCategory, pv:hasSupplier,
-  <http://ld.company.org/prod-instances/prod-cat-Compensator> .
+    dct:created "2026-03-30T16:02:31.732156+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732156+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Compensator>,
+        pv:hasCategory,
+        pv:hasSupplier .
 
-_:sf12 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:hasCategory, pv:hasSupplier, <http://ld.company.org/prod-instances/prod-cat-Compensator> .
+:13 a lsqv:Query,
+        qat:Aggregation ;
+    rdfs:label "How many suppliers do we have in France?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX dbPedia: <http://dbpedia.org/resource/> 
+PREFIX pv: <http://ld.company.org/prod-vocab/> 
 
-:13 a lsqv:Query ;
-  rdfs:label "How many suppliers do we have in France?" ;
-  dct:created "2026-03-30T16:02:31.732186Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732186Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT (COUNT(DISTINCT ?supplier) as ?result)
 WHERE {
   ?product pv:hasSupplier ?supplier .
-  ?supplier pv:addressCountry "France" .
+  ?supplier pv:country dbPedia:France .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf13 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:addressCountry, pv:hasSupplier .
+    dct:created "2026-03-30T16:02:31.732186+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732186+00:00"^^xsd:dateTime ;
+    dct:subject pv:addressCountry,
+        pv:hasSupplier .
 
-_:sf13 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:addressCountry, pv:hasSupplier .
+:14 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which supplier in France delivers Compensators?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 3 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+PREFIX dbPedia: <http://dbpedia.org/resource/> 
 
-:14 a lsqv:Query ;
-  rdfs:label "Which supplier in France delivers Compensators?" ;
-  
-  dct:created "2026-03-30T16:02:31.732213Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732213Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   ?product pv:hasSupplier ?result .
   ?product pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Compensator> .
-  ?result pv:addressCountry "France" .
+  ?result pv:country dbPedia:France .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf14 ;
-  lsqv:resultCount "3"^^xsd:integer ;
-  dct:subject pv:addressCountry, pv:hasCategory, pv:hasSupplier,
-  <http://ld.company.org/prod-instances/prod-cat-Compensator> .
+    dct:created "2026-03-30T16:02:31.732213+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732213+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Compensator>,
+        pv:addressCountry,
+        pv:hasCategory,
+        pv:hasSupplier .
 
-_:sf14 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "3"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:addressCountry, pv:hasCategory, pv:hasSupplier, <http://ld.company.org/prod-instances/prod-cat-Compensator> .
-
-:15 a lsqv:Query ;
-  rdfs:label "What is the cheapest Encoder we can get from a french or german supplier?" ;
-  dct:created "2026-03-30T16:02:31.732247Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732247Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:15 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the cheapest Encoder we can get from a french or german supplier?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 10 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT DISTINCT ?result 
 WHERE {
@@ -343,135 +639,49 @@ WHERE {
   FILTER (?price = ?minPrice)
 }
 """ ;
-  lsqv:hasStructuralFeatures _:sf15 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:addressCountry, pv:amount, pv:hasCategory, pv:hasSupplier, pv:price,
-  <http://ld.company.org/prod-instances/prod-cat-Encoder> .
+    dct:created "2026-03-30T16:02:31.732247+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732247+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Encoder>,
+        pv:addressCountry,
+        pv:amount,
+        pv:hasCategory,
+        pv:hasSupplier,
+        pv:price .
 
-_:sf15 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "10"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:addressCountry, pv:amount, pv:hasCategory, pv:hasSupplier, pv:price, <http://ld.company.org/prod-instances/prod-cat-Encoder> .
-
-:16 a lsqv:Query ;
-  rdfs:label "Do we have suppliers in Toulouse?" ;
-  dct:created "2026-03-30T16:02:31.732295Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732295Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-ASK
-WHERE {
-  ?product pv:hasSupplier ?supplier .
-  ?supplier pv:addressLocality "Toulouse" .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf16 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:addressLocality, pv:hasSupplier .
-
-_:sf16 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Ask, lsqv:TriplePattern ;
-  lsqv:projectVarCount "0"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:addressLocality, pv:hasSupplier .
-
-:17 a lsqv:Query ;
-  rdfs:label "Which suppliers do we have in Toulouse?" ;
-  dct:created "2026-03-30T16:02:31.732321Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732321Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:2 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What is the telephone of Baldwin Dirksen?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
-  ?product pv:hasSupplier ?result .
-  ?result pv:addressLocality "Toulouse" .
+  <http://ld.company.org/prod-instances/empl-Baldwin.Dirksen%40company.org> pv:phone ?result .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf17 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:addressLocality, pv:hasSupplier .
+    dct:created "2026-03-30T16:02:31.731825+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731825+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/empl-Baldwin.Dirksen%40company.org>,
+        pv:phone .
 
-_:sf17 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:addressLocality, pv:hasSupplier .
-
-:18 a lsqv:Query ;
-  rdfs:label "What is the cheapest Oscillator we have?" ;
-  dct:created "2026-03-30T16:02:31.732348Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732348Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result 
-WHERE {
-  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
-  ?result pv:price ?priceR .
-  ?priceR pv:amount ?price .
-
-  {
-    SELECT (MIN(?p) AS ?minPrice)
-    WHERE {
-      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
-      ?r pv:price ?pr .
-      ?pr pv:amount ?p .
-    }
-  }
-
-  FILTER (?price = ?minPrice)
-}""" ;
-  lsqv:hasStructuralFeatures _:sf18 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:amount, pv:hasCategory, pv:price,
-  <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
-
-_:sf18 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "6"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:amount, pv:hasCategory, pv:price, <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
-
-:19 a lsqv:Query ;
-  rdfs:label "What is the most expensive service we offer?" ;
-  dct:created "2026-03-30T16:02:31.732382Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732382Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result 
-WHERE {
-  ?result a pv:Service .
-  ?result pv:price ?priceR .
-  ?priceR pv:amount ?price .
-
-  {
-    SELECT (MAX(?p) AS ?maxPrice)
-    WHERE {
-      ?r a pv:Service .
-      ?r pv:price ?pr .
-      ?pr pv:amount ?p .
-    }
-  }
-
-  FILTER (?price = ?maxPrice)
-}""" ;
-  lsqv:hasStructuralFeatures _:sf19 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:Service, pv:amount,
-  pv:price .
-
-_:sf19 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "6"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:Service, pv:amount, pv:price .
-
-:20 a lsqv:Query ;
-  rdfs:label "Who is responsible for the most expensive service we offer?" ;
-  dct:created "2026-03-30T16:02:31.732414Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732414Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:20 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "Who is responsible for the most expensive service we offer?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 7 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT DISTINCT ?result
 WHERE {
@@ -491,108 +701,73 @@ WHERE {
 
   FILTER (?price = ?maxPrice)
 }""" ;
-  lsqv:hasStructuralFeatures _:sf20 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:Service, pv:amount, pv:hasProductManager,
-  pv:price .
+    dct:created "2026-03-30T16:02:31.732414+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732414+00:00"^^xsd:dateTime ;
+    dct:subject pv:Service,
+        pv:amount,
+        pv:hasProductManager,
+        pv:price .
 
-_:sf20 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "7"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:Service, pv:amount, pv:hasProductManager, pv:price .
-
-:21 a lsqv:Query ;
-  rdfs:label "What is the heaviest coil that does not exceed a base area of 15x15 milimeter?" ;
-  dct:created "2026-03-30T16:02:31.732449Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732449Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result 
-WHERE {
-  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
-  ?result pv:weight_g ?weight_g .
-  ?result pv:width_mm ?width_mm .
-  ?result pv:depth_mm ?depth_mm .
-
-  FILTER (?width_mm <= 15)
-  FILTER (?depth_mm <= 15)
-
-  {
-    SELECT (MAX(?w) AS ?maxWeight)
-    WHERE {
-      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
-      ?r pv:weight_g ?w .
-      ?r pv:width_mm ?wmm .
-      ?r pv:depth_mm ?dmm .
-      FILTER (?wmm <= 15)
-      FILTER (?dmm <= 15)
-    }
-  }
-
-  FILTER (?weight_g = ?maxWeight)
-}""" ;
-  lsqv:hasStructuralFeatures _:sf21 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:depth_mm, pv:hasCategory, pv:weight_g, pv:width_mm,
-  <http://ld.company.org/prod-instances/prod-cat-Coil> .
-
-_:sf21 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "8"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:depth_mm, pv:hasCategory, pv:weight_g, pv:width_mm, <http://ld.company.org/prod-instances/prod-cat-Coil> .
-
-:22 a lsqv:Query ;
-  rdfs:label "What products are compatible with the U990 LCD Inductor?" ;
-  dct:created "2026-03-30T16:02:31.732495Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732495Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:22 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What products are compatible with the U990 LCD Inductor?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 6 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   <http://ld.company.org/prod-instances/hw-U990-5234138> pv:compatibleProduct ?result .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf22 ;
-  lsqv:resultCount "6"^^xsd:integer ;
-  dct:subject pv:compatibleProduct, <http://ld.company.org/prod-instances/hw-U990-5234138> .
+    dct:created "2026-03-30T16:02:31.732495+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732495+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/hw-U990-5234138>,
+        pv:compatibleProduct .
 
-_:sf22 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "1"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:compatibleProduct, <http://ld.company.org/prod-instances/hw-U990-5234138> .
-
-:23 a lsqv:Query ;
-  rdfs:label "What products can I get from US suppliers that are compatible with the U990 LCD Inductor?" ;
-  dct:created "2026-03-30T16:02:31.732520Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732520Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:23 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What products can I get from US suppliers that are compatible with the U990 LCD Inductor?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 2 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   <http://ld.company.org/prod-instances/hw-U990-5234138> pv:compatibleProduct ?result .
   ?result pv:hasSupplier ?supplier .
   ?supplier pv:country <http://dbpedia.org/resource/United_States> .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf23 ;
-  lsqv:resultCount "2"^^xsd:integer ;
-  dct:subject pv:compatibleProduct, pv:country, pv:hasSupplier, <http://dbpedia.org/resource/United_States>,
-  <http://ld.company.org/prod-instances/hw-U990-5234138> .
+    dct:created "2026-03-30T16:02:31.732520+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732520+00:00"^^xsd:dateTime ;
+    dct:subject <http://dbpedia.org/resource/United_States>,
+        <http://ld.company.org/prod-instances/hw-U990-5234138>,
+        pv:compatibleProduct,
+        pv:country,
+        pv:hasSupplier .
 
-_:sf23 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "3"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:compatibleProduct, pv:country, pv:hasSupplier, <http://dbpedia.org/resource/United_States>, <http://ld.company.org/prod-instances/hw-U990-5234138> .
-
-:24 a lsqv:Query ;
-  rdfs:label "What is the pontiometer with the smallest volume?" ;
-  dct:created "2026-03-30T16:02:31.732556Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732556Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:24 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the pontiometer with the smallest volume?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 8 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT DISTINCT ?result
 WHERE {
@@ -616,23 +791,29 @@ WHERE {
 
   FILTER (?volume = ?minVolume)
 }""" ;
-  lsqv:hasStructuralFeatures _:sf24 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:depth_mm, pv:hasCategory, pv:height_mm, pv:width_mm,
-  <http://ld.company.org/prod-instances/prod-cat-Potentiometer> .
+    dct:created "2026-03-30T16:02:31.732556+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732556+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Potentiometer>,
+        pv:depth_mm,
+        pv:hasCategory,
+        pv:height_mm,
+        pv:width_mm .
 
-_:sf24 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Bind, lsqv:Aggregators, lsqv:Filter, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "8"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:depth_mm, pv:hasCategory, pv:height_mm, pv:width_mm, <http://ld.company.org/prod-instances/prod-cat-Potentiometer> .
-
-:25 a lsqv:Query ;
-  rdfs:label "Which coil has the highest density?" ;
-  dct:created "2026-03-30T16:02:31.732600Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732600Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:25 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "Which coil has the highest density?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 10 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 0 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT DISTINCT ?result
 WHERE {
@@ -663,23 +844,26 @@ WHERE {
 
   FILTER (?density = ?maxDensity)
 }""" ;
-  lsqv:hasStructuralFeatures _:sf25 ;
-  lsqv:resultCount "0"^^xsd:integer ;
-  dct:subject pv:depth_mm, pv:hasCategory, pv:height_mm, pv:weight_g, pv:width_mm,
-  <http://ld.company.org/prod-instances/prod-cat-Coil> .
+    dct:created "2026-03-30T16:02:31.732600+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732600+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Coil>,
+        pv:depth_mm,
+        pv:hasCategory,
+        pv:height_mm,
+        pv:weight_g,
+        pv:width_mm .
 
-_:sf25 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Bind, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "10"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:depth_mm, pv:hasCategory, pv:height_mm, pv:weight_g, pv:width_mm, <http://ld.company.org/prod-instances/prod-cat-Coil> .
-
-:26 a lsqv:Query ;
-  rdfs:label "In which cities are our US suppliers for LCDs?" ;
-  dct:created "2026-03-30T16:02:31.732654Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732654Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:26 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "In which cities are our US suppliers for LCDs?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 10 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   ?product pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-LCD> .
@@ -687,23 +871,29 @@ WHERE {
   ?supplier pv:country <http://dbpedia.org/resource/United_States> .
   ?supplier pv:addressLocality ?result .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf26 ;
-  lsqv:resultCount "10"^^xsd:integer ;
-  dct:subject pv:addressLocality, pv:country, pv:hasCategory, pv:hasSupplier, <http://dbpedia.org/resource/United_States>,
-  <http://ld.company.org/prod-instances/prod-cat-LCD> .
+    dct:created "2026-03-30T16:02:31.732654+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732654+00:00"^^xsd:dateTime ;
+    dct:subject <http://dbpedia.org/resource/United_States>,
+        <http://ld.company.org/prod-instances/prod-cat-LCD>,
+        pv:addressLocality,
+        pv:country,
+        pv:hasCategory,
+        pv:hasSupplier .
 
-_:sf26 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:addressLocality, pv:country, pv:hasCategory, pv:hasSupplier, <http://dbpedia.org/resource/United_States>, <http://ld.company.org/prod-instances/prod-cat-LCD> .
-
-:27 a lsqv:Query ;
-  rdfs:label "Give me a phone directory of everyone on staff who does not manage anyone, I need name, email, and phone, sorted by name?" ;
-  dct:created "2026-03-30T16:02:31.732700Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732700Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+:27 a lsqv:Query,
+        qat:CounterFactualIdentification,
+        qat:RankedListing ;
+    rdfs:label "Give me a phone directory of everyone on staff who does not manage anyone, I need name, email, and phone, sorted by name?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
+            lsqv:projectVarCount 4 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:NotExists,
+                lsqv:Optional,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 141 ;
+    lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
@@ -717,59 +907,27 @@ WHERE {
   FILTER NOT EXISTS { [] pv:hasManager ?empl . }
 }
 ORDER BY ?name""" ;
-  lsqv:hasStructuralFeatures _:sf27 ;
-  lsqv:resultCount "141"^^xsd:integer ;
-  dct:subject pv:Employee, pv:email, pv:hasManager, pv:name,
-  pv:phone .
+    dct:created "2026-03-30T16:02:31.732700+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732700+00:00"^^xsd:dateTime ;
+    dct:subject pv:Employee,
+        pv:email,
+        pv:hasManager,
+        pv:name,
+        pv:phone .
 
-_:sf27 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Optional, lsqv:NotExists, lsqv:OrderBy, lsqv:TriplePattern ;
-  lsqv:projectVarCount "4"^^xsd:integer ;
-  lsqv:tpCount "6"^^xsd:integer ;
-  lsqv:bgpCount "3"^^xsd:integer ;
-  dct:subject pv:Employee, pv:email, pv:hasManager, pv:name, pv:phone .
-
-:28 a lsqv:Query ;
-  rdfs:label "Do we have any service that does apply to a BOM where parts are sourced from Russia?" ;
-  dct:created "2026-03-30T16:02:31.732781Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732781Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-ASK
-WHERE {
-  { # all Russia-sourced hardware in any BOM
-    SELECT ?bom ?hw
-    WHERE {
-      ?bom pv:hasBomPart ?bomPart .
-      ?bomPart pv:hasPart ?hw .
-      ?hw pv:hasSupplier ?suppl .
-      ?suppl pv:addressCountry ?country .
-      FILTER (CONTAINS(LCASE(?country), LCASE("Russia")))
-    }
-  }
-
-  # is there a service eligible for that specific Russia-sourced hardware?
-  ?s a pv:Service .
-  ?s pv:eligibleFor ?hw .
-}""" ;
-  lsqv:hasStructuralFeatures _:sf28 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:Service, pv:addressCountry, pv:eligibleFor, pv:hasBomPart, pv:hasPart,
-  pv:hasSupplier .
-
-_:sf28 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Ask, lsqv:Filter, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "0"^^xsd:integer ;
-  lsqv:tpCount "6"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:Service, pv:addressCountry, pv:eligibleFor, pv:hasBomPart, pv:hasPart, pv:hasSupplier .
-
-:29 a lsqv:Query ;
-  rdfs:label "What suppliers - I need name, country and price - deliver the 6th to 10th most expensive hardware items." ;
-  dct:created "2026-03-30T16:02:31.732846Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732846Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:29 a lsqv:Query,
+        qat:LimitedRankedListing ;
+    rdfs:label "What suppliers - I need name, country and price - deliver the 6th to 10th most expensive hardware items." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 7 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:Offset,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 5 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?name ?country ?price
@@ -784,23 +942,32 @@ WHERE {
 }
 ORDER BY DESC(?price)
 LIMIT 5 OFFSET 5""" ;
-  lsqv:hasStructuralFeatures _:sf29 ;
-  lsqv:resultCount "5"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:Supplier, pv:addressCountry, pv:amount, pv:currency, pv:hasSupplier, pv:name,
-  pv:price .
+    dct:created "2026-03-30T16:02:31.732846+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732846+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:Supplier,
+        pv:addressCountry,
+        pv:amount,
+        pv:currency,
+        pv:hasSupplier,
+        pv:name,
+        pv:price .
 
-_:sf29 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Limit, lsqv:Offset, lsqv:OrderBy, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "7"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:Supplier, pv:addressCountry, pv:amount, pv:currency, pv:hasSupplier, pv:name, pv:price .
-
-:30 a lsqv:Query ;
-  rdfs:label "Which department have more than 5 employees? I need their names and the number of employees." ;
-  dct:created "2026-03-30T16:02:31.732901Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732901Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:30 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "Which department have more than 5 employees? I need their names and the number of employees." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count,
+                lsqv:fn-gt ] ;
+    lsqv:resultCount 4 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?name (COUNT(?emp) AS ?numEmployees)
@@ -812,51 +979,25 @@ WHERE {
 }
 GROUP BY ?dept ?name
 HAVING (COUNT(?emp) > 5)""" ;
-  lsqv:hasStructuralFeatures _:sf30 ;
-  lsqv:resultCount "4"^^xsd:integer ;
-  dct:subject pv:Department, pv:Employee, pv:memberOf,
-  pv:name .
+    dct:created "2026-03-30T16:02:31.732901+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732901+00:00"^^xsd:dateTime ;
+    dct:subject pv:Department,
+        pv:Employee,
+        pv:memberOf,
+        pv:name .
 
-_:sf30 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:Having, lsqv:Aggregators, lsqv:agg-count, lsqv:fn-gt, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Department, pv:Employee, pv:memberOf, pv:name .
-
-:31 a lsqv:Query ;
-  rdfs:label "Per product category, what's our lightest and heaviest hardware item?" ;
-  dct:created "2026-03-30T16:02:31.732941Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732941Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT ?cat (MIN(?w) AS ?minWeight) (MAX(?w) AS ?maxWeight)
-WHERE {
-  ?catItem a pv:ProductCategory ;
-    pv:name ?cat .
-  ?hw a pv:Hardware ;
-    pv:hasCategory ?catItem ;
-    pv:weight_g ?w .
-}
-GROUP BY ?cat""" ;
-  lsqv:hasStructuralFeatures _:sf31 ;
-  lsqv:resultCount "26"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:ProductCategory, pv:hasCategory, pv:name,
-  pv:weight_g .
-
-_:sf31 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:Aggregators, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:ProductCategory, pv:hasCategory, pv:name, pv:weight_g .
-
-:32 a lsqv:Query ;
-  rdfs:label "For each supplier, what's the average price (in EUR) of what they sell, round reasonably?" ;
-  dct:created "2026-03-30T16:02:31.732987Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.732987Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:32 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "For each supplier, what's the average price (in EUR) of what they sell, round reasonably?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 246 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?name (ROUND(AVG(?amt) * 100) / 100 AS ?avgEur) WHERE {
@@ -867,23 +1008,26 @@ SELECT ?name (ROUND(AVG(?amt) * 100) / 100 AS ?avgEur) WHERE {
     pv:price/pv:currency "EUR" .
 }
 GROUP BY ?sup ?name""" ;
-  lsqv:hasStructuralFeatures _:sf32 ;
-  lsqv:resultCount "246"^^xsd:integer ;
-  dct:subject pv:Supplier, pv:amount, pv:currency, pv:hasSupplier, pv:name,
-  pv:price .
+    dct:created "2026-03-30T16:02:31.732987+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732987+00:00"^^xsd:dateTime ;
+    dct:subject pv:Supplier,
+        pv:amount,
+        pv:currency,
+        pv:hasSupplier,
+        pv:name,
+        pv:price .
 
-_:sf32 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:Aggregators, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Supplier, pv:amount, pv:currency, pv:hasSupplier, pv:name, pv:price .
-
-:33 a lsqv:Query ;
-  rdfs:label "Are there departments with no manager assigned?" ;
-  dct:created "2026-03-30T16:02:31.733031Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733031Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:33 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Are there departments with no manager assigned?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Ask,
+                lsqv:NotExists,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
@@ -895,23 +1039,23 @@ WHERE {
     ?m a pv:Manager .
   }
 }""" ;
-  lsqv:hasStructuralFeatures _:sf33 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:Department, pv:Manager,
-  pv:memberOf .
+    dct:created "2026-03-30T16:02:31.733031+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733031+00:00"^^xsd:dateTime ;
+    dct:subject pv:Department,
+        pv:Manager,
+        pv:memberOf .
 
-_:sf33 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Ask, lsqv:NotExists, lsqv:TriplePattern ;
-  lsqv:projectVarCount "0"^^xsd:integer ;
-  lsqv:tpCount "3"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:Department, pv:Manager, pv:memberOf .
-
-:34 a lsqv:Query ;
-  rdfs:label "I need to update my supplier rolodex, give me every supplier's name and all address details." ;
-  dct:created "2026-03-30T16:02:31.733068Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733068Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:34 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "I need to update my supplier rolodex, give me every supplier's name and all address details." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 4 ;
+            lsqv:projectVarCount 4 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Optional,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 250 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?name ?locality ?ccode ?country
@@ -922,23 +1066,24 @@ WHERE {
   OPTIONAL { ?sup pv:addressCountryCode ?ccode . }
   OPTIONAL { ?sup pv:addressCountry ?country . }
 }""" ;
-  lsqv:hasStructuralFeatures _:sf34 ;
-  lsqv:resultCount "250"^^xsd:integer ;
-  dct:subject pv:Supplier, pv:addressCountry, pv:addressCountryCode, pv:addressLocality,
-  pv:name .
+    dct:created "2026-03-30T16:02:31.733068+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733068+00:00"^^xsd:dateTime ;
+    dct:subject pv:Supplier,
+        pv:addressCountry,
+        pv:addressCountryCode,
+        pv:addressLocality,
+        pv:name .
 
-_:sf34 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Optional, lsqv:TriplePattern ;
-  lsqv:projectVarCount "4"^^xsd:integer ;
-  lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "4"^^xsd:integer ;
-  dct:subject pv:Supplier, pv:addressCountry, pv:addressCountryCode, pv:addressLocality, pv:name .
-
-:35 a lsqv:Query ;
-  rdfs:label "For every product, list what other products it is compatible with and the price differences between both." ;
-  dct:created "2026-03-30T16:02:31.733107Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733107Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+:35 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "For every product, list what other products it is compatible with and the price differences between both." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 7 ;
+            lsqv:usesFeature lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 5814 ;
+    lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv:    <http://ld.company.org/prod-vocab/>
 
@@ -952,23 +1097,34 @@ WHERE {
   ?compatible pv:price/pv:amount ?compatibleAmount ;
     pv:price/pv:currency "EUR" .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf35 ;
-  lsqv:resultCount "5814"^^xsd:integer ;
-  dct:subject pv:Product, pv:amount, pv:compatibleProduct, pv:currency,
-  pv:price .
+    dct:created "2026-03-30T16:02:31.733107+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733107+00:00"^^xsd:dateTime ;
+    dct:subject pv:Product,
+        pv:amount,
+        pv:compatibleProduct,
+        pv:currency,
+        pv:price .
 
-_:sf35 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "7"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Product, pv:amount, pv:compatibleProduct, pv:currency, pv:price .
-
-:36 a lsqv:Query ;
-  rdfs:label "What are the top 3 most common product categories among our hardware?" ;
-  dct:created "2026-03-30T16:02:31.733164Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733164Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:36 a lsqv:Query,
+        qat:AggregateEnumeration,
+        qat:Comparative,
+        qat:LimitedRankedListing ;
+    rdfs:label "What are the top 3 most common product categories among our hardware?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 4 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 9 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Limit,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:resultCount 3 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?cat ?name
 WHERE {
@@ -1024,53 +1180,23 @@ WHERE {
   FILTER (?cnt >= ?minTopThree)
 }
 ORDER BY DESC(?cnt)""" ;
-  lsqv:hasStructuralFeatures _:sf36 ;
-  lsqv:resultCount "3"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:hasCategory,
-  pv:name .
+    dct:created "2026-03-30T16:02:31.733164+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733164+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:hasCategory,
+        pv:name .
 
-_:sf36 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:Aggregators, lsqv:Limit, lsqv:OrderBy, lsqv:Bind, lsqv:Filter, lsqv:SubQuery, lsqv:agg-count, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "9"^^xsd:integer ;
-  lsqv:bgpCount "4"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:hasCategory, pv:name .
-
-:37 a lsqv:Query ;
-  rdfs:label "For each Bill of Material, how many parts does it contain and what is the total material quantity — show me only those BOMs exceeding 600 total items and order them descending." ;
-  dct:created "2026-03-30T16:02:31.733199Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733199Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT ?bom (COUNT(?part) AS ?partCount) (SUM(?qty) AS ?totalQty)
-WHERE {
-  ?bom a pv:BillOfMaterial ;
-    pv:hasBomPart ?part .
-  ?part pv:quantity ?qty_ .
-  BIND(xsd:int(?qty_) AS ?qty)
-}
-GROUP BY ?bom
-HAVING (SUM(?qty) > 600)
-ORDER BY DESC(SUM(?qty))""" ;
-  lsqv:hasStructuralFeatures _:sf37 ;
-  lsqv:resultCount "7"^^xsd:integer ;
-  dct:subject pv:BillOfMaterial, pv:hasBomPart,
-  pv:quantity .
-
-_:sf37 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Bind, lsqv:GroupBy, lsqv:Having, lsqv:Aggregators, lsqv:OrderBy, lsqv:agg-count, lsqv:fn-gt, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "3"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:BillOfMaterial, pv:hasBomPart, pv:quantity .
-
-:38 a lsqv:Query ;
-  rdfs:label "I want to update my contact list, for each Employee give me name, email, phone number and the department they belong to as well as their direct report." ;
-  dct:created "2026-03-30T16:02:31.733243Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733243Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+:38 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "I want to update my contact list, for each Employee give me name, email, phone number and the department they belong to as well as their direct report." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 5 ;
+            lsqv:projectVarCount 5 ;
+            lsqv:tpCount 7 ;
+            lsqv:usesFeature lsqv:Optional,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 106 ;
+    lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
@@ -1084,23 +1210,27 @@ WHERE {
   OPTIONAL { ?empl pv:memberOf/pv:name ?dept . }
   OPTIONAL { ?empl pv:hasManager/pv:name ?manager . }
 }""" ;
-  lsqv:hasStructuralFeatures _:sf38 ;
-  lsqv:resultCount "106"^^xsd:integer ;
-  dct:subject pv:Agent, pv:email, pv:hasManager, pv:memberOf, pv:name,
-  pv:phone .
+    dct:created "2026-03-30T16:02:31.733243+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733243+00:00"^^xsd:dateTime ;
+    dct:subject pv:Agent,
+        pv:email,
+        pv:hasManager,
+        pv:memberOf,
+        pv:name,
+        pv:phone .
 
-_:sf38 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Optional, lsqv:TriplePattern ;
-  lsqv:projectVarCount "5"^^xsd:integer ;
-  lsqv:tpCount "7"^^xsd:integer ;
-  lsqv:bgpCount "5"^^xsd:integer ;
-  dct:subject pv:Agent, pv:email, pv:hasManager, pv:memberOf, pv:name, pv:phone .
-
-:39 a lsqv:Query ;
-  rdfs:label "Which hardware items are wider than they are tall, and have a depth under 50 mm? List their dimensions." ;
-  dct:created "2026-03-30T16:02:31.733289Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733289Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:39 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "Which hardware items are wider than they are tall, and have a depth under 50 mm? List their dimensions." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 4 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Filter,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:fn-gt ] ;
+    lsqv:resultCount 485 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?hw ?width ?height ?depth
@@ -1111,23 +1241,24 @@ WHERE {
     pv:depth_mm ?depth .
   FILTER (?width > ?height && ?depth < 50)
 }""" ;
-  lsqv:hasStructuralFeatures _:sf39 ;
-  lsqv:resultCount "485"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:depth_mm, pv:height_mm,
-  pv:width_mm .
+    dct:created "2026-03-30T16:02:31.733289+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733289+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:depth_mm,
+        pv:height_mm,
+        pv:width_mm .
 
-_:sf39 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:fn-gt, lsqv:Filter, lsqv:TriplePattern ;
-  lsqv:projectVarCount "4"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:depth_mm, pv:height_mm, pv:width_mm .
-
-:40 a lsqv:Query ;
-  rdfs:label "Which hardware items - list id and name - have no active product manager?" ;
-  dct:created "2026-03-30T16:02:31.733330Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733330Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+:40 a lsqv:Query,
+        qat:CounterFactualIdentification ;
+    rdfs:label "Which hardware items - list id and name - have no active product manager?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:NotExists,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 48 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?hw ?id ?name
@@ -1137,61 +1268,29 @@ WHERE {
     pv:name ?name .
   FILTER NOT EXISTS { ?hw pv:hasProductManager/pv:name [] . }
 }""" ;
-  lsqv:hasStructuralFeatures _:sf40 ;
-  lsqv:resultCount "48"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:hasProductManager, pv:id,
-  pv:name .
+    dct:created "2026-03-30T16:02:31.733330+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733330+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:hasProductManager,
+        pv:id,
+        pv:name .
 
-_:sf40 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:NotExists, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:hasProductManager, pv:id, pv:name .
-
-:41 a lsqv:Query ;
-  rdfs:label "For each manager, what percentage of their entire team work in the same department as the manager?" ;
-  dct:created "2026-03-30T16:02:31.733366Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733366Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT ?m ?name (?deptTeam / ?fullteam * 100 AS ?pct)
-WHERE {
-
-  ?m pv:name ?name .
-
-  { # full team
-    SELECT ?m (COUNT(*) AS ?fullteam) WHERE {
-      ?e pv:hasManager ?m .
-    } GROUP BY ?m
-  }
-
-  { # team in same dept
-    SELECT ?m (COUNT(*) AS ?deptTeam) WHERE {
-      ?m pv:memberOf ?dept .
-      ?e pv:hasManager ?m .
-      ?e pv:memberOf ?dept .
-    } GROUP BY ?m
-  }
-}""" ;
-  lsqv:hasStructuralFeatures _:sf41 ;
-  lsqv:resultCount "6"^^xsd:integer ;
-  dct:subject pv:hasManager, pv:memberOf,
-  pv:name .
-
-_:sf41 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:SubQuery, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "3"^^xsd:integer ;
-  dct:subject pv:hasManager, pv:memberOf, pv:name .
-
-:42 a lsqv:Query ;
-  rdfs:label "Which Bill-of-Material has the highest average unit cost of its hardware parts, and what is that average?" ;
-  dct:created "2026-03-30T16:02:31.733417Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733417Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+:42 a lsqv:Query,
+        qat:AggregateEnumeration,
+        qat:Comparative ;
+    rdfs:label "Which Bill-of-Material has the highest average unit cost of its hardware parts, and what is that average?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 10 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?bom ?avgUnitCost
@@ -1241,23 +1340,27 @@ WHERE {
 
   FILTER (?avgUnitCost = ?maxAvg)
 }""" ;
-  lsqv:hasStructuralFeatures _:sf42 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:BillOfMaterial, pv:amount, pv:currency, pv:hasBomPart, pv:hasPart, pv:price,
-  pv:quantity .
+    dct:created "2026-03-30T16:02:31.733417+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733417+00:00"^^xsd:dateTime ;
+    dct:subject pv:BillOfMaterial,
+        pv:amount,
+        pv:currency,
+        pv:hasBomPart,
+        pv:hasPart,
+        pv:price,
+        pv:quantity .
 
-_:sf42 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Bind, lsqv:SubQuery, lsqv:Filter, lsqv:GroupBy, lsqv:Aggregators, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "10"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:BillOfMaterial, pv:amount, pv:currency, pv:hasBomPart, pv:hasPart, pv:price, pv:quantity .
-
-:43 a lsqv:Query ;
-  rdfs:label "Show me any cycles of product compatibility — i.e. product A says it's compatible with B, and B says it's compatible with A (mutual pairs)." ;
-  dct:created "2026-03-30T16:02:31.733487Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733487Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:43 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "Show me any cycles of product compatibility — i.e. product A says it's compatible with B, and B says it's compatible with A (mutual pairs)." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Filter,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 969 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?a ?b
 WHERE {
@@ -1265,22 +1368,27 @@ WHERE {
   ?b pv:compatibleProduct ?a .
   FILTER (STR(?a) < STR(?b))
 }""" ;
-  lsqv:hasStructuralFeatures _:sf43 ;
-  lsqv:resultCount "969"^^xsd:integer ;
-  dct:subject pv:compatibleProduct .
+    dct:created "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
+    dct:subject pv:compatibleProduct .
 
-_:sf43 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Filter, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:compatibleProduct .
-
-:44 a lsqv:Query ;
-  rdfs:label "Which hardware items have dimensions in the top 10 % of all widths, and what are their IDs, names and widths?" ;
-  dct:created "2026-03-30T16:02:31.733514Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733514Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:44 a lsqv:Query,
+        qat:Aggregation,
+        qat:RankedListing ;
+    rdfs:label "Which hardware items have dimensions in the top 10 % of all widths, and what are their IDs, names and widths?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:Filter,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern,
+                lsqv:fn-gt ] ;
+    lsqv:resultCount 93 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?id ?name ?width
 WHERE {
@@ -1303,57 +1411,32 @@ WHERE {
   FILTER(?width >= ?pct90)
 }
 ORDER BY DESC(?width)""" ;
-  lsqv:hasStructuralFeatures _:sf44 ;
-  lsqv:resultCount "93"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:id, pv:name,
-  pv:width_mm .
+    dct:created "2026-03-30T16:02:31.733514+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733514+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:id,
+        pv:name,
+        pv:width_mm .
 
-_:sf44 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:fn-gt, lsqv:Bind, lsqv:Filter, lsqv:Aggregators, lsqv:OrderBy, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "3"^^xsd:integer ;
-  lsqv:tpCount "6"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:Hardware, pv:id, pv:name, pv:width_mm .
-
-:45 a lsqv:Query ;
-  rdfs:label "Which supplier delivers the most reliable Inductor?" ;
-  dct:created "2026-03-30T16:02:31.733565Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733565Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result
-WHERE {
-  ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
-  ?hardware pv:reliabilityIndex ?reliabilityIndex .
-  ?hardware pv:hasSupplier ?result .
-
-  {
-    SELECT (MAX(?ri) AS ?maxRI)
-    WHERE {
-      ?h pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
-      ?h pv:reliabilityIndex ?ri .
-    }
-  }
-
-  FILTER(?reliabilityIndex = ?maxRI)
-}""" ;
-  lsqv:hasStructuralFeatures _:sf45 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:hasCategory, pv:hasSupplier, pv:reliabilityIndex,
-  <http://ld.company.org/prod-instances/prod-cat-Inductor> .
-
-_:sf45 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:Filter, lsqv:Aggregators, lsqv:SubQuery, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:hasCategory, pv:hasSupplier, pv:reliabilityIndex, <http://ld.company.org/prod-instances/prod-cat-Inductor> .
-
-:46 a lsqv:Query ;
-  rdfs:label "What are the top 5 suppliers with best average reliability over their products." ;
-  dct:created "2026-03-30T16:02:31.733601Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733601Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:46 a lsqv:Query,
+        qat:AggregateEnumeration,
+        qat:Comparative,
+        qat:LimitedRankedListing ;
+    rdfs:label "What are the top 5 suppliers with best average reliability over their products." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Limit,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 5 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?supplier ?avgReliability
 WHERE {
@@ -1384,22 +1467,22 @@ WHERE {
 }
 ORDER BY DESC(?avgReliability) ?supplier
 """ ;
-  lsqv:hasStructuralFeatures _:sf46 ;
-  lsqv:resultCount "5"^^xsd:integer ;
-  dct:subject pv:hasSupplier, pv:reliabilityIndex .
+    dct:created "2026-03-30T16:02:31.733601+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733601+00:00"^^xsd:dateTime ;
+    dct:subject pv:hasSupplier,
+        pv:reliabilityIndex .
 
-_:sf46 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:GroupBy, lsqv:Filter, lsqv:SubQuery, lsqv:Aggregators, lsqv:Limit, lsqv:OrderBy, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:hasSupplier, pv:reliabilityIndex .
-
-:47 a lsqv:Query ;
-  rdfs:label "From which countries are the BOM parts of our SkySync MechWave delivered?" ;
-  dct:created "2026-03-30T16:02:31.733632Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733632Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:47 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "From which countries are the BOM parts of our SkySync MechWave delivered?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 7 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   <http://ld.company.org/prod-instances/bom-17> pv:hasBomPart ?bomPart .
@@ -1407,23 +1490,25 @@ WHERE {
   ?product pv:hasSupplier ?supplier .
   ?supplier pv:country ?result
 }""" ;
-  lsqv:hasStructuralFeatures _:sf47 ;
-  lsqv:resultCount "7"^^xsd:integer ;
-  dct:subject pv:country, pv:hasBomPart, pv:hasPart, pv:hasSupplier,
-  <http://ld.company.org/prod-instances/bom-17> .
+    dct:created "2026-03-30T16:02:31.733632+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733632+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/bom-17>,
+        pv:country,
+        pv:hasBomPart,
+        pv:hasPart,
+        pv:hasSupplier .
 
-_:sf47 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "4"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:country, pv:hasBomPart, pv:hasPart, pv:hasSupplier, <http://ld.company.org/prod-instances/bom-17> .
-
-:48 a lsqv:Query ;
-  rdfs:label "Show me all BOMs which have at least on part from a polish supplier." ;
-  dct:created "2026-03-30T16:02:31.733667Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733667Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:48 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Show me all BOMs which have at least on part from a polish supplier." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 3 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT DISTINCT ?result
 WHERE {
   ?result a pv:BillOfMaterial .
@@ -1432,45 +1517,74 @@ WHERE {
   ?product pv:hasSupplier ?supplier .
   ?supplier pv:country <http://dbpedia.org/resource/Poland> .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf48 ;
-  lsqv:resultCount "3"^^xsd:integer ;
-  dct:subject pv:BillOfMaterial, pv:country, pv:hasBomPart, pv:hasPart, pv:hasSupplier,
-  <http://dbpedia.org/resource/Poland> .
+    dct:created "2026-03-30T16:02:31.733667+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733667+00:00"^^xsd:dateTime ;
+    dct:subject <http://dbpedia.org/resource/Poland>,
+        pv:BillOfMaterial,
+        pv:country,
+        pv:hasBomPart,
+        pv:hasPart,
+        pv:hasSupplier .
 
-_:sf48 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Distinct, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "5"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:BillOfMaterial, pv:country, pv:hasBomPart, pv:hasPart, pv:hasSupplier, <http://dbpedia.org/resource/Poland> .
-
-:49 a lsqv:Query ;
-  rdfs:label "How many suppliers can deliver alternative compatible products for the K367 Strain Encoder?" ;
-  dct:created "2026-03-30T16:02:31.733706Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733706Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:49 a lsqv:Query,
+        qat:Aggregation ;
+    rdfs:label "How many suppliers can deliver alternative compatible products for the K367 Strain Encoder?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 SELECT (COUNT(DISTINCT ?supplier) AS ?result)
 WHERE {
   <http://ld.company.org/prod-instances/hw-K367-1320550> pv:compatibleProduct ?alternative .
   ?alternative pv:hasSupplier ?supplier .
 }""" ;
-  lsqv:hasStructuralFeatures _:sf49 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:compatibleProduct, pv:hasSupplier,
-  <http://ld.company.org/prod-instances/hw-K367-1320550> .
+    dct:created "2026-03-30T16:02:31.733706+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733706+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/hw-K367-1320550>,
+        pv:compatibleProduct,
+        pv:hasSupplier .
 
-_:sf49 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
-  lsqv:projectVarCount "1"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "1"^^xsd:integer ;
-  dct:subject pv:compatibleProduct, pv:hasSupplier, <http://ld.company.org/prod-instances/hw-K367-1320550> .
+:5 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Who has expertise in Transistors?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 4 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Transistor> .
+}""" ;
+    dct:created "2026-03-30T16:02:31.731943+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731943+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Transistor>,
+        pv:areaOfExpertise .
 
-:50 a lsqv:Query ;
-  rdfs:label "Which department is resposible for the most product and how many product are this?" ;
-  dct:created "2026-03-30T16:02:31.733737Z"^^xsd:dateTime ;
-  dct:modified "2026-03-30T16:02:31.733737Z"^^xsd:dateTime ;
-  lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+:50 a lsqv:Query,
+        qat:AggregateEnumeration,
+        qat:Comparative ;
+    rdfs:label "Which department is resposible for the most product and how many product are this?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
 SELECT ?result ?count
 WHERE {
@@ -1493,553 +1607,497 @@ WHERE {
   }
   FILTER (?count = ?maxCount)
 }""" ;
-  lsqv:hasStructuralFeatures _:sf50 ;
-  lsqv:resultCount "1"^^xsd:integer ;
-  dct:subject pv:responsibleFor .
-
-_:sf50 a lsqv:StructuralFeatures ;
-  lsqv:usesFeature lsqv:Select, lsqv:GroupBy, lsqv:Filter, lsqv:SubQuery, lsqv:Aggregators, lsqv:agg-count, lsqv:TriplePattern ;
-  lsqv:projectVarCount "2"^^xsd:integer ;
-  lsqv:tpCount "2"^^xsd:integer ;
-  lsqv:bgpCount "2"^^xsd:integer ;
-  dct:subject pv:responsibleFor .
-
-:51 a lsqv:Query ;
-  rdfs:label "In which department is Karen Brant?" ;
-  dct:created "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  skos:closeMatch :1 .
-
-_:annq1 a qa:AnnotationQuestion ;
-    oa:hasTarget :1 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:52 a lsqv:Query ;
-  rdfs:label "What is the phone number of Baldwin Dirksen?" ;
-  dct:created "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T16:02:31.731362Z"^^xsd:dateTime ;
-  skos:closeMatch :2 .
-
-_:annq2 a qa:AnnotationQuestion ;
-    oa:hasTarget :2 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:53 a lsqv:Query ;
-  rdfs:label "Who has area of expertise in Transistors?" ;
-  dct:created "2026-04-09T23:02:23.631368Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:02:23.631368Z"^^xsd:dateTime ;
-  skos:closeMatch :5 .
-
-_:annq3 a qa:AnnotationQuestion ;
-    oa:hasTarget :5 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:54 a lsqv:Query ;
-  rdfs:label "Who has area of expertise in Sensor?" ;
-  dct:created "2026-04-09T23:05:02.931564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:05:02.931564Z"^^xsd:dateTime ;
-  skos:closeMatch :6 .
-
-_:annq4a a qa:AnnotationQuestion ;
-    oa:hasTarget :6 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq4b a qa:AnnotationQuestion ;
-    oa:hasTarget :6 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:55 a lsqv:Query ;
-  rdfs:label "Who manages the people that are members of the Data Services department?" ;
-  dct:created "2026-04-09T23:09:50.151567Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:09:50.151567Z"^^xsd:dateTime ;
-  skos:closeMatch :7 .
-
-_:annq5 a qa:AnnotationQuestion ;
-    oa:hasTarget :7 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:56 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the M558-2275045 - Sensor Switch?" ;
-  dct:created "2026-04-09T23:14:12.531564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:14:12.531564Z"^^xsd:dateTime ;
-  skos:closeMatch :8 .
-
-_:annq6 a qa:AnnotationQuestion ;
-    oa:hasTarget :8 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:57 a lsqv:Query ;
-  rdfs:label "How many items have both the Sensor and Switch categories?" ;
-  dct:created "2026-04-09T23:18:34.901564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:18:34.901564Z"^^xsd:dateTime ;
-  skos:closeMatch :9 .
-
-_:annq7 a qa:AnnotationQuestion ;
-    oa:hasTarget :9 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:58 a lsqv:Query ;
-  rdfs:label "What are the names of employees with area of expertise in Network in the Marketing department?" ;
-  dct:created "2026-04-09T23:22:14.301564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-09T23:22:14.301564Z"^^xsd:dateTime ;
-  skos:closeMatch :10 .
-
-_:annq8a a qa:AnnotationQuestion ;
-    oa:hasTarget :10 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq8b a qa:AnnotationQuestion ;
-    oa:hasTarget :10 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:59 a lsqv:Query ;
-  rdfs:label "Which departments have employees with an area of expertise in Transducer?" ;
-  dct:created "2026-04-10T10:22:24.131564Z"^^xsd:dateTime ;
-  dct:modified "2026-04-10T10:22:24.131564Z"^^xsd:dateTime ;
-  skos:closeMatch :11 .
-
-_:annq9 a qa:AnnotationQuestion ;
-    oa:hasTarget :11 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:60 a lsqv:Query ;
-  rdfs:label "Which suppliers are available to deliver Compensators?" ;
-  dct:created "2026-04-16T16:02:31.732156Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:31.732156Z"^^xsd:dateTime ;
-  skos:closeMatch :12 .
-
-_:annq10 a qa:AnnotationQuestion ;
-    oa:hasTarget :12 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:61 a lsqv:Query ;
-  rdfs:label "How many suppliers in France supply at least one product?" ;
-  dct:created "2026-04-16T16:02:34.132158Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:34.132158Z"^^xsd:dateTime ;
-  skos:closeMatch :13 .
-
-_:annq11 a qa:AnnotationQuestion ;
-    oa:hasTarget :13 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:62 a lsqv:Query ;
-  rdfs:label "Which suppliers in France delivers Compensators?" ;
-  dct:created "2026-04-16T16:02:37.812142Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:37.812142Z"^^xsd:dateTime ;
-  skos:closeMatch :14 .
-
-_:annq12 a qa:AnnotationQuestion ;
-    oa:hasTarget :14 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:63 a lsqv:Query ;
-  rdfs:label "What is the cheapest Encoder we can get from a supplier in France or Germany?" ;
-  dct:created "2026-04-16T16:02:40.135154Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:40.135154Z"^^xsd:dateTime ;
-  skos:closeMatch :15 .
-
-_:annq13 a qa:AnnotationQuestion ;
-    oa:hasTarget :15 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:64 a lsqv:Query ;
-  rdfs:label "Who is the product manager of the most expensive service we offer?" ;
-  dct:created "2026-04-16T16:02:42.637152Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:42.637152Z"^^xsd:dateTime ;
-  skos:closeMatch :20 .
-
-_:annq15 a qa:AnnotationQuestion ;
-    oa:hasTarget :20 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:65 a lsqv:Query ;
-  rdfs:label "What is the heaviest item in the Coil category with width and depth each at most 15 mm?" ;
-  dct:created "2026-04-16T16:02:45.232156Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:45.232156Z"^^xsd:dateTime ;
-  skos:closeMatch :21 .
-
-_:annq16a a qa:AnnotationQuestion ;
-    oa:hasTarget :21 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-_:annq16b a qa:AnnotationQuestion ;
-    oa:hasTarget :21 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:66 a lsqv:Query ;
-  rdfs:label "What products are compatible with the U990-5234138 - LCD Inductor?" ;
-  dct:created "2026-04-16T16:02:47.732131Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:47.732131Z"^^xsd:dateTime ;
-  skos:closeMatch :22 .
-
-_:annq17 a qa:AnnotationQuestion ;
-    oa:hasTarget :22 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:67 a lsqv:Query ;
-  rdfs:label "What products can I get from suppliers in United States that are compatible with the U990-5234138 - LCD Inductor?" ;
-  dct:created "2026-04-16T16:02:49.132143Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:49.132143Z"^^xsd:dateTime ;
-  skos:closeMatch :23 .
-
-_:annq18 a qa:AnnotationQuestion ;
-    oa:hasTarget :23 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:68 a lsqv:Query ;
-  rdfs:label "What is the Potentiometer with the smallest volume?" ;
-  dct:created "2026-04-16T16:02:51.432146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-16T16:02:51.432146Z"^^xsd:dateTime ;
-  skos:closeMatch :24 .
-
-_:annq19 a qa:AnnotationQuestion ;
-    oa:hasTarget :24 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:69 a lsqv:Query ;
-  rdfs:label "Which item in the Coil category has the highest density measured in kilograms per cubic meter?" ;
-  dct:created "2026-04-17T16:09:14.432541Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:14.432541Z"^^xsd:dateTime ;
-  skos:closeMatch :25 .
-
-_:annq20 a qa:AnnotationQuestion ;
-    oa:hasTarget :25 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:70 a lsqv:Query ;
-  rdfs:label "What are the address localities of suppliers in the United States that supply LCDs?" ;
-  dct:created "2026-04-17T16:09:16.832845Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:16.832845Z"^^xsd:dateTime ;
-  skos:closeMatch :26 .
-
-_:annq21 a qa:AnnotationQuestion ;
-    oa:hasTarget :26 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:71 a lsqv:Query ;
-  rdfs:label "Give me IRI, name, email, and phone number of all employees who do not manage anyone, sorted by name." ;
-  dct:created "2026-04-17T16:09:20.332846Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:20.332846Z"^^xsd:dateTime ;
-  skos:closeMatch :27 .
-
-_:annq22 a qa:AnnotationQuestion ;
-    oa:hasTarget :27 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:72 a lsqv:Query ;
-  rdfs:label "Is there any service that is eligible for at least one part used in a bill of material (BOM) that includes parts supplied by suppliers in Russia?" ;
-  dct:created "2026-04-17T16:09:23.632866Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:23.632866Z"^^xsd:dateTime ;
-  skos:closeMatch :28 .
-
-_:annq23a a qa:AnnotationQuestion ;
-    oa:hasTarget :28 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-_:annq23b a qa:AnnotationQuestion ;
-    oa:hasTarget :28 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:73 a lsqv:Query ;
-  rdfs:label "List the names and countries of suppliers and the prices of hardware items ranked from 11th to 15th highest by price (in EUR).”" ;
-  dct:created "2026-04-17T16:09:25.332766Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:25.332766Z"^^xsd:dateTime ;
-  skos:closeMatch :29 .
-
-_:annq24 a qa:AnnotationQuestion ;
-    oa:hasTarget :29 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:74 a lsqv:Query ;
-  rdfs:label "Which departments have more than 5 employees? List each department name and its employee count." ;
-  dct:created "2026-04-17T16:09:27.432766Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:27.432766Z"^^xsd:dateTime ;
-  skos:closeMatch :30 .
-
-_:annq25 a qa:AnnotationQuestion ;
-    oa:hasTarget :30 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-     
-:75 a lsqv:Query ;
-  rdfs:label "For each product category, what are the minimum and maximum weights (in grams) of hardware items?" ;
-  dct:created "2026-04-17T16:09:30.432146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:30.432146Z"^^xsd:dateTime ;
-  skos:closeMatch :31 .
-
-_:annq26a a qa:AnnotationQuestion ;
-    oa:hasTarget :31 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq26b a qa:AnnotationQuestion ;
-    oa:hasTarget :31 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:76 a lsqv:Query ;
-  rdfs:label "For each supplier, return the supplier’s name and the average price in EUR of the hardware items they supply, rounded to two decimal places." ;
-  dct:created "2026-04-17T16:09:32.042145Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:32.042145Z"^^xsd:dateTime ;
-  skos:closeMatch :32 .
-
-_:annq27 a qa:AnnotationQuestion ;
-    oa:hasTarget :32 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:77 a lsqv:Query ;
-  rdfs:label "Are there any departments that have no members of type Manager?" ;
-  dct:created "2026-04-17T16:09:34.262143Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:34.262143Z"^^xsd:dateTime ;
-  skos:closeMatch :33 .
-
-_:annq28 a qa:AnnotationQuestion ;
-    oa:hasTarget :33 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:78 a lsqv:Query ;
-  rdfs:label "List all suppliers with their names and available address information, including locality, country code, and country." ;
-  dct:created "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:37.862143Z"^^xsd:dateTime ;
-  skos:closeMatch :34 .
-
-_:annq29 a qa:AnnotationQuestion ;
-    oa:hasTarget :34 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:79 a lsqv:Query ;
-  rdfs:label "For each product, list all products that are compatible with it and compute the difference in EUR price between the two products." ;
-  dct:created "2026-04-17T16:09:40.602137Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:40.602137Z"^^xsd:dateTime ;
-  skos:closeMatch :35 .
-
-_:annq30 a qa:AnnotationQuestion ;
-    oa:hasTarget :35 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:80 a lsqv:Query ;
-  rdfs:label "What are the top three product categories based on the number of hardware items they include? Return the category IRI and the category name." ;
-  dct:created "2026-04-17T16:09:45.302136Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:45.302136Z"^^xsd:dateTime ;
-  skos:closeMatch :36 .
-
-_:annq31 a qa:AnnotationQuestion ;
-    oa:hasTarget :36 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:81 a lsqv:Query ;
-  rdfs:label "For each Bill of Material (BOM), return its IRI, the count of its BOM parts, and the sum of their quantities. Include only Bill of Materials where the total quantity exceeds 600, and order results by total quantity in descending order." ;
-  dct:created "2026-04-17T16:09:44.124136Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:44.124136Z"^^xsd:dateTime ;
-  skos:closeMatch :37 .
-
-_:annq32a a qa:AnnotationQuestion ;
-    oa:hasTarget :37 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-_:annq32b a qa:AnnotationQuestion ;
-    oa:hasTarget :37 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:82 a lsqv:Query ;
-  rdfs:label "For each employee including also  all subclasses, return the name, email, phone number, the name of the department they belong to, and the name of their manager." ;
-  dct:created "2026-04-17T16:09:47.702136Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:47.702136Z"^^xsd:dateTime ;
-  skos:closeMatch :38 .
-
-_:annq33 a qa:AnnotationQuestion ;
-    oa:hasTarget :38 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:83 a lsqv:Query ;
-  rdfs:label "Which hardware items have a width greater than their height and a depth less than 50 mm? Return their IRIs and dimensions (width, height, and depth)." ;
-  dct:created "2026-04-17T16:09:50.135196Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:50.135196Z"^^xsd:dateTime ;
-  skos:closeMatch :39 .
-
-_:annq34 a qa:AnnotationQuestion ;
-    oa:hasTarget :39 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:84 a lsqv:Query ;
-  rdfs:label "Which hardware items (with their ID and name) do not have an assigned name for the product manager?" ;
-  dct:created "2026-04-17T16:09:52.752190Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:52.752190Z"^^xsd:dateTime ;
-  skos:closeMatch :40 .
-
-_:annq35 a qa:AnnotationQuestion ;
-    oa:hasTarget :40 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:85 a lsqv:Query ;
-  rdfs:label "Which Bill of Material has the highest weighted average unit cost of its hardware parts, and what is that value?" ;
-  dct:created "2026-04-17T16:09:55.032196Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:55.032196Z"^^xsd:dateTime ;
-  skos:closeMatch :42 .
-
-_:annq36 a qa:AnnotationQuestion ;
-    oa:hasTarget :42 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:86 a lsqv:Query ;
-  rdfs:label "List all product pairs where the first product is compatible with the second product." ;
-  dct:created "2026-04-17T16:09:58.132146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:09:58.132146Z"^^xsd:dateTime ;
-  skos:closeMatch :43 .
-
-_:annq37 a qa:AnnotationQuestion ;
-    oa:hasTarget :43 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:87 a lsqv:Query ;
-  rdfs:label "Which hardware items have widths in the top 10% of the width range (based on minimum and maximum widths), and what are their IDs, names, and widths?" ;
-  dct:created "2026-04-17T16:10:01.402147Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:01.402147Z"^^xsd:dateTime ;
-  skos:closeMatch :44 .
-
-_:annq38 a qa:AnnotationQuestion ;
-    oa:hasTarget :44 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:88 a lsqv:Query ;
-  rdfs:label "What are the top 5 suppliers with the highest average reliability index across the hardware items they supply?" ;
-  dct:created "2026-04-17T16:10:05.252147Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:05.252147Z"^^xsd:dateTime ;
-  skos:closeMatch :46 .
-
-_:annq39 a qa:AnnotationQuestion ;
-    oa:hasTarget :46 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:89 a lsqv:Query ;
-  rdfs:label "From which countries do the suppliers of the BOM parts of SkySync MechWave come?" ;
-  dct:created "2026-04-17T16:10:12.242146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:12.242146Z"^^xsd:dateTime ;
-  skos:closeMatch :47 .
-
-_:annq40 a qa:AnnotationQuestion ;
-    oa:hasTarget :47 ;
-    oa:hasBody [
-        a qat:SemanticIssue
-    ] .
-
-:90 a lsqv:Query ;
-  rdfs:label "Which Bill of Materials (BOMs) have at least one part supplied by a supplier from Poland?" ;
-  dct:created "2026-04-17T16:10:15.632746Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:15.632746Z"^^xsd:dateTime ;
-  skos:closeMatch :48 .
-
-_:annq41 a qa:AnnotationQuestion ;
-    oa:hasTarget :48 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:91 a lsqv:Query ;
-  rdfs:label "How many suppliers provide products that are compatible with the K367-1320550 - Strain Encoder?" ;
-  dct:created "2026-04-17T16:10:18.572149Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:18.572149Z"^^xsd:dateTime ;
-  skos:closeMatch :49 .
-
-_:annq42 a qa:AnnotationQuestion ;
-    oa:hasTarget :49 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
-
-:92 a lsqv:Query ;
-  rdfs:label "Which department is responsible for the most products, and how many products does it handle?" ;
-  dct:created "2026-04-17T16:10:20.132146Z"^^xsd:dateTime ;
-  dct:modified "2026-04-17T16:10:20.132146Z"^^xsd:dateTime ;
-  skos:closeMatch :50 .
-
-_:annq43 a qa:AnnotationQuestion ;
-    oa:hasTarget :50 ;
-    oa:hasBody [
-        a qat:LinguisticIssue
-    ] .
+    dct:created "2026-03-30T16:02:31.733737+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733737+00:00"^^xsd:dateTime ;
+    dct:subject pv:responsibleFor .
+
+:7 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Who is the manager of the Data Services department?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?person pv:memberOf <http://ld.company.org/prod-instances/dept-41622> .
+  ?person pv:hasManager ?result .
+}""" ;
+    dct:created "2026-03-30T16:02:31.731998+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731998+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/dept-41622>,
+        pv:hasManager,
+        pv:memberOf .
+
+:8 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which department is responsible for the Sensor Switch M558-2275045?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?result pv:responsibleFor <http://ld.company.org/prod-instances/hw-M558-2275045> .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732030+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732030+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/hw-M558-2275045>,
+        pv:responsibleFor .
+
+:9 a lsqv:Query,
+        qat:Aggregation ;
+    rdfs:label "How many Sensor Switches do we offer?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT (COUNT(DISTINCT ?resultR) as ?result)
+WHERE {
+  ?resultR pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Sensor> .
+  ?resultR pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Switch> .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732055+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732055+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Sensor>,
+        <http://ld.company.org/prod-instances/prod-cat-Switch>,
+        pv:hasCategory .
+
+:10 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What is the name of the Network expert from the Marketing Department?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 2 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?employee pv:memberOf <http://ld.company.org/prod-instances/dept-85880> .
+  ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Network> .
+  ?employee pv:name ?result .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732089+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732089+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/dept-85880>,
+        <http://ld.company.org/prod-instances/prod-cat-Network>,
+        pv:areaOfExpertise,
+        pv:memberOf,
+        pv:name .
+
+:21 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the heaviest coil that does not exceed a base area of 15x15 milimeter?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 8 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result 
+WHERE {
+  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
+  ?result pv:weight_g ?weight_g .
+  ?result pv:width_mm ?width_mm .
+  ?result pv:depth_mm ?depth_mm .
+
+  FILTER (?width_mm <= 15)
+  FILTER (?depth_mm <= 15)
+
+  {
+    SELECT (MAX(?w) AS ?maxWeight)
+    WHERE {
+      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
+      ?r pv:weight_g ?w .
+      ?r pv:width_mm ?wmm .
+      ?r pv:depth_mm ?dmm .
+      FILTER (?wmm <= 15)
+      FILTER (?dmm <= 15)
+    }
+  }
+
+  FILTER (?weight_g = ?maxWeight)
+}""" ;
+    dct:created "2026-03-30T16:02:31.732449+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732449+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Coil>,
+        pv:depth_mm,
+        pv:hasCategory,
+        pv:weight_g,
+        pv:width_mm .
+
+:28 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Do we have any service that does apply to a BOM where parts are sourced from Russia?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Ask,
+                lsqv:Filter,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+ASK
+WHERE {
+  { # all Russia-sourced hardware in any BOM
+    SELECT ?bom ?hw
+    WHERE {
+      ?bom pv:hasBomPart ?bomPart .
+      ?bomPart pv:hasPart ?hw .
+      ?hw pv:hasSupplier ?suppl .
+      ?suppl pv:addressCountry ?country .
+      FILTER (CONTAINS(LCASE(?country), LCASE("Russia")))
+    }
+  }
+
+  # is there a service eligible for that specific Russia-sourced hardware?
+  ?s a pv:Service .
+  ?s pv:eligibleFor ?hw .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732781+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732781+00:00"^^xsd:dateTime ;
+    dct:subject pv:Service,
+        pv:addressCountry,
+        pv:eligibleFor,
+        pv:hasBomPart,
+        pv:hasPart,
+        pv:hasSupplier .
+
+:31 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "Per product category, what's our lightest and heaviest hardware item?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 26 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT ?cat (MIN(?w) AS ?minWeight) (MAX(?w) AS ?maxWeight)
+WHERE {
+  ?catItem a pv:ProductCategory ;
+    pv:name ?cat .
+  ?hw a pv:Hardware ;
+    pv:hasCategory ?catItem ;
+    pv:weight_g ?w .
+}
+GROUP BY ?cat""" ;
+    dct:created "2026-03-30T16:02:31.732941+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732941+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:ProductCategory,
+        pv:hasCategory,
+        pv:name,
+        pv:weight_g .
+
+:37 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "For each Bill of Material, how many parts does it contain and what is the total material quantity — show me only those BOMs exceeding 600 total items and order them descending." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count,
+                lsqv:fn-gt ] ;
+    lsqv:resultCount 7 ;
+    lsqv:text """PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT ?bom (COUNT(?part) AS ?partCount) (SUM(?qty) AS ?totalQty)
+WHERE {
+  ?bom a pv:BillOfMaterial ;
+    pv:hasBomPart ?part .
+  ?part pv:quantity ?qty_ .
+  BIND(xsd:int(?qty_) AS ?qty)
+}
+GROUP BY ?bom
+HAVING (SUM(?qty) > 600)
+ORDER BY DESC(SUM(?qty))""" ;
+    dct:created "2026-03-30T16:02:31.733199+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733199+00:00"^^xsd:dateTime ;
+    dct:subject pv:BillOfMaterial,
+        pv:hasBomPart,
+        pv:quantity .
+
+:4 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What is the email of Sabrina from Marketing?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?department pv:name "Marketing" .
+  ?person pv:memberOf ?department .
+  ?person pv:email ?result .
+  ?person pv:name ?name .
+  FILTER (CONTAINS(?name, "Sabrina"))
+}""" ;
+    dct:created "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
+    dct:subject pv:email,
+        pv:memberOf,
+        pv:name .
+
+:6 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Who is our Sensor expert?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 7 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Sensor> .
+}""" ;
+    dct:created "2026-03-30T16:02:31.731971+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731971+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Sensor>,
+        pv:areaOfExpertise .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :28 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :29 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :30 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :31 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :31 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :32 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :33 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :34 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :35 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :36 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :37 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :37 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :38 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :39 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :40 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :42 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :43 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :44 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :46 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :47 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :48 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :49 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :50 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :4 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :4 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :1 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :2 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :5 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :6 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :6 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :7 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :8 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :9 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :10 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :10 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :11 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :12 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :13 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :14 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :15 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :20 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :21 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :21 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :22 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :23 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :24 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :25 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :26 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :27 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :28 .
+
