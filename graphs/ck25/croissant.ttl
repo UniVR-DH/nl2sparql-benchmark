@@ -1,0 +1,150 @@
+PREFIX : <https://mlcommons.org/croissant/>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX lsqv: <http://lsq.aksw.org/vocab#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sc: <https://schema.org/>
+PREFIX sp: <http://spinrdf.org/sp#>
+
+_:b0    :extract     _:b1;
+        :fileObject  <https://text2sparql.aksw.org/2025/corporate/queries> .
+
+_:b1    a             sp:TriplePattern;
+        sp:object     "?l"@en;
+        sp:predicate  "rdfs:label"@en;
+        sp:subject    "?s"@en;
+        :column       "?l"@en .
+
+_:b2    :extract     _:b3;
+        :fileObject  <https://text2sparql.aksw.org/2025/corporate/queries> .
+
+_:b3    a             sp:TriplePattern;
+        sp:object     "?q"@en;
+        sp:predicate  "lsqv:text"@en;
+        sp:subject    "?s"@en;
+        :column       "?q"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/>
+        a                 sc:Dataset;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/entrypoint>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/entrypoint-graph>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/instances>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/instances-graph>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/vocab>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/vocab-graph>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/shapes>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/shapes-graph>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/examples>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/examples-graph>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/queries>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/queries-graph>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/void>;
+        :distribution     <https://text2sparql.aksw.org/2025/corporate/void-graph>;
+        :recordSet        <https://text2sparql.aksw.org/2025/corporate/query-benchmark>;
+        sc:citation       "ref"@en;
+        sc:datePublished  "2025-01-01"@en;
+        sc:description    "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads."@en;
+        sc:license        "https://creativecommons.org/licenses/by/4.0/"@en;
+        sc:name           "TEXT2SPARQL-Benchmark-Corporate-Knowledge-Graph"@en;
+        sc:version        "1.0"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/entrypoint>
+        a                :FileObject;
+        :contentUrl      "ck25.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/entrypoint-graph>
+        a                :FileObject;
+        :contentUrl      "ck25.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/examples>
+        a                :FileObject;
+        :contentUrl      "ck25-examples.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-examples.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/examples-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-examples.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-examples.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/instances>
+        a                :FileObject;
+        :contentUrl      "ck25-data-instances.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-data-instances.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/instances-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-data-instances.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-data-instances.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/label>
+        a          :Field;
+        :dataType  "Text"@en;
+        :name      "rdfs:label"@en;
+        :source    _:b0 .
+
+<https://text2sparql.aksw.org/2025/corporate/queries>
+        a                :FileObject;
+        :contentUrl      "ck25-queries.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-queries.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/queries-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-queries.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-queries.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/query-benchmark>
+        a       :RecordSet;
+        :field  <https://text2sparql.aksw.org/2025/corporate/label>;
+        :field  <https://text2sparql.aksw.org/2025/corporate/text>;
+        :name   "Query Benchmark"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/shapes>
+        a                :FileObject;
+        :contentUrl      "ck25-data-shapes.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-data-shapes.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/shapes-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-data-shapes.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-data-shapes.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/text>
+        a          :Field;
+        :dataType  "Text"@en;
+        :name      "lsqv:text"@en;
+        :source    _:b2 .
+
+<https://text2sparql.aksw.org/2025/corporate/vocab>
+        a                :FileObject;
+        :contentUrl      "ck25-data-vocab.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-data-vocab.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/vocab-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-data-vocab.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-data-vocab.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/void>
+        a                :FileObject;
+        :contentUrl      "ck25-void.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-void.ttl"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/void-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-void.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-void.graph"@en .

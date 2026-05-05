@@ -1,0 +1,148 @@
+PREFIX : <https://mlcommons.org/croissant/>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX lsqv: <http://lsq.aksw.org/vocab#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sc: <https://schema.org/>
+PREFIX sp: <http://spinrdf.org/sp#>
+
+_:b0    a          :Field;
+        :dataType  "Text"@en;
+        :name      "rdfs:label"@en;
+        :source    _:b1 .
+
+_:b1    :extract     _:b2;
+        :fileObject  "queries"@en .
+
+_:b2    a             sp:TriplePattern;
+        sp:object     "?l"@en;
+        sp:predicate  "rdfs:label"@en;
+        sp:subject    "?s"@en;
+        :column       "?l"@en .
+
+_:b3    a          :Field;
+        :dataType  "Text"@en;
+        :name      "lsqv:text"@en;
+        :source    _:b4 .
+
+_:b4    :extract     _:b5;
+        :fileObject  "queries"@en .
+
+_:b5    a             sp:TriplePattern;
+        sp:object     "?q"@en;
+        sp:predicate  "lsqv:text"@en;
+        sp:subject    "?s"@en;
+        :column       "?q"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/entrypoint>
+        a                :FileObject;
+        :contentUrl      "ck25-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/entrypoint-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-h.graph"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/examples>
+        a                :FileObject;
+        :contentUrl      "ck25-examples-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-examples-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/examples-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-examples-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-examples-h.graph"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/instances>
+        a                :FileObject;
+        :contentUrl      "ck25-data-instances-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-data-instances-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/instances-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-data-instances-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-data-instances-h.graph"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/queries>
+        a                :FileObject;
+        :contentUrl      "ck25-queries-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-queries-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/queries-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-queries-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-queries-h.graph"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/query-benchmark>
+        a       :RecordSet;
+        :field  _:b0;
+        :field  _:b3;
+        :name   "Query Benchmark"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/shapes>
+        a                :FileObject;
+        :contentUrl      "ck25-data-shapes-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-data-shapes-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/shapes-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-data-shapes-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-data-shapes-h.graph"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/vocab>
+        a                :FileObject;
+        :contentUrl      "ck25-data-vocab-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-data-vocab-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/vocab-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-data-vocab-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-data-vocab-h.graph"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/void>
+        a                :FileObject;
+        :contentUrl      "ck25-void-h.ttl"@en;
+        :encodingFormat  "text/turtle"@en;
+        :name            "ck25-void-h.ttl"@en .
+
+<file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/void-graph>
+        a                :FileObject;
+        :contentUrl      "ck25-void-h.graph"@en;
+        :encodingFormat  "application/octet-stream"@en;
+        :name            "ck25-void-h.graph"@en .
+
+<https://text2sparql.aksw.org/2025/corporate/>
+        a                 sc:Dataset;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/entrypoint>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/entrypoint-graph>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/instances>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/instances-graph>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/vocab>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/vocab-graph>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/shapes>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/shapes-graph>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/examples>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/examples-graph>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/queries>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/queries-graph>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/void>;
+        :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/void-graph>;
+        :recordSet        <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/query-benchmark>;
+        sc:citation       "ref"@en;
+        sc:datePublished  "2025-01-01"@en;
+        sc:description    "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads."@en;
+        sc:license        "https://creativecommons.org/licenses/by/4.0/"@en;
+        sc:name           "TEXT2SPARQL-Benchmark-Corporate-Knowledge-Graph"@en;
+        sc:version        "1.0"@en .
