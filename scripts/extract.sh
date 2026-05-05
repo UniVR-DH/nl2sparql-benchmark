@@ -469,6 +469,7 @@ else
     # Fallbacks
     VOCAB_URI="https://$PREFIX/vocab/"
     INST_URI="https://$PREFIX/"
+    echo "WARNING: could not derive gptkb: prefix from $PREFIXES_OUT; using fallback URIs: $VOCAB_URI $INST_URI" >&2
 fi
 
 echo "$VOCAB_URI" > "$VOCAB_GRAPH"
