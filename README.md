@@ -50,7 +50,38 @@ Derived from the [CK25 dataset](https://github.com/eccenca/ck25-dataset), adapte
 
 ### `graphs/gptkb/`
 
-Derived from the [GPT-KB dataset](), adapted for this benchmark.
+Derived from the [GPT-KB dataset](https://huggingface.co/datasets/Knowledge-aware-AI/GPTKB_v1.5/resolve/main/gptkb_v1.5.3.ttl), adapted for this benchmark.
+
+To regenerate the GPTKB derived artifacts from a source TTL/NT, run the extraction script. Replace the `VERSION` and `BASE_URL` values below with the appropriate release and download location for the GPTKB release you are using.
+
+```bash
+cd graphs/gptkb
+VERSION="gptkb_v1.5.3"
+# Direct download URL for the GPTKB release TTL
+DOWNLOAD_URL="https://huggingface.co/datasets/Knowledge-aware-AI/GPTKB_v1.5/resolve/main/gptkb_v1.5.3.ttl"
+
+# Download the source TTL (if you have only a TTL). If you already have NT files, skip this.
+curl -L -o "${VERSION}.ttl" "${DOWNLOAD_URL}"
+
+# Convert TTL → N-Triples (requires rapper / Raptor or use riot)
+rapper -i turtle -o ntriples "${VERSION}.ttl" > "${VERSION}.nt"
+
+# Create the types file (instanceOf → rdf:type) if not provided
+awk '$2 == "<https://gptkb.org/prop/instanceOf>"' "${VERSION}.nt" \
+  | sed 's|<https://gptkb.org/prop/instanceOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|' \
+  > "${VERSION}_types.nt"
+
+# Run the extractor (this writes outputs into graphs/gptkb)
+bash ../../scripts/extract.sh "${VERSION}.nt" "${VERSION}_types.nt" "./" "${VERSION}.ttl" "${VERSION}"
+
+# List produced files
+ls -lh "${VERSION}-"*
+```
+
+Notes:
+- The extractor produces NT and TTL vocab/instances files plus predicate lists. The predicate lists are generated for inspection and manual review.
+- If you prefer the repository to track only canonical TTL/graph files, the predicate list files can be treated as generated artifacts and ignored via `.gitignore`.
+
 
 ### `.external/`
 
