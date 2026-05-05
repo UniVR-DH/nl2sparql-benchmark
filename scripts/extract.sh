@@ -51,7 +51,7 @@ for f in "$NT_MAIN" "$NT_TYPES"; do
     [ -f "$f" ] || { echo "ERROR: Input file not found: $f"; exit 1; }
 done
 
-# ── URI constants (used in awk -v args) ─────────────────────
+# ── URI constants ─────────────────────
 RDF_TYPE="<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 RDFS_LABEL="<http://www.w3.org/2000/01/rdf-schema#label>"
 RDFS_SUBCLASSOF="<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
@@ -72,8 +72,6 @@ ENTITY_PREFIX="<https://gptkb.org/entity/"
 #   (d) entity-subject triples    → entity_triples.nt     (instances)
 #       (subClassOf already split out, so this file excludes them)
 #
-# All four outputs are written in a single awk pass — the file
-# is read from disk exactly once regardless of its size.
 # ============================================================
 echo "============================================================"
 echo "  Single pass over $NT_MAIN"
@@ -196,14 +194,10 @@ BEGIN {
 }
 ' "$NT_TYPES"
 
-# sort -u the classes file (awk deduplicates within a run but let's be safe)
-# sort -u "$TMPDIR_WORK/classes.txt" -o "$TMPDIR_WORK/classes.txt"
 echo "  Found $(wc -l < "$TMPDIR_WORK/classes.txt") unique classes"
 
 # ============================================================
 # Aggregate predicate classification
-# (same logic as before, but the raw pairs file is now fully
-#  populated from the single NT_MAIN pass above)
 # ============================================================
 echo ""
 echo "============================================================"
@@ -262,14 +256,13 @@ echo "============================================================"
     echo "# Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# ============================================================"
 
-    # prop-subject triples (already extracted)
+    # prop-subject triples
     cat "$TMPDIR_WORK/prop_triples.nt"
 
-    # rdfs:subClassOf triples (already extracted)
+    # rdfs:subClassOf triples
     cat "$TMPDIR_WORK/subclassof_triples.nt"
 
     # owl:Class + rdfs:label for every class
-    # Pure awk — no per-line bash subshell
     awk \
         -v rdf_type="$RDF_TYPE" \
         -v rdfs_label="$RDFS_LABEL" \
@@ -347,7 +340,7 @@ echo "============================================================"
     echo "# Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     echo "# ============================================================"
 
-    # entity triples from main NT (subClassOf already excluded)
+    # entity triples from main NT
     cat "$TMPDIR_WORK/entity_triples.nt"
 
     # rdf:type triples from types file
@@ -370,7 +363,7 @@ PREFIXES_OUT="$OUTPUT_DIR/prefixes.ttl"
 VOCAB_TTL="${VOCAB_OUT%.nt}.ttl"
 INSTANCES_TTL="${INSTANCES_OUT%.nt}.ttl"
 
-# Write complete prefix declarations (always include these)
+# Write complete prefix declarations
 cat > "$PREFIXES_OUT" <<'EOF'
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
