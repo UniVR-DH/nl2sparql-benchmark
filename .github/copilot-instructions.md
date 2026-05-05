@@ -132,7 +132,27 @@ git fetch --tags
 
 ---
 
-## 3. Development Environment
+## 3. Branch & Pull Request Naming
+
+### Branch format
+
+`<prefix>/<ticket>-short-description` or `<prefix>/short-description` (no ticket)
+
+Canonical prefixes: `feature/`, `fix/`, `chore/`, `hotfix/`, `doc/`, `refactor/`, `test/`
+
+* Descriptive part: lowercase, digits, hyphens only — max ~50 chars
+* Examples: `feature/345-gptkb-split`, `fix/readme-typo`, `chore/update-deps`
+
+### PR text files
+
+Store in `.temp/PR_<branch-with-slashes-as-hyphens>.md`
+→ e.g. branch `feature/345-gptkb-split` → `.temp/PR_feature-345-gptkb-split.md`
+
+If a valid name cannot be produced → **stop and ask**.
+
+---
+
+## 4. Development Environment
 
 ### Core setup
 
@@ -231,7 +251,7 @@ docker run --rm \
 
 ---
 
-## 4. Bash Best Practices
+## 5. Bash Best Practices
 
 * Prefer **readable scripts over one-liners**
 * One logical action per line
@@ -268,13 +288,10 @@ tmpfile=$(mktemp)
 
 ---
 
-## 5. Project Philosophy
+## 6. Project Philosophy
 
 * Keep structure clean and minimal
 * Avoid assumptions
 * Prefer explicit over implicit
 * Optimize for maintainability, not cleverness
 
----
-
-If anything is unclear → **ask before acting**.
