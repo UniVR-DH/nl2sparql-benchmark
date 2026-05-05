@@ -12,25 +12,27 @@
 #                              awk '$2 == "<https://gptkb.org/prop/instanceOf>"' gptkb_v1.5.3.nt \
 #                              | sed 's|<https://gptkb.org/prop/instanceOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|' \
 #                              > gptkb_v1.5.3_types.nt)
-#   gptkb_v1.5.3.ttl       — original TTL, used only to extract @prefix lines
-#                            (optional — TTL conversion is skipped if not found)
+#   gptkb_v1.5.3.ttl       — original TTL, used only to extract @prefix lines X (optional)
 #
-# Output files:
-#   graphs/gptkb/gptkb-data-vocab.nt
-#   graphs/gptkb/gptkb-data-instances.nt
-#   graphs/gptkb/predicates_datatype.txt
-#   graphs/gptkb/predicates_object.txt
-#   graphs/gptkb/predicates_both.txt
-#   graphs/gptkb/prefixes.ttl          (if source TTL provided)
-#   graphs/gptkb/gptkb-data-vocab.ttl  (if source TTL provided)
-#   graphs/gptkb/gptkb-data-instances.ttl (if source TTL provided)
+# Output files (PREFIX defaults to the stem of the first input file,
+#               e.g. "gptkb_v1.5.3" from "gptkb_v1.5.3.nt"):
+#   graphs/gptkb/<PREFIX>-vocab.nt
+#   graphs/gptkb/<PREFIX>-instances.nt
+#   graphs/gptkb/<PREFIX>-predicates_datatype.txt
+#   graphs/gptkb/<PREFIX>-predicates_object.txt
+#   graphs/gptkb/<PREFIX>-predicates_both.txt
+#   graphs/gptkb/<PREFIX>-prefixes.ttl          (if source TTL provided)
+#   graphs/gptkb/<PREFIX>-vocab.ttl             (if source TTL provided)
+#   graphs/gptkb/<PREFIX>-instances.ttl         (if source TTL provided)
 #
 # Usage:
-#   bash extract.sh [main.nt] [types.nt] [output_dir] [source.ttl]
+#   bash extract.sh [main.nt] [types.nt] [output_dir] [source.ttl] [PREFIX]
 #
 #   source.ttl is optional — if provided, @prefix declarations are
 #   extracted from it and used to convert the NT outputs to TTL.
 #   Defaults to gptkb_v1.5.3.ttl if the file exists, skipped if not.
+#
+#   PREFIX is optional — overrides the default stem derived from main.nt.
 # ============================================================
 export LC_ALL=C 
 set -euo pipefail
@@ -39,9 +41,10 @@ NT_MAIN="${1:-gptkb_v1.5.3.nt}"
 NT_TYPES="${2:-gptkb_v1.5.3_types.nt}"
 OUTPUT_DIR="${3:-graphs/gptkb}"
 SOURCE_TTL="${4:-gptkb_v1.5.3.ttl}"
+PREFIX="${5:-$(basename "${NT_MAIN%.*}")}"
 
-VOCAB_OUT="$OUTPUT_DIR/gptkb-data-vocab.nt"
-INSTANCES_OUT="$OUTPUT_DIR/gptkb-data-instances.nt"
+VOCAB_OUT="$OUTPUT_DIR/$PREFIX-vocab.nt"
+INSTANCES_OUT="$OUTPUT_DIR/$PREFIX-instances.nt"
 
 TMPDIR_WORK="${TMPDIR:-/tmp}/gptkb_extract_$$"
 mkdir -p "$OUTPUT_DIR" "$TMPDIR_WORK"
@@ -236,13 +239,13 @@ echo "  owl:DatatypeProperty : $(wc -l < "$TMPDIR_WORK/predicates_datatype.txt")
 echo "  owl:ObjectProperty   : $(wc -l < "$TMPDIR_WORK/predicates_object.txt")"
 echo "  Both (review)        : $(wc -l < "$TMPDIR_WORK/predicates_both.txt")"
 
-cp "$TMPDIR_WORK/predicates_datatype.txt" "$OUTPUT_DIR/"
-cp "$TMPDIR_WORK/predicates_object.txt"   "$OUTPUT_DIR/"
-cp "$TMPDIR_WORK/predicates_both.txt"     "$OUTPUT_DIR/"
+cp "$TMPDIR_WORK/predicates_datatype.txt" "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt"
+cp "$TMPDIR_WORK/predicates_object.txt"   "$OUTPUT_DIR/$PREFIX-predicates_object.txt"
+cp "$TMPDIR_WORK/predicates_both.txt"     "$OUTPUT_DIR/$PREFIX-predicates_both.txt"
 echo "  Saved predicate files to $OUTPUT_DIR/"
 
 # ============================================================
-# Generate gptkb-data-vocab.nt
+# Generate vocab NT
 # ============================================================
 echo ""
 echo "============================================================"
@@ -326,7 +329,7 @@ echo "  rdfs:subClassOf triples: $SUBCLASSOF_COUNT"
 echo "  Written: $VOCAB_OUT ($(wc -l < "$VOCAB_OUT") lines)"
 
 # ============================================================
-# Generate gptkb-data-instances.nt
+# Generate instances NT
 # ============================================================
 echo ""
 echo "============================================================"
@@ -351,19 +354,17 @@ echo "============================================================"
 echo "  Written: $INSTANCES_OUT ($(wc -l < "$INSTANCES_OUT") lines)"
 
 # ============================================================
-# PART 4 — NT → TTL
+# NT → TTL
 # ============================================================
 echo ""
 echo "============================================================"
 echo "  Converting to TTL"
 echo "============================================================"
 
-# Create prefixes file with ALL needed prefixes
-PREFIXES_OUT="$OUTPUT_DIR/prefixes.ttl"
+PREFIXES_OUT="$OUTPUT_DIR/$PREFIX-prefixes.ttl"
 VOCAB_TTL="${VOCAB_OUT%.nt}.ttl"
 INSTANCES_TTL="${INSTANCES_OUT%.nt}.ttl"
 
-# Write complete prefix declarations
 cat > "$PREFIXES_OUT" <<'EOF'
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
@@ -373,7 +374,6 @@ cat > "$PREFIXES_OUT" <<'EOF'
 @prefix gptkbp: <https://gptkb.org/prop/> .
 EOF
 
-# Optionally add any extra prefixes from source TTL
 if [ -f "$SOURCE_TTL" ]; then
     echo "  Adding extra prefixes from $SOURCE_TTL ..."
     grep '^@prefix' "$SOURCE_TTL" | grep -v -E '(rdf:|rdfs:|owl:|xsd:|gptkb:|gptkbp:)' >> "$PREFIXES_OUT" || true
@@ -381,7 +381,6 @@ fi
 
 echo "  Prefixes: $(grep -c '^@prefix' "$PREFIXES_OUT")"
 
-# Convert using riot
 if command -v riot &> /dev/null; then
     echo "  Converting $VOCAB_OUT → $VOCAB_TTL ..."
     cat "$PREFIXES_OUT" "$VOCAB_OUT" | riot --output=turtle --syntax=turtle > "$VOCAB_TTL"
@@ -402,7 +401,10 @@ echo "============================================================"
 echo "  Done"
 echo "============================================================"
 echo ""
-ls -lh "$VOCAB_OUT" "$INSTANCES_OUT" "$OUTPUT_DIR"/predicates_*.txt
+ls -lh "$VOCAB_OUT" "$INSTANCES_OUT" \
+       "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt" \
+       "$OUTPUT_DIR/$PREFIX-predicates_object.txt" \
+       "$OUTPUT_DIR/$PREFIX-predicates_both.txt"
 echo ""
 echo "Validate with:"
 echo "  riot --validate $VOCAB_OUT"
