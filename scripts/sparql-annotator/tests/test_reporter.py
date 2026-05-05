@@ -321,10 +321,11 @@ def test_invalid_format_ignored(tmp_path, onto, query_file):
 
 
 def test_prefix_path_traversal_raises(tmp_path, onto, query_file):
-    """prefix containing path separators must be rejected."""
+    """prefix must be rejected if it contains anything outside [A-Za-z0-9_-]."""
     gen = ReportGenerator(str(onto))
-    with pytest.raises(ValueError, match="path separators"):
-        gen.generate_reports(str(query_file), str(tmp_path), prefix="../evil")
+    for bad in ["../evil", "pre}fix", "pre\\fix", "pre%fix"]:
+        with pytest.raises(ValueError, match="letters, digits"):
+            gen.generate_reports(str(query_file), str(tmp_path), prefix=bad)
 
 
 def test_operators_latex_unparseable_query(tmp_path, onto):

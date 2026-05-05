@@ -80,8 +80,12 @@ def annotate(input_path, fmt, output_path):
 # ---------------------------------------------------------------------------
 
 
-def _setup_logging(log_file: Optional[Path], verbose: bool) -> logging.Logger:
-    logger = logging.getLogger("sparql_annotator.classify")
+def _setup_logging(
+    log_file: Optional[Path],
+    verbose: bool,
+    logger_name: str = "sparql_annotator.classify",
+) -> logging.Logger:
+    logger = logging.getLogger(logger_name)
     if logger.handlers:
         return logger
     level = logging.DEBUG if verbose else logging.INFO
@@ -512,7 +516,7 @@ def classify_cmd(
 )
 def report_cmd(query_file, ontology, output_dir, prefix, formats):
     """Generate CSV/LaTeX reports for a query dataset."""
-    logger = _setup_logging(None, verbose=False)
+    logger = _setup_logging(None, verbose=False, logger_name="sparql_annotator.report")
     format_list = [f.strip() for f in formats.split(",")]
     try:
         generator = ReportGenerator(str(ontology), logger=logger)

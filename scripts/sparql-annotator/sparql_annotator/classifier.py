@@ -230,7 +230,7 @@ class QuestionTypeClassifier:
         self, g: Graph
     ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
         """Classify queries from an already-parsed RDF graph (avoids re-parsing the TTL)."""
-        query_uris = list(g.subjects(RDF.type, LSQV.Query))
+        query_uris = sorted(g.subjects(RDF.type, LSQV.Query), key=str)
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
         results: Dict[

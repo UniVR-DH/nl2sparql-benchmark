@@ -20,6 +20,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -200,9 +201,9 @@ class ReportGenerator:
         if unknown:
             self.logger.warning(f"Ignoring unknown report format(s): {unknown}")
         formats = [f for f in formats if f in ("csv", "latex")]
-        if Path(prefix).name != prefix:
+        if not re.fullmatch(r"[A-Za-z0-9_\-]+", prefix):
             raise ValueError(
-                f"prefix must be a plain filename with no path separators, got: {prefix!r}"
+                f"prefix must contain only letters, digits, hyphens, and underscores, got: {prefix!r}"
             )
 
         # Validate inputs before creating any output directories
