@@ -1109,7 +1109,7 @@ WHERE {
         qat:AggregateEnumeration,
         qat:Comparative,
         qat:LimitedRankedListing ;
-    rdfs:label "What are the top 3 most common product categories among our hardware?" ;
+    rdfs:label "Which area of expertise is most relevant among our products, what are the top three skills?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 4 ;
             lsqv:projectVarCount 2 ;
             lsqv:tpCount 9 ;
