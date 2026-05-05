@@ -9,13 +9,13 @@ by NL question type using an OWL ontology.
 
 ```bash
 cd scripts/sparql-annotator
-uv venv .venv && uv pip install -e .
+uv sync          # create .venv and install all dependencies
 
 # With optional Graphviz rendering support
-uv pip install -e ".[viz]"
+uv sync --extra viz
 
 # With dev tools (pytest, ruff)
-uv pip install -e . pytest ruff
+uv sync --dev
 ```
 
 All CLI examples below assume you are at the **repository root**.
@@ -288,14 +288,16 @@ from sparql_annotator.algebra import (
 text = "SELECT ?s WHERE { ?s ?p ?o . FILTER(REGEX(STR(?s), 'foo')) }"
 ok, parsed, err = parse_query(text)
 
-# Generic operator extraction
-ops = extract_operators(text, parsed)
+# Translate once; pass alg= to avoid a second translateQuery on the mutated tree
+import rdflib.plugins.sparql.algebra as _a
+alg = _a.translateQuery(parsed)
+
+# Generic operator extraction — reuses the already-translated algebra
+ops = extract_operators(text, parsed, alg=alg)
 print(ops.filters)           # {"FILTER"}
 print(ops.filter_functions)  # {"REGEX", "STR"}
 
-# LSQ feature names (used by classifier)
-import rdflib.plugins.sparql.algebra as _a
-alg = _a.translateQuery(parsed)
+# LSQ feature names (used by classifier) — reuse the same alg
 feats = detect_lsq_features(alg.algebra, parsed)
 print(feats)  # {"Filter"}
 
@@ -392,7 +394,7 @@ when you need the spec-correct count.
 
 ```bash
 cd scripts/sparql-annotator
-uv run pytest              # run tests (182 tests)
+uv run pytest              # run tests (185 tests)
 uv run pytest -x -q        # stop on first failure
 uv run ruff check .        # lint
 uv run ruff format .       # format
@@ -428,6 +430,9 @@ for per-query SPARQL analysis.  It:
 
 - parses the query text once (`parseQuery`),
 - translates once (`translateQuery`),
+- passes `parsed` and `alg` to `extract_features` so feature extraction,
+  implied-feature detection, and count-annotation checks all reuse the same
+  algebra object without re-parsing,
 - computes metrics and extracts operators from the same `alg` object,
 - returns the `OperatorSet` as the 6th element of the result tuple.
 
@@ -438,7 +443,7 @@ separately (it re-parses internally, which is unavoidable).
 If you add a new analysis step that needs the algebra, add it inside
 `classify_queries_from_graph` alongside the existing metrics/operator
 extraction — do not add a new `parseQuery` / `translateQuery` call in
-`_collect` or any downstream consumer.
+`_collect`, `extract_features`, or any downstream consumer.
 
 #### Classifier result tuple
 

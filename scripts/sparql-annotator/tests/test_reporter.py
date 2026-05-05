@@ -312,7 +312,7 @@ def test_invalid_ttl_raises(tmp_path, onto):
 
 
 def test_invalid_format_ignored(tmp_path, onto, query_file):
-    """Unknown format strings are silently ignored (no csv/latex output, no crash)."""
+    """Unknown format strings are warned and ignored (no csv/latex output, no crash)."""
     out = tmp_path / "out"
     gen = ReportGenerator(str(onto))
     gen.generate_reports(str(query_file), str(out), prefix="x", formats=["unknown"])

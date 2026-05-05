@@ -73,7 +73,7 @@ _AGG_MAP: Dict[str, str] = {
 # LaTeX helpers
 # ---------------------------------------------------------------------------
 
-_LATEX_PREAMBLE_COMMENT = "% Required packages:\n%   \\usepackage[table]{xcolor}\n%   \\usepackage{booktabs}\n%   \\usepackage{amssymb}  % for \\checkmark\n%\n"
+_LATEX_PREAMBLE_COMMENT = "% Required packages:\n%   \\usepackage[table]{xcolor}\n%   \\usepackage{booktabs}\n%   \\usepackage{amssymb}  % for $\\checkmark$ and $\\times$ (used in math mode)\n%\n"
 
 _GREEN = r"\cellcolor{green!20}"
 _RED = r"\cellcolor{red!10}"
@@ -107,8 +107,8 @@ class _RawLatex(str):
 
 def _latex_bool(val: bool, antipattern: bool = False) -> _RawLatex:
     if antipattern:
-        return _RawLatex(f"{_ORANGE}\\checkmark" if val else f"{_RED}$\\times$")
-    return _RawLatex(f"{_GREEN}\\checkmark" if val else f"{_RED}$\\times$")
+        return _RawLatex(f"{_ORANGE}$\\checkmark$" if val else f"{_RED}$\\times$")
+    return _RawLatex(f"{_GREEN}$\\checkmark$" if val else f"{_RED}$\\times$")
 
 
 def _latex_table(
@@ -251,6 +251,7 @@ class ReportGenerator:
             warnings,
             counts,
             op_set,
+            *_,
         ) in classify_results.items():
             uri = URIRef(uri_str)
             query_id = uri_str.split("/")[-1]

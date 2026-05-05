@@ -107,7 +107,11 @@ class QuestionTypeClassifier:
             return False
 
     def extract_features(
-        self, query_graph: Graph, query_uri: URIRef
+        self,
+        query_graph: Graph,
+        query_uri: URIRef,
+        parsed: object = None,
+        alg: object = None,
     ) -> Tuple[Set[str], List[str]]:
         short_uri = str(query_uri).split("/")[-1]
         features: Set[str] = set()
@@ -121,16 +125,18 @@ class QuestionTypeClassifier:
 
         for sparql_lit in query_graph.objects(query_uri, LSQV.text):
             text = str(sparql_lit)
-            if not self._check_sparql_syntax(text, short_uri):
-                continue
-            try:
-                parsed = _sparql_parser.parseQuery(text)
-                algebra = _sparql_algebra.translateQuery(parsed)
-            except Exception as exc:
-                self.logger.error(
-                    f"Query {short_uri!r}: algebra translation failed — {exc}"
-                )
-                continue
+            # Use pre-parsed objects when provided (avoids redundant parse/translate)
+            if parsed is None or alg is None:
+                if not self._check_sparql_syntax(text, short_uri):
+                    continue
+                try:
+                    parsed = _sparql_parser.parseQuery(text)
+                    alg = _sparql_algebra.translateQuery(parsed)
+                except Exception as exc:
+                    self.logger.error(
+                        f"Query {short_uri!r}: algebra translation failed — {exc}"
+                    )
+                    continue
 
             # Pure-aggregate Distinct stripping
             if (
@@ -155,7 +161,7 @@ class QuestionTypeClassifier:
                 except Exception:
                     pass
 
-            implied = detect_lsq_features(algebra.algebra, parsed)
+            implied = detect_lsq_features(alg.algebra, parsed)
             missing = implied - features
             if missing:
                 for feat_name in sorted(missing):
@@ -169,7 +175,7 @@ class QuestionTypeClassifier:
 
             warnings.extend(
                 self._check_count_annotations(
-                    query_graph, query_uri, algebra.algebra, short_uri
+                    query_graph, query_uri, alg.algebra, short_uri
                 )
             )
 
@@ -234,7 +240,7 @@ class QuestionTypeClassifier:
 
     def classify_queries_from_graph(self, g: Graph) -> Dict[str, QueryResult]:
         """Classify queries from an already-parsed RDF graph (avoids re-parsing the TTL)."""
-        query_uris = sorted(g.subjects(RDF.type, LSQV.Query), key=str)
+        query_uris = sorted(set(g.subjects(RDF.type, LSQV.Query)), key=str)
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
         results: Dict[str, QueryResult] = {}
@@ -244,7 +250,28 @@ class QuestionTypeClassifier:
                 self.logger.info(f"Skipping {short!r}: no lsqv:text present")
                 continue
 
-            features, warnings = self.extract_features(g, uri)
+            # Parse once per query and reuse for features, metrics, and operators
+            text: Optional[str] = None
+            parsed = None
+            alg = None
+            for sparql_lit in g.objects(uri, LSQV.text):
+                text = str(sparql_lit)
+                try:
+                    parsed = _sparql_parser.parseQuery(text)
+                    alg = _sparql_algebra.translateQuery(parsed)
+                except Exception as exc:
+                    short = str(uri).split("/")[-1]
+                    self.logger.error(
+                        f"Query {short!r}: parse/translate failed — {exc}"
+                    )
+                break
+
+            if not text or not alg:
+                # No valid SPARQL text or parse failed
+                results[str(uri)] = (set(), set(), None, [], {}, None)
+                continue
+
+            features, warnings = self.extract_features(g, uri, parsed=parsed, alg=alg)
             qtypes = self.classify_query(uri, features)
 
             label: Optional[str] = None
@@ -263,22 +290,12 @@ class QuestionTypeClassifier:
 
             counts: Dict[str, int] = {}
             op_set = None
-            for sparql_lit in g.objects(uri, LSQV.text):
-                text = str(sparql_lit)
-                try:
-                    parsed = _sparql_parser.parseQuery(text)
-                    alg = _sparql_algebra.translateQuery(parsed)
-                    bgp_c, tp_c, pv_c = compute_metrics(alg.algebra)
-                    counts = {
-                        "bgpCount": bgp_c,
-                        "tpCount": tp_c,
-                        "projectVarCount": pv_c,
-                    }
-                    # reuse the already-translated algebra — no second translateQuery
-                    op_set = extract_operators(text, parsed, alg=alg)
-                except Exception:
-                    counts = {}
-                break
+            try:
+                bgp_c, tp_c, pv_c = compute_metrics(alg.algebra)
+                counts = {"bgpCount": bgp_c, "tpCount": tp_c, "projectVarCount": pv_c}
+                op_set = extract_operators(text, parsed, alg=alg)
+            except Exception:
+                counts = {}
 
             results[str(uri)] = (qtypes, features, label, warnings, counts, op_set)
 
