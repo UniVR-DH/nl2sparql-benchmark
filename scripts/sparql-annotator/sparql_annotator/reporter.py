@@ -101,10 +101,14 @@ def _tex(s: str) -> str:
     return s.translate(_LATEX_ESCAPE)
 
 
-def _latex_bool(val: bool, antipattern: bool = False) -> str:
+class _RawLatex(str):
+    """A str subclass marking content as already-valid LaTeX — never re-escaped."""
+
+
+def _latex_bool(val: bool, antipattern: bool = False) -> _RawLatex:
     if antipattern:
-        return f"{_ORANGE}\\checkmark" if val else f"{_RED}$\\times$"
-    return f"{_GREEN}\\checkmark" if val else f"{_RED}$\\times$"
+        return _RawLatex(f"{_ORANGE}\\checkmark" if val else f"{_RED}$\\times$")
+    return _RawLatex(f"{_GREEN}\\checkmark" if val else f"{_RED}$\\times$")
 
 
 def _latex_table(
@@ -136,8 +140,9 @@ def _latex_table(
         r"\midrule",
     ]
     for row in rows:
-        # Cells that start with \ are already LaTeX commands (e.g. \cellcolor{...})
-        escaped = [c if c.startswith("\\") else _tex(c) for c in row]
+        # Only _RawLatex instances (produced by _latex_bool) bypass escaping.
+        # Plain str cells — including user-supplied query IDs — are always escaped.
+        escaped = [c if isinstance(c, _RawLatex) else _tex(c) for c in row]
         lines.append(" & ".join(escaped) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     return _LATEX_PREAMBLE_COMMENT + "\n".join(lines) + "\n"

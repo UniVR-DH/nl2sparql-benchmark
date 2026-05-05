@@ -9,10 +9,16 @@ from rdflib.term import Variable as _Variable
 import rdflib.plugins.sparql.parser as _sparql_parser
 import rdflib.plugins.sparql.algebra as _sparql_algebra
 
-from .model import QuestionTypeDefinition
+from .model import QuestionTypeDefinition, OperatorSet
 from .ontology import build_type_definitions, build_depth_cache, _uri_to_local
 from .algebra import detect_lsq_features, compute_metrics, extract_operators
 from .namespaces import LSQV
+
+# Return type for classify_queries_from_graph / classify_queries_from_file:
+# (qtypes, features, label, warnings, counts, op_set)
+QueryResult = Tuple[
+    Set[str], Set[str], Optional[str], List[str], Dict[str, int], Optional[OperatorSet]
+]
 
 
 class QuestionTypeClassifier:
@@ -226,34 +232,12 @@ class QuestionTypeClassifier:
     # File-level classification
     # ------------------------------------------------------------------
 
-    def classify_queries_from_graph(
-        self, g: Graph
-    ) -> Dict[
-        str,
-        Tuple[
-            Set[str],
-            Set[str],
-            Optional[str],
-            List[str],
-            Dict[str, int],
-            Optional[object],
-        ],
-    ]:
+    def classify_queries_from_graph(self, g: Graph) -> Dict[str, QueryResult]:
         """Classify queries from an already-parsed RDF graph (avoids re-parsing the TTL)."""
         query_uris = sorted(g.subjects(RDF.type, LSQV.Query), key=str)
         self.logger.info(f"Found {len(query_uris)} queries to classify")
 
-        results: Dict[
-            str,
-            Tuple[
-                Set[str],
-                Set[str],
-                Optional[str],
-                List[str],
-                Dict[str, int],
-                Optional[object],
-            ],
-        ] = {}
+        results: Dict[str, QueryResult] = {}
         for uri in query_uris:
             if not any(True for _ in g.objects(uri, LSQV.text)):
                 short = str(uri).split("/")[-1]
@@ -300,9 +284,7 @@ class QuestionTypeClassifier:
 
         return results
 
-    def classify_queries_from_file(
-        self, query_file: Path
-    ) -> Dict[str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]]:
+    def classify_queries_from_file(self, query_file: Path) -> Dict[str, QueryResult]:
         g = Graph()
         try:
             g.parse(str(query_file), format="turtle")

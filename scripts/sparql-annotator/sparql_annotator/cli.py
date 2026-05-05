@@ -2,7 +2,7 @@ import logging
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
 from rdflib import Graph, URIRef, Literal, BNode
@@ -11,7 +11,7 @@ from rdflib.namespace import RDF
 from .annotator import Annotator
 from .adapters import CSVAdapter, JSONAdapter, TTLAdapter
 from .algebra import OPERATOR_FEATURES
-from .classifier import QuestionTypeClassifier
+from .classifier import QuestionTypeClassifier, QueryResult
 from .namespaces import LSQV, QAT, QA
 from .inspect_query import inspect_cmd
 from .antipatterns import detect_antipatterns
@@ -108,9 +108,7 @@ def _setup_logging(
 
 def _print_results(
     classifier: QuestionTypeClassifier,
-    results: Dict[
-        str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
-    ],
+    results: Dict[str, QueryResult],
     logger: logging.Logger,
 ) -> None:
     W = 80
@@ -276,9 +274,7 @@ def _print_results(
 
 def _generate_type_assertions(
     query_file: Path,
-    results: Dict[
-        str, Tuple[Set[str], Set[str], Optional[str], List[str], Dict[str, int]]
-    ],
+    results: Dict[str, QueryResult],
     classifier: QuestionTypeClassifier,
     logger: logging.Logger,
 ) -> Graph:
