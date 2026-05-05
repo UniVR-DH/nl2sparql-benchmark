@@ -450,10 +450,35 @@ echo "============================================================"
 echo "  Done"
 echo "============================================================"
 echo ""
+# Create companion .graph files (small pointer files used by project tooling)
+VOCAB_GRAPH="$OUTPUT_DIR/$PREFIX-vocab.graph"
+INSTANCES_GRAPH="$OUTPUT_DIR/$PREFIX-instances.graph"
+
+# Try to derive base URIs from the prefixes file; fall back to sensible defaults
+GPTKB_PREFIX_URI=""
+if [ -f "$PREFIXES_OUT" ]; then
+    GPTKB_PREFIX_URI=$(grep '^@prefix gptkb:' "$PREFIXES_OUT" \
+        | sed -n "s/^@prefix gptkb:[[:space:]]*<\(.*\)>[[:space:]]*\..*/\1/p" || true)
+fi
+
+if [ -n "$GPTKB_PREFIX_URI" ]; then
+    # If prefix ends with /entity/ replace with /vocab/ and / (instances base)
+    VOCAB_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/vocab/#; t; s#/$#/vocab/#; s#$#/vocab/#')
+    INST_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/#; t; s#/$#/#; s#$#/#')
+else
+    # Fallbacks
+    VOCAB_URI="https://$PREFIX/vocab/"
+    INST_URI="https://$PREFIX/"
+fi
+
+echo "$VOCAB_URI" > "$VOCAB_GRAPH"
+echo "$INST_URI" > "$INSTANCES_GRAPH"
+
 ls -lh "$VOCAB_OUT" "$INSTANCES_OUT" \
        "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt" \
        "$OUTPUT_DIR/$PREFIX-predicates_object.txt" \
-       "$OUTPUT_DIR/$PREFIX-predicates_both.txt"
+       "$OUTPUT_DIR/$PREFIX-predicates_both.txt" \
+       "$VOCAB_GRAPH" "$INSTANCES_GRAPH"
 echo ""
 echo "Validate with:"
 echo "  riot --validate $VOCAB_OUT"
