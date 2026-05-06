@@ -54,7 +54,7 @@
               [ void:property rdfs:label ; void:triples "199"^^xsd:integer ] ,
               [ void:property <http://ld.company.org/prod-vocab/343130> ; void:triples "197"^^xsd:integer ] ,
               [ void:property rdf:type ; void:triples "197"^^xsd:integer ] ],
-        [ void:class <http://dbpedia.org/ontology/Country> ;
+        [ void:class <http://dbpedia.org/ontology/596693> ;
           void:entities "63"^^xsd:integer ;
           void:propertyPartition [ void:property rdf:type ; void:triples "63"^^xsd:integer ] ,
               [ void:property rdfs:label ; void:triples "63"^^xsd:integer ] ],
