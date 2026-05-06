@@ -77,7 +77,8 @@ bash ../../scripts/extract.sh "${VERSION}.nt" "${VERSION}_types.nt" "./" "${VERS
 
 > Notes:
 > The extractor produces NT and TTL vocab/instances files plus predicate lists. The predicate lists are generated for inspection and manual review.
-> Companion `.graph` files (containing the named graph IRI `http://gptkb.org/`) are written only if they do not already exist, so manually curated graph IRIs are preserved across re-runs.
+> Companion `.graph` files are written with the named graph IRI `http://gptkb.org/` for both `*-vocab.graph` and `*-instances.graph`.
+> Existing `.graph` files are not overwritten, so manually curated graph IRIs are preserved across re-runs.
 
 
 
