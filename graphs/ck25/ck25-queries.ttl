@@ -941,7 +941,7 @@ WHERE {
     pv:hasSupplier ?sup .
 }
 ORDER BY DESC(?price)
-LIMIT 5 OFFSET 5""" ;
+LIMIT 5 OFFSET 10""" ;
     dct:created "2026-03-30T16:02:31.732846+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.732846+00:00"^^xsd:dateTime ;
     dct:subject pv:Hardware,
@@ -1365,7 +1365,6 @@ WHERE {
 SELECT ?a ?b
 WHERE {
   ?a pv:compatibleProduct ?b .
-  ?b pv:compatibleProduct ?a .
   FILTER (STR(?a) < STR(?b))
 }""" ;
     dct:created "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
