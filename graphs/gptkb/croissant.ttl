@@ -41,7 +41,7 @@ _:b3    a             sp:TriplePattern;
         :distribution     <https://text2sparql.aksw.org/2025/corporate/void-graph>;
         :recordSet        <https://text2sparql.aksw.org/2025/corporate/query-benchmark>;
         sc:citation       "ref"@en;
-        sc:datePublished  "2025-01-01"@en;
+        sc:datePublished  "2026-05-07"@en;
         sc:description    "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads."@en;
         sc:license        "https://creativecommons.org/licenses/by/4.0/"@en;
         sc:name           "TEXT2SPARQL-Benchmark-GPTKB-Knowledge-Graph"@en;

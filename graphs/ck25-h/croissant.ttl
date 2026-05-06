@@ -141,7 +141,7 @@ _:b5    a             sp:TriplePattern;
         :distribution     <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/void-graph>;
         :recordSet        <file:///Users/bianca/Desktop/PhD/repositories/NL2SPARQL/nl2sparql-benchmark/graphs/ck25-h/query-benchmark>;
         sc:citation       "ref"@en;
-        sc:datePublished  "2025-01-01"@en;
+        sc:datePublished  "2026-05-07"@en;
         sc:description    "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads."@en;
         sc:license        "https://creativecommons.org/licenses/by/4.0/"@en;
         sc:name           "TEXT2SPARQL-Benchmark-Corporate-Knowledge-Graph"@en;

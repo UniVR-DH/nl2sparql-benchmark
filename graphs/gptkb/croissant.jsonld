@@ -14,7 +14,7 @@
   "sc:name": "TEXT2SPARQL-Benchmark-GPTKB-Knowledge-Graph",
   "sc:description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads.",
   "sc:license": "https://creativecommons.org/licenses/by/4.0/",
-  "sc:datePublished": "2025-01-01",
+  "sc:datePublished": "2026-05-07",
   "sc:version": "1.0",
   "sc:citation": "ref",
 
