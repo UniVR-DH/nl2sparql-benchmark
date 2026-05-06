@@ -445,35 +445,33 @@ else
     exit 1
 fi
 
-echo ""
-echo "============================================================"
-echo "  Done"
-echo "============================================================"
-echo ""
+# ============================================================
 # Create companion .graph files (small pointer files used by project tooling)
+# ============================================================
+echo ""
+echo "============================================================"
+echo "  Generating .graph files"
+echo "============================================================"
+
 VOCAB_GRAPH="$OUTPUT_DIR/$PREFIX-vocab.graph"
 INSTANCES_GRAPH="$OUTPUT_DIR/$PREFIX-instances.graph"
 
-# Try to derive base URIs from the prefixes file; fall back to sensible defaults
+# Derive gptkb: prefix URI: prefer SOURCE_TTL (reflects actual data),
+# fall back to the known stable GPTKB base.
 GPTKB_PREFIX_URI=""
-if [ -f "$PREFIXES_OUT" ]; then
-    GPTKB_PREFIX_URI=$(grep '^@prefix gptkb:' "$PREFIXES_OUT" \
+if [ -f "$SOURCE_TTL" ]; then
+    GPTKB_PREFIX_URI=$(grep '^@prefix gptkb:' "$SOURCE_TTL" \
         | sed -n "s/^@prefix gptkb:[[:space:]]*<\(.*\)>[[:space:]]*\..*/\1/p" || true)
 fi
+: "${GPTKB_PREFIX_URI:=https://gptkb.org/entity/}"
 
-if [ -n "$GPTKB_PREFIX_URI" ]; then
-    # If prefix ends with /entity/ replace with /vocab/ and / (instances base)
-    VOCAB_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/vocab/#; t; s#/$#/vocab/#; s#$#/vocab/#')
-    INST_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/#; t; s#/$#/#; s#$#/#')
-else
-    # Fallbacks
-    VOCAB_URI="https://$PREFIX/vocab/"
-    INST_URI="https://$PREFIX/"
-    echo "WARNING: could not derive gptkb: prefix from $PREFIXES_OUT; using fallback URIs: $VOCAB_URI $INST_URI" >&2
-fi
+VOCAB_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/vocab/#')
+INST_URI=$(echo "$GPTKB_PREFIX_URI"  | sed -E 's#(/entity/?)$#/#')
 
 echo "$VOCAB_URI" > "$VOCAB_GRAPH"
-echo "$INST_URI" > "$INSTANCES_GRAPH"
+echo "$INST_URI"  > "$INSTANCES_GRAPH"
+echo "  Written: $VOCAB_GRAPH ($VOCAB_URI)"
+echo "  Written: $INSTANCES_GRAPH ($INST_URI)"
 
 ls -lh "$VOCAB_OUT" "$INSTANCES_OUT" \
        "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt" \
@@ -489,3 +487,9 @@ if [ -s "$TMPDIR_WORK/predicates_both.txt" ]; then
     echo "WARNING: $(wc -l < "$TMPDIR_WORK/predicates_both.txt") predicates appear as both DatatypeProperty and ObjectProperty"
     echo "Check $OUTPUT_DIR/$PREFIX-predicates_both.txt for manual review"
 fi
+
+echo ""
+echo "============================================================"
+echo "  Done"
+echo "============================================================"
+echo ""
