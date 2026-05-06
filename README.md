@@ -72,15 +72,12 @@ awk '$2 == "<https://gptkb.org/prop/instanceOf>"' "${VERSION}.nt" \
   > "${VERSION}_types.nt"
 
 # Run the extractor (this writes outputs into graphs/gptkb)
-# extract.sh requires `riot` on the host PATH to convert NT → TTL.
-# If riot is not installed locally, use the same Docker image:
-#   alias riot='docker run --rm -v "$PWD":/data -w /data stain/jena:5.1.0 riot'
 bash ../../scripts/extract.sh "${VERSION}.nt" "${VERSION}_types.nt" "./" "${VERSION}.ttl" "${VERSION}"
 ```
 
 > Notes:
 > The extractor produces NT and TTL vocab/instances files plus predicate lists. The predicate lists are generated for inspection and manual review.
-> `riot` must be available on the host PATH for the TTL conversion step. Install [Apache Jena](https://jena.apache.org/download/) or use the Docker alias shown above.
+> Companion `.graph` files (containing the named graph IRI `http://gptkb.org/`) are written only if they do not already exist, so manually curated graph IRIs are preserved across re-runs.
 
 
 

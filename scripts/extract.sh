@@ -33,6 +33,8 @@
 #   Defaults to gptkb_v1.5.3.ttl if the file exists, skipped if not.
 #
 #   PREFIX is optional — overrides the default stem derived from main.nt.
+#
+# Requires: docker (used to run Apache Jena riot for NT → TTL conversion)
 # ============================================================
 export LC_ALL=C
 set -euo pipefail
@@ -428,22 +430,14 @@ fi
 
 echo "  Prefixes: $(grep -c '^@prefix' "$PREFIXES_OUT")"
 
-if command -v riot &> /dev/null; then
-    echo "  Converting $VOCAB_OUT → $VOCAB_TTL ..."
-    cat "$PREFIXES_OUT" "$VOCAB_OUT" | riot --output=turtle --syntax=turtle > "$VOCAB_TTL"
+echo "  Converting $VOCAB_OUT → $VOCAB_TTL ..."
+cat "$PREFIXES_OUT" "$VOCAB_OUT" | docker run --rm --platform=linux/amd64 -i stain/jena:5.1.0 riot --output=turtle --syntax=turtle > "$VOCAB_TTL"
 
-    echo "  Converting $INSTANCES_OUT → $INSTANCES_TTL ..."
-    cat "$PREFIXES_OUT" "$INSTANCES_OUT" | riot --output=turtle --syntax=turtle > "$INSTANCES_TTL"
+echo "  Converting $INSTANCES_OUT → $INSTANCES_TTL ..."
+cat "$PREFIXES_OUT" "$INSTANCES_OUT" | docker run --rm --platform=linux/amd64 -i stain/jena:5.1.0 riot --output=turtle --syntax=turtle > "$INSTANCES_TTL"
 
-    echo "  Written: $VOCAB_TTL"
-    echo "  Written: $INSTANCES_TTL"
-else
-    echo "  ERROR: riot not found - cannot convert to TTL"
-    echo "  Install Apache Jena or use manual conversion:"
-    echo "    cat $PREFIXES_OUT $VOCAB_OUT | riot --output=turtle --syntax=turtle > $VOCAB_TTL"
-    echo "    cat $PREFIXES_OUT $INSTANCES_OUT | riot --output=turtle --syntax=turtle > $INSTANCES_TTL"
-    exit 1
-fi
+echo "  Written: $VOCAB_TTL"
+echo "  Written: $INSTANCES_TTL"
 
 # ============================================================
 # Create companion .graph files (small pointer files used by project tooling)
@@ -456,26 +450,20 @@ echo "============================================================"
 VOCAB_GRAPH="$OUTPUT_DIR/$PREFIX-vocab.graph"
 INSTANCES_GRAPH="$OUTPUT_DIR/$PREFIX-instances.graph"
 
-# Derive gptkb: prefix URI: prefer SOURCE_TTL (reflects actual data),
-# fall back to the known stable GPTKB base.
-GPTKB_PREFIX_URI=""
-if [ -f "$SOURCE_TTL" ]; then
-    GPTKB_PREFIX_URI=$(grep '^@prefix gptkb:' "$SOURCE_TTL" \
-        | sed -n "s/^@prefix gptkb:[[:space:]]*<\(.*\)>[[:space:]]*\..*/\1/p" \
-        | head -n 1 || true)
-fi
-if [ -z "$GPTKB_PREFIX_URI" ]; then
-    GPTKB_PREFIX_URI="https://gptkb.org/entity/"
-    echo "WARNING: could not extract gptkb: prefix from SOURCE_TTL; using fallback <$GPTKB_PREFIX_URI>" >&2
-fi
+# Graph IRIs for GPTKB: both vocab and instance data live under http://gptkb.org/
+VOCAB_URI="http://gptkb.org/"
+INST_URI="http://gptkb.org/"
 
-VOCAB_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/vocab/#')
-INST_URI=$(echo "$GPTKB_PREFIX_URI"  | sed -E 's#(/entity/?)$#/#')
-
-echo "$VOCAB_URI" > "$VOCAB_GRAPH"
-echo "$INST_URI"  > "$INSTANCES_GRAPH"
-echo "  Written: $VOCAB_GRAPH ($VOCAB_URI)"
-echo "  Written: $INSTANCES_GRAPH ($INST_URI)"
+for graph_file in "$VOCAB_GRAPH" "$INSTANCES_GRAPH"; do
+    if [ -f "$graph_file" ]; then
+        echo "  Skipped (already exists): $graph_file"
+    else
+        uri="$VOCAB_URI"
+        [ "$graph_file" = "$INSTANCES_GRAPH" ] && uri="$INST_URI"
+        echo "$uri" > "$graph_file"
+        echo "  Written: $graph_file ($uri)"
+    fi
+done
 
 ls -lh "$VOCAB_OUT" "$INSTANCES_OUT" \
        "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt" \
