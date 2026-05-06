@@ -1,0 +1,2 @@
+# GPTKB vocab TTL files are tracked via Git LFS (large but versioned)
+graphs/gptkb/*-vocab.ttl filter=lfs diff=lfs merge=lfs -text

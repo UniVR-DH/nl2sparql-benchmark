@@ -9,13 +9,13 @@ by NL question type using an OWL ontology.
 
 ```bash
 cd scripts/sparql-annotator
-uv venv .venv && uv pip install -e .
+uv sync          # create .venv and install all dependencies
 
 # With optional Graphviz rendering support
-uv pip install -e ".[viz]"
+uv sync --extra viz
 
 # With dev tools (pytest, ruff)
-uv pip install -e . pytest ruff
+uv sync --dev
 ```
 
 All CLI examples below assume you are at the **repository root**.
@@ -130,6 +130,58 @@ The algebra tree nodes are colour-coded by type (BGP=green, Filter=yellow, LeftJ
 
 ---
 
+### `report` — dataset-level analysis reports
+
+Classifies all queries in a file, detects antipatterns, and writes multiple CSV and/or
+LaTeX report files to an output directory.
+
+```bash
+# CSV only (default)
+$SA report \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --ontology   graphs/qa-types.ttl \
+  --output-dir .temp/reports \
+  --prefix     ck25
+
+# CSV + LaTeX
+$SA report \
+  --query-file graphs/ck25/ck25-queries.ttl \
+  --ontology   graphs/qa-types.ttl \
+  --output-dir .temp/reports \
+  --prefix     ck25 \
+  --format     csv,latex
+```
+
+**Options:**
+
+| Flag | Description |
+|---|---|
+| `--query-file` | LSQ Turtle file containing `lsqv:Query` resources (required) |
+| `--ontology` | `qa-types.ttl` ontology file (required) |
+| `--output-dir` | Directory for output files — created if missing (required) |
+| `--prefix` | Filename prefix for all output files (default: `report`) |
+| `--format` | Output format(s): `csv`, `latex`, or `csv,latex` (default: `csv`) |
+
+**Output files** (all prefixed with `<prefix>_`):
+
+| File | Content |
+|---|---|
+| `features.csv` | LSQ feature presence matrix (one row per query, one column per feature) |
+| `operators.csv` | SPARQL operator presence matrix + `query_form` + `filter_functions` |
+| `question_types.csv` | Classification status and assigned `qat:*` types per query |
+| `antipatterns.csv` | AP01–AP09 flags + JSON messages per query |
+| `metrics.csv` | `bgp_count`, `triple_count`, `projected_var_count` per query |
+| `summary.csv` | Aggregate statistics (totals, averages, per-AP counts) |
+| `count_by_question_type.csv` | Frequency table: queries per question type |
+| `count_by_feature.csv` | Frequency table: queries per LSQ structural feature |
+| `count_by_operator.csv` | Frequency table: queries per SPARQL operator |
+
+LaTeX output (when `--format` includes `latex`): `features.tex`, `operators.tex`,
+`summary.tex`, `antipatterns.tex` — uses `xcolor` (with the `table` option for `\cellcolor`), `booktabs`, and `amssymb`; matrices are
+auto-transposed when the dataset has more than 20 queries.
+
+---
+
 ### `annotate` — generic operator annotation
 
 Annotates queries from TTL, CSV, or JSON files with `OperatorSet` fields.
@@ -214,7 +266,7 @@ clf = QuestionTypeClassifier(Path("graphs/qa-types.ttl"))
 # Classify all queries in a file
 results = clf.classify_queries_from_file(Path("graphs/ck25/ck25-queries.ttl"))
 
-for uri, (qtypes, features, label, warnings, counts) in results.items():
+for uri, (qtypes, features, label, warnings, counts, *_) in results.items():
     print(f"{uri.split('/')[-1]}: {qtypes}")
     print(f"  features: {sorted(features)}")
     print(f"  counts:   {counts}")
@@ -236,14 +288,16 @@ from sparql_annotator.algebra import (
 text = "SELECT ?s WHERE { ?s ?p ?o . FILTER(REGEX(STR(?s), 'foo')) }"
 ok, parsed, err = parse_query(text)
 
-# Generic operator extraction
-ops = extract_operators(text, parsed)
+# Translate once; pass alg= to avoid a second translateQuery on the mutated tree
+import rdflib.plugins.sparql.algebra as _a
+alg = _a.translateQuery(parsed)
+
+# Generic operator extraction — reuses the already-translated algebra
+ops = extract_operators(text, parsed, alg=alg)
 print(ops.filters)           # {"FILTER"}
 print(ops.filter_functions)  # {"REGEX", "STR"}
 
-# LSQ feature names (used by classifier)
-import rdflib.plugins.sparql.algebra as _a
-alg = _a.translateQuery(parsed)
+# LSQ feature names (used by classifier) — reuse the same alg
 feats = detect_lsq_features(alg.algebra, parsed)
 print(feats)  # {"Filter"}
 
@@ -340,8 +394,69 @@ when you need the spec-correct count.
 
 ```bash
 cd scripts/sparql-annotator
-uv run pytest              # run tests (158 tests)
+uv run pytest              # run tests (185 tests)
 uv run pytest -x -q        # stop on first failure
 uv run ruff check .        # lint
 uv run ruff format .       # format
+```
+
+### Architectural decisions and guidelines
+
+#### rdflib parse-tree mutation
+
+`rdflib.plugins.sparql.algebra.translateQuery(parsed)` **mutates the parse
+tree in-place**.  After it returns, the `parsed` object is no longer a valid
+input for a second `translateQuery` call — doing so produces silently wrong
+results (wrong query form, missing operators, etc.).
+
+Rules that follow from this:
+
+1. **Parse fresh for every independent translation.**  If two subsystems both
+   need to translate the same query text, each must call `parseQuery` on its
+   own copy of the text.
+2. **Share the algebra, not the parse tree.**  When a single call site needs
+   both the algebra (for metrics / operator extraction) and the parse tree (for
+   HAVING detection), translate once and pass the resulting `alg` object to
+   every consumer.  `extract_operators(text, parsed, alg=alg)` supports this
+   pattern explicitly.
+3. **`detect_antipatterns` always re-parses.**  It calls `parseQuery` internally
+   and ignores any `parsed` argument for this reason.  Do not try to share a
+   parse tree with it.
+
+#### Single-parse pipeline
+
+`QuestionTypeClassifier.classify_queries_from_graph` is the single entry point
+for per-query SPARQL analysis.  It:
+
+- parses the query text once (`parseQuery`),
+- translates once (`translateQuery`),
+- passes `parsed` and `alg` to `extract_features` so feature extraction,
+  implied-feature detection, and count-annotation checks all reuse the same
+  algebra object without re-parsing,
+- computes metrics and extracts operators from the same `alg` object,
+- returns the `OperatorSet` as the 6th element of the result tuple.
+
+`ReportGenerator._collect` unpacks the `OperatorSet` directly from the
+classifier result and does **not** re-parse.  `detect_antipatterns` is called
+separately (it re-parses internally, which is unavoidable).
+
+If you add a new analysis step that needs the algebra, add it inside
+`classify_queries_from_graph` alongside the existing metrics/operator
+extraction — do not add a new `parseQuery` / `translateQuery` call in
+`_collect`, `extract_features`, or any downstream consumer.
+
+#### Classifier result tuple
+
+`classify_queries_from_graph` returns a dict mapping URI strings to 6-tuples:
+
+```
+(qtypes, features, label, warnings, counts, op_set)
+```
+
+Unpack with `*_` for any elements you do not need, so that adding a 7th
+element in the future does not break callers:
+
+```python
+for uri, (qtypes, features, label, warnings, counts, *_) in results.items():
+    ...
 ```

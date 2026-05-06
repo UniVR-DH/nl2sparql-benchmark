@@ -37,275 +37,275 @@
     rdfs:label "pv: Products - Vocab"@en ;
     owl:versionInfo "v0.0.1-37-g15bd45c-dirty" .
 
-pv:f79b36
+pv:951377
     a owl:Class ;
     rdfs:comment "Abstract base class for people, robots or other things that can act."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Agent"@en ;
     foaf:depiction <https://api.iconify.design/mdi/anonymous.svg?color=%23D6AF00&format=svg> .
 
-pv:93a553
+pv:337437
     a owl:Class ;
     rdfs:comment "The Bill of Material (BOM) of a complex product."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Bill of Material (BOM)"@en ;
     foaf:depiction <https://api.iconify.design/icon-park-outline/tree-list.svg?color=%23D6AF00&format=svg> .
 
-pv:13078c
+pv:599482
     a owl:Class ;
     rdfs:comment "A (number of) part(s) in a BOM."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "BOM Part"@en ;
     foaf:depiction <https://api.iconify.design/fluent/puzzle-cube-piece-20-filled.svg?color=%23D6AF00&format=svg> .
 
-pv:debd90
+pv:716806
     a owl:Class ;
     rdfs:comment "A department in an organization."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Department"@en ;
     foaf:depiction <https://api.iconify.design/arcticons/emoji-department-store.svg?color=%23D6AF00&format=svg> .
 
-pv:236555
+pv:235391
     a owl:Class ;
     rdfs:comment "An employee in my company."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Employee"@en ;
-    rdfs:subClassOf pv:f79b36 ;
+    rdfs:subClassOf pv:951377 ;
     foaf:depiction <https://api.iconify.design/clarity/employee-line.svg?color=%23D6AF00&format=svg> .
 
-pv:1b4d3f
+pv:592850
     a owl:Class ;
     rdfs:comment "The hardware products produced."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Hardware"@en ;
-    rdfs:subClassOf pv:217433 ;
+    rdfs:subClassOf pv:558616 ;
     foaf:depiction <https://api.iconify.design/ion/hardware-chip-outline.svg?color=%23D6AF00&format=svg> .
 
-pv:c10983
+pv:530933
     a owl:Class ;
     rdfs:comment "An employee with some direct reports and management duties."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Manager"@en ;
-    rdfs:subClassOf pv:236555 ;
+    rdfs:subClassOf pv:235391 ;
     foaf:depiction <https://api.iconify.design/hugeicons/manager.svg?color=%23D6AF00&format=svg> .
 
-pv:f66260
+pv:933733
     a owl:Class ;
     rdfs:comment "A price object to deal with multiple prices and/or currencies."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Price"@en ;
     foaf:depiction <https://api.iconify.design/solar/tag-price-bold.svg?color=%23D6AF00&format=svg> .
 
-pv:217433
+pv:558616
     a owl:Class ;
     rdfs:comment "Anything that we make and/or sell."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Product"@en ;
     foaf:depiction <https://api.iconify.design/ant-design/product-outlined.svg?color=%23D6AF00&format=svg> .
 
-pv:a13515
+pv:300880
     a owl:Class ;
     rdfs:comment "The category of a product."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Product Category"@en ;
     foaf:depiction <https://api.iconify.design/material-symbols-light/category-outline.svg?color=%23D6AF00&format=svg> .
 
-pv:979522
+pv:530512
     a owl:Class ;
     rdfs:comment "Some value added service realized based on other product(s)."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Service"@en ;
-    rdfs:subClassOf pv:217433 ;
+    rdfs:subClassOf pv:558616 ;
     foaf:depiction <https://api.iconify.design/mdi/account-service-outline.svg?color=%23D6AF00&format=svg> .
 
-pv:df4ad3
+pv:173093
     a owl:Class ;
     rdfs:comment "The Supplier of some item(s)."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "Supplier"@en ;
     foaf:depiction <https://api.iconify.design/mdi/company.svg?color=%23D6AF00&format=svg> .
 
-pv:2f6a8b
+pv:187270
     a owl:DatatypeProperty ;
     rdfs:comment "The address country."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "address country"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:ea7446
+pv:840277
     a owl:DatatypeProperty ;
     rdfs:comment "The address country code."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "address country code"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:be2fdb
+pv:984350
     a owl:DatatypeProperty ;
     rdfs:comment "The address locality (city)."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "address locality"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:f0bcfd
+pv:953290
     a owl:DatatypeProperty ;
     rdfs:comment "The address text."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "address text"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:af5cae
+pv:261910
     a owl:DatatypeProperty ;
     rdfs:comment "The amount."@en ;
-    rdfs:domain pv:f66260 ;
+    rdfs:domain pv:933733 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "amount"@en ;
     rdfs:range xsd:decimal ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:76f55e
+pv:050057
     a owl:ObjectProperty ;
     rdfs:comment "The product category agent is expert for."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "area of expertise"@en ;
-    rdfs:range pv:a13515 ;
+    rdfs:range pv:300880 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:a6d551
+pv:980975
     a owl:ObjectProperty ;
     rdfs:comment "A compatible product."@en ;
-    rdfs:domain pv:217433 ;
+    rdfs:domain pv:558616 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "compatible product"@en ;
-    rdfs:range pv:217433 ;
+    rdfs:range pv:558616 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:14d94c
+pv:347609
     a owl:ObjectProperty ;
     rdfs:comment "The country where the supplier is located."@en ;
-    rdfs:domain pv:df4ad3 ;
+    rdfs:domain pv:173093 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "country"@en ;
     rdfs:range <http://dbpedia.org/ontology/Country> ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:d7f276
+pv:020472
     a owl:DatatypeProperty ;
     rdfs:comment "The currency."@en ;
-    rdfs:domain pv:f66260 ;
+    rdfs:domain pv:933733 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "currency"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:807b0b
+pv:328410
     a owl:DatatypeProperty ;
     rdfs:comment "The depth of an item measured in millimeter."@en ;
-    rdfs:domain pv:1b4d3f ;
+    rdfs:domain pv:592850 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "depth (mm)"@en ;
     rdfs:range xsd:decimal ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:798bd6
+pv:944906
     a owl:ObjectProperty ;
     rdfs:comment "Valid product service combinations (bundles, accessories)."@en ;
-    rdfs:domain pv:979522 ;
+    rdfs:domain pv:530512 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "eligible for"@en ;
-    rdfs:range pv:217433 ;
+    rdfs:range pv:558616 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:e1dbec
+pv:681037
     a owl:DatatypeProperty ;
     rdfs:comment "The e-mail of an agent."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "email"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:0607c7
+pv:427858
     a owl:ObjectProperty ;
     rdfs:comment "A part(s) used in this BOM."@en ;
-    rdfs:domain pv:93a553 ;
+    rdfs:domain pv:337437 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "has BOM Part"@en ;
-    rdfs:range pv:13078c ;
+    rdfs:range pv:599482 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:5e848e
+pv:426669
     a owl:ObjectProperty ;
     rdfs:comment "The category name of a product."@en ;
-    rdfs:domain pv:217433 ;
+    rdfs:domain pv:558616 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "has category"@en ;
-    rdfs:range pv:a13515 ;
+    rdfs:range pv:300880 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:a54872
+pv:313514
     a owl:ObjectProperty ;
     rdfs:comment "The employees manager she is reporting to."@en ;
-    rdfs:domain pv:c10983 ;
+    rdfs:domain pv:530933 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "has direct report"@en ;
-    rdfs:range pv:236555 ;
+    rdfs:range pv:235391 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:f6909e
+pv:897919
     a owl:ObjectProperty ;
     rdfs:comment "The manager of the employee."@en ;
-    rdfs:domain pv:236555 ;
+    rdfs:domain pv:235391 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "has manager"@en ;
-    rdfs:range pv:c10983 ;
+    rdfs:range pv:530933 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:d25624
+pv:343130
     a owl:ObjectProperty ;
     rdfs:comment "The Product needed."@en ;
-    rdfs:domain pv:13078c ;
+    rdfs:domain pv:599482 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "part"@en ;
-    rdfs:range pv:217433 ;
+    rdfs:range pv:558616 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:d55029
+pv:760454
     a owl:ObjectProperty ;
     rdfs:comment "The employee acting as the product manager of the product."@en ;
-    rdfs:domain pv:217433 ;
+    rdfs:domain pv:558616 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "has product manager"@en ;
-    rdfs:range pv:236555 ;
+    rdfs:range pv:235391 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:1bade2
+pv:238286
     a owl:ObjectProperty ;
     rdfs:comment "The supplier of a product."@en ;
-    rdfs:domain pv:217433 ;
+    rdfs:domain pv:558616 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "supplier"@en ;
-    rdfs:range pv:df4ad3 ;
+    rdfs:range pv:173093 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:9eefc0
+pv:580393
     a owl:DatatypeProperty ;
     rdfs:comment "The height of an item measured in millimeter."@en ;
-    rdfs:domain pv:1b4d3f ;
+    rdfs:domain pv:592850 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "height (mm)"@en ;
     rdfs:range xsd:decimal ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:ac9b7e
+pv:869502
     a owl:DatatypeProperty ;
     rdfs:comment "The ID of a thing."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
@@ -313,16 +313,16 @@ pv:ac9b7e
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:8c4b73
+pv:973576
     a owl:ObjectProperty ;
     rdfs:comment "The department to which an agents belongs."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "member of"@en ;
-    rdfs:range pv:debd90 ;
+    rdfs:range pv:716806 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:704fde
+pv:095940
     a owl:DatatypeProperty ;
     rdfs:comment "The name of something."@en ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
@@ -330,64 +330,64 @@ pv:704fde
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:caf9e1
+pv:553857
     a owl:DatatypeProperty ;
     rdfs:comment "A phone number."@en ;
-    rdfs:domain pv:f79b36 ;
+    rdfs:domain pv:951377 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "phone number"@en ;
     rdfs:range xsd:string ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:e462e7
+pv:310044
     a owl:ObjectProperty ;
     rdfs:comment "The price specification of a product."@en ;
-    rdfs:domain pv:217433 ;
+    rdfs:domain pv:558616 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "price"@en ;
-    rdfs:range pv:f66260 ;
+    rdfs:range pv:933733 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:e90f57
+pv:054052
     a owl:DatatypeProperty ;
     rdfs:comment "The quantity needed."@en ;
-    rdfs:domain pv:13078c ;
+    rdfs:domain pv:599482 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "quantity"@en ;
     rdfs:range xsd:decimal ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:7a26d1
+pv:544420
     a owl:DatatypeProperty ;
     rdfs:comment "A computed KPI to have an reliablity indicator in the context of a supply chain."@en ;
-    rdfs:domain pv:1b4d3f ;
+    rdfs:domain pv:592850 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "has reliability index"@en ;
     rdfs:range xsd:decimal ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:cd5184
+pv:423093
     a owl:ObjectProperty ;
     rdfs:comment "The product for which a department is responsible."@en ;
-    rdfs:domain pv:debd90 ;
+    rdfs:domain pv:716806 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "responsible for"@en ;
-    rdfs:range pv:217433 ;
+    rdfs:range pv:558616 ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
-pv:c4bb1c
+pv:749841
     a owl:DatatypeProperty ;
     rdfs:comment "The weight of an item measured in grams."@en ;
-    rdfs:domain pv:1b4d3f ;
+    rdfs:domain pv:592850 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "weight (g)"@en ;
     rdfs:range xsd:decimal ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%2339AB4B&format=svg> .
 
-pv:4811a9
+pv:036775
     a owl:DatatypeProperty ;
     rdfs:comment "The width of an item measured in millimeter."@en ;
-    rdfs:domain pv:1b4d3f ;
+    rdfs:domain pv:592850 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "width (mm)"@en ;
     rdfs:range xsd:decimal ;

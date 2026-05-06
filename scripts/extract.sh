@@ -1,322 +1,465 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ============================================================
+# extract.sh
+#
+# Single script that classifies predicates and generates
+# vocab + instances files for GPTKB.
+#
+# Input files:
+#   gptkb_v1.5.3.nt        — full NT (rapper-generated, clean)
+#   gptkb_v1.5.3_types.nt  — instanceOf triples rewritten as rdf:type
+#                            (produced with:
+#                              awk '$2 == "<https://gptkb.org/prop/instanceOf>"' gptkb_v1.5.3.nt \
+#                              | sed 's|<https://gptkb.org/prop/instanceOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|' \
+#                              > gptkb_v1.5.3_types.nt)
+#   gptkb_v1.5.3.ttl       — original TTL, used only to extract @prefix lines (optional)
+#
+# Output files (PREFIX defaults to the stem of the first input file,
+#               e.g. "gptkb_v1.5.3" from "gptkb_v1.5.3.nt"):
+#   graphs/gptkb/<PREFIX>-vocab.nt
+#   graphs/gptkb/<PREFIX>-instances.nt
+#   graphs/gptkb/<PREFIX>-predicates_datatype.txt
+#   graphs/gptkb/<PREFIX>-predicates_object.txt
+#   graphs/gptkb/<PREFIX>-predicates_both.txt
+#   graphs/gptkb/<PREFIX>-prefixes.ttl
+#   graphs/gptkb/<PREFIX>-vocab.ttl
+#   graphs/gptkb/<PREFIX>-instances.ttl
+#
+# Usage:
+#   bash extract.sh [main.nt] [types.nt] [output_dir] [source.ttl] [PREFIX]
+#
+#   source.ttl is optional — if provided, @prefix declarations are
+#   extracted from it and used to convert the NT outputs to TTL.
+#   Defaults to gptkb_v1.5.3.ttl if the file exists, skipped if not.
+#
+#   PREFIX is optional — overrides the default stem derived from main.nt.
+# ============================================================
+export LC_ALL=C
 set -euo pipefail
 
-# GPTKB splitter - uses Virtuoso for metadata and two local inputs for splitting.
-# Usage:
-#   ./scripts/extract.sh [raw.nt] [output_dir]
-#   ./scripts/extract.sh [raw.nt] [types.nt] [output_dir]
+NT_MAIN="${1:-gptkb_v1.5.3.nt}"
+NT_TYPES="${2:-gptkb_v1.5.3_types.nt}"
+OUTPUT_DIR="${3:-graphs/gptkb}"
+SOURCE_TTL="${4:-gptkb_v1.5.3.ttl}"
+PREFIX="${5:-$(basename "${NT_MAIN%.*}")}"
 
-INPUT="${1:-gptkb_v1.5.3.nt}"
+VOCAB_OUT="$OUTPUT_DIR/$PREFIX-vocab.nt"
+INSTANCES_OUT="$OUTPUT_DIR/$PREFIX-instances.nt"
 
-if [ "$#" -eq 2 ]; then
-  TYPES_INPUT="gptkb_v1.5.3_types.nt"
-  OUTPUT_DIR="$2"
-else
-  TYPES_INPUT="${2:-gptkb_v1.5.3_types.nt}"
-  OUTPUT_DIR="${3:-graphs/gptkb}"
-fi
+TMPDIR_WORK="${TMPDIR:-/tmp}/gptkb_extract_$$"
+mkdir -p "$OUTPUT_DIR" "$TMPDIR_WORK"
+trap 'rm -rf "$TMPDIR_WORK"' EXIT
 
-WORKDIR="${OUTPUT_DIR}/.split_tmp"
+for f in "$NT_MAIN" "$NT_TYPES"; do
+    [ -f "$f" ] || { echo "ERROR: Input file not found: $f"; exit 1; }
+done
 
-SPARQL_ENDPOINT="http://157.27.26.146:8890/sparql"
-GRAPH="https://www.gptkb.org/"
-
-INSTANCEOF="<https://gptkb.org/prop/instanceOf>"
+# ── URI constants ─────────────────────
 RDF_TYPE="<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-RDFS_SUBCLASSOF="<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
 RDFS_LABEL="<http://www.w3.org/2000/01/rdf-schema#label>"
-RDFS_DOMAIN="<http://www.w3.org/2000/01/rdf-schema#domain>"
-RDFS_RANGE="<http://www.w3.org/2000/01/rdf-schema#range>"
+RDFS_COMMENT="<http://www.w3.org/2000/01/rdf-schema#comment>"
+RDFS_SUBCLASSOF="<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
+# rdfs:domain and rdfs:range are reserved for future use; add them here
+# and to is_schema_pred in the awk pass below when ready to implement.
 OWL_CLASS="<http://www.w3.org/2002/07/owl#Class>"
-OWL_OBJECT_PROPERTY="<http://www.w3.org/2002/07/owl#ObjectProperty>"
-OWL_DATATYPE_PROPERTY="<http://www.w3.org/2002/07/owl#DatatypeProperty>"
-OWL_ANNOTATION_PROPERTY="<http://www.w3.org/2002/07/owl#AnnotationProperty>"
-OWL_ONTOLOGY="<http://www.w3.org/2002/07/owl#Ontology>"
-RDFS_CLASS="<http://www.w3.org/2000/01/rdf-schema#Class>"
-RDF_PROPERTY="<http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>"
+OWL_DTYPE="<http://www.w3.org/2002/07/owl#DatatypeProperty>"
+OWL_OBJ="<http://www.w3.org/2002/07/owl#ObjectProperty>"
 
-PREFIX="https://gptkb.org/entity/"
-PROP_PREFIX="https://gptkb.org/prop/"
+PROP_PREFIX="<https://gptkb.org/prop/"
+ENTITY_PREFIX="<https://gptkb.org/entity/"
 
-VOCAB_OUT="${OUTPUT_DIR}/gptkb-data-vocab.ttl"
-INST_OUT="${OUTPUT_DIR}/gptkb-data-instances.ttl"
+# ============================================================
+# SINGLE PASS over NT_MAIN
+#
+# In one streaming read we collect everything we need:
+#   (a) predicate classification   → pred_kind_pairs.txt
+#   (b) prop-subject triples       → prop_triples.nt        (vocab)
+#   (c) entity schema triples      → entity_schema.nt       (vocab)
+#       predicates: rdf:type, rdfs:subClassOf, rdfs:label, rdfs:comment
+#       (rdfs:domain and rdfs:range reserved for future use)
+#   (d) class IRIs from subClassOf → subclassof_classes.txt (vocab)
+#       both subject and object of every rdfs:subClassOf triple
+#   (e) entity instance triples    → entity_triples.nt      (instances)
+#       all entity-subject triples whose predicate is NOT one of
+#       the schema predicates listed above
+#
+# ============================================================
+echo "============================================================"
+echo "  Single pass over $NT_MAIN"
+echo "============================================================"
 
-CLASS_IRIS_CSV="${WORKDIR}/classes_iris.csv"
-PREDICATES_IRIS_CSV="${WORKDIR}/predicates_iris.csv"
-CLASS_DEFINITIONS_CSV="${WORKDIR}/class_definitions.csv"
-TOP_PREDICATES_CSV="${WORKDIR}/top_predicates.csv"
-
-PREFIX_HEADER="@prefix gptkb: <${PREFIX}> .
-@prefix gptkbp: <${PROP_PREFIX}> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> ."
-
-if [ ! -f "$INPUT" ]; then
-  echo "Input file not found: $INPUT"
-  exit 1
-fi
-
-if [ ! -f "$TYPES_INPUT" ]; then
-  echo "Types file not found: $TYPES_INPUT"
-  exit 1
-fi
-
-mkdir -p "$OUTPUT_DIR" "$WORKDIR"
-
-sparql_query() {
-  local query="$1"
-  local format="$2"
-  local out_file="$3"
-  curl -sS "$SPARQL_ENDPOINT" \
-    --data-urlencode "query=$query" \
-    --data-urlencode "default-graph-uri=$GRAPH" \
-    --data "format=$format" > "$out_file"
+# Note: rdfs:domain and rdfs:range are intentionally omitted from
+# the -v list and from is_schema_pred; add both when ready.
+awk \
+    -v prop_prefix="$PROP_PREFIX" \
+    -v entity_prefix="$ENTITY_PREFIX" \
+    -v rdf_type_uri="$RDF_TYPE" \
+    -v rdfs_label_uri="$RDFS_LABEL" \
+    -v rdfs_comment_uri="$RDFS_COMMENT" \
+    -v rdfs_subclassof="$RDFS_SUBCLASSOF" \
+    -v pred_out="$TMPDIR_WORK/pred_kind_pairs.txt" \
+    -v prop_out="$TMPDIR_WORK/prop_triples.nt" \
+    -v schema_out="$TMPDIR_WORK/entity_schema.nt" \
+    -v subclasses_out="$TMPDIR_WORK/subclassof_classes.txt" \
+    -v ent_out="$TMPDIR_WORK/entity_triples.nt" \
+'
+BEGIN {
+    print "" > pred_out;       close(pred_out)
+    print "" > prop_out;       close(prop_out)
+    print "" > schema_out;     close(schema_out)
+    print "" > subclasses_out; close(subclasses_out)
+    print "" > ent_out;        close(ent_out)
 }
 
-echo "=========================================="
-echo "GPTKB Splitter"
-echo "=========================================="
-echo "Input:           $INPUT"
-echo "Types input:     $TYPES_INPUT"
-echo "SPARQL endpoint: $SPARQL_ENDPOINT"
-echo "Output dir:      $OUTPUT_DIR"
+/^[[:space:]]*#/ { next }
+/^[[:space:]]*$/ { next }
 
-echo ""
-echo "Step 1: Querying class IRIs from Virtuoso..."
-sparql_query "
-  SELECT DISTINCT ?class WHERE {
-    ?instance ${INSTANCEOF} ?class .
-    FILTER(isIRI(?class))
-  }
-" "text/csv" "$CLASS_IRIS_CSV"
-echo "  Class IRIs: $(tail -n +2 "$CLASS_IRIS_CSV" | wc -l)"
+{
+    line = $0
 
-echo ""
-echo "Step 2: Querying predicate IRIs from Virtuoso..."
-sparql_query "
-  SELECT DISTINCT ?p WHERE {
-    ?s ?p ?o .
-    FILTER(isIRI(?p))
-  }
-" "text/csv" "$PREDICATES_IRIS_CSV"
-echo "  Predicate IRIs: $(tail -n +2 "$PREDICATES_IRIS_CSV" | wc -l)"
+    # ── subject ──────────────────────────────────────────────
+    match(line, /^[[:space:]]*(<[^>]*>|_:[^[:space:]]*)/)
+    subj = substr(line, RSTART, RLENGTH)
+    rest = substr(line, RSTART + RLENGTH)
+    sub(/^[[:space:]]+/, "", rest)
 
-echo ""
-echo "Step 3: Querying class definitions from Virtuoso..."
-sparql_query "
-  PREFIX gptkbp: <${PROP_PREFIX}>
-  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-  SELECT DISTINCT ?class ?label WHERE {
-    ?instance gptkbp:instanceOf ?class .
-    OPTIONAL { ?class rdfs:label ?label }
-    FILTER(isIRI(?class))
-  }
-" "text/csv" "$CLASS_DEFINITIONS_CSV"
-echo "  Class definitions: $(tail -n +2 "$CLASS_DEFINITIONS_CSV" | wc -l)"
+    # ── predicate ────────────────────────────────────────────
+    match(rest, /^(<[^>]*>|_:[^[:space:]]*)/)
+    pred = substr(rest, RSTART, RLENGTH)
+    rest2 = substr(rest, RSTART + RLENGTH)
+    sub(/^[[:space:]]+/, "", rest2)
 
-echo ""
-echo "Step 4: Querying top predicates from Virtuoso..."
-sparql_query "
-  SELECT ?p (COUNT(*) AS ?count) WHERE {
-    ?s ?p ?o .
-    FILTER(?p != <https://gptkb.org/prop/instanceOf>)
-  }
-  GROUP BY ?p
-  HAVING (COUNT(*) > 1000)
-  ORDER BY DESC(?count)
-" "text/csv" "$TOP_PREDICATES_CSV"
-echo "  Top predicates: $(tail -n +2 "$TOP_PREDICATES_CSV" | wc -l)"
-
-echo ""
-echo "Step 5: Discovering classes and properties from local files..."
-rm -f "$WORKDIR/classes_raw.txt" "$WORKDIR/properties_raw.txt" "$WORKDIR/instances_raw.txt"
-
-awk \
-  -v rdfType="$RDF_TYPE" \
-  -v rdfsDomain="$RDFS_DOMAIN" \
-  -v rdfsRange="$RDFS_RANGE" \
-  -v owlClass="$OWL_CLASS" \
-  -v rdfsClass="$RDFS_CLASS" \
-  -v rdfProperty="$RDF_PROPERTY" \
-  -v owlObjProp="$OWL_OBJECT_PROPERTY" \
-  -v owlDataProp="$OWL_DATATYPE_PROPERTY" \
-  -v owlAnnProp="$OWL_ANNOTATION_PROPERTY" \
-  -v owlOntology="$OWL_ONTOLOGY" \
-  -v instances_file="$WORKDIR/instances_raw.txt" \
-  -v classes_file="$WORKDIR/classes_raw.txt" '
-  {
-    gsub(/\r/, "", $0)
-    s = $1
-    p = $2
-    o = $3
-
-    if (p == rdfType) {
-      print s >> instances_file
-      print o >> classes_file
-    }
-    if (p == rdfType && (o == owlClass || o == rdfsClass || o == owlOntology)) {
-      print s >> classes_file
-    }
-  }
-' "$TYPES_INPUT"
-
-awk \
-  -v rdfType="$RDF_TYPE" \
-  -v rdfsDomain="$RDFS_DOMAIN" \
-  -v rdfsRange="$RDFS_RANGE" \
-  -v rdfProperty="$RDF_PROPERTY" \
-  -v owlObjProp="$OWL_OBJECT_PROPERTY" \
-  -v owlDataProp="$OWL_DATATYPE_PROPERTY" \
-  -v owlAnnProp="$OWL_ANNOTATION_PROPERTY" \
-  -v properties_file="$WORKDIR/properties_raw.txt" '
-  {
-    p = $2
-    o = $3
-
-    if (p == rdfType && (o == rdfProperty || o == owlObjProp || o == owlDataProp || o == owlAnnProp)) {
-      print $1 >> properties_file
-    }
-    if (p == rdfsDomain || p == rdfsRange) {
-      print $1 >> properties_file
-    }
-  }
-' "$INPUT"
-
-# If local schema declarations are sparse, seed property IRIs from endpoint stats.
-tail -n +2 "$TOP_PREDICATES_CSV" | sed 's/"//g' | awk -F',' '{
-  if ($1 ~ /^https?:\/\//) {
-    printf "<%s>\n", $1
-  }
-}' >> "$WORKDIR/properties_raw.txt"
-
-sort -u "$WORKDIR/classes_raw.txt" > "$WORKDIR/classes.txt" 2>/dev/null || :
-sort -u "$WORKDIR/properties_raw.txt" > "$WORKDIR/properties.txt" 2>/dev/null || :
-sort -u "$WORKDIR/instances_raw.txt" > "$WORKDIR/instances.txt" 2>/dev/null || :
-
-echo "  Classes:    $(wc -l < "$WORKDIR/classes.txt" 2>/dev/null || echo 0)"
-echo "  Properties: $(wc -l < "$WORKDIR/properties.txt" 2>/dev/null || echo 0)"
-echo "  Instances:  $(wc -l < "$WORKDIR/instances.txt" 2>/dev/null || echo 0)"
-
-echo ""
-echo "Step 6: Splitting triples into vocab and instances..."
-echo "  This step can take several minutes on 100M+ triples."
-rm -f "$WORKDIR/vocab_raw.nt" "$WORKDIR/inst_raw.nt"
-
-awk \
-  -v classesFile="$WORKDIR/classes.txt" \
-  -v propertiesFile="$WORKDIR/properties.txt" \
-  -v vocabOut="$WORKDIR/vocab_raw.nt" \
-  -v instOut="$WORKDIR/inst_raw.nt" \
-  -v rdfType="$RDF_TYPE" \
-  -v rdfsSubClassOf="$RDFS_SUBCLASSOF" \
-  -v rdfsLabel="$RDFS_LABEL" \
-  -v rdfsDomain="$RDFS_DOMAIN" \
-  -v rdfsRange="$RDFS_RANGE" '
-  function is_schema_pred(p) {
-    return (p == rdfType || p == rdfsSubClassOf || p == rdfsLabel || p == rdfsDomain || p == rdfsRange)
-  }
-
-  BEGIN {
-    while ((getline c < classesFile) > 0) classes[c] = 1
-    close(classesFile)
-    while ((getline p < propertiesFile) > 0) properties[p] = 1
-    close(propertiesFile)
-  }
-
-  {
-    s = $1
-    p = $2
-    o = $3
-    is_vocab = 0
-
-    if (is_schema_pred(p)) is_vocab = 1
-    if (p == rdfType && (o in classes)) is_vocab = 1
-    if (s in classes || s in properties) is_vocab = 1
-
-    if (is_vocab) print >> vocabOut
-    else print >> instOut
-  }
-' "$INPUT"
-
-echo "  Vocab triples:    $(wc -l < "$WORKDIR/vocab_raw.nt")"
-echo "  Instance triples:  $(wc -l < "$WORKDIR/inst_raw.nt")"
-
-echo ""
-echo "Step 7: Generating vocab TTL..."
-(
-  echo "$PREFIX_HEADER"
-  echo ""
-  echo "# Ontology"
-  echo "<${PREFIX}>"
-  echo "  a owl:Ontology ;"
-  echo "  rdfs:label \"GPTKB Knowledge Graph Vocabulary\"@en ."
-  echo ""
-  echo "# Classes"
-  tail -n +2 "$CLASS_DEFINITIONS_CSV" | sed 's/"//g' | awk -F',' -v pp="$PREFIX" '{
-    class=$1
-    label=$2
-    sub(pp, "gptkb:", class)
-    if (label != "") {
-      printf "%s\n  a owl:Class ;\n  rdfs:label \"%s\"@en .\n\n", class, label
+    # ── predicate classification ──────────────────────────────
+    # Distinguish DatatypeProperty (literal) vs ObjectProperty (IRI)
+    first = substr(rest2, 1, 1)
+    if (first == "\"") {
+        key = pred "\tD"      # DatatypeProperty
+    } else if (first == "<" || first == "_") {
+        key = pred "\tO"      # ObjectProperty
     } else {
-      split(class, parts, ":")
-      printf "%s\n  a owl:Class ;\n  rdfs:label \"%s\"@en .\n\n", class, parts[2]
+        key = ""
     }
-  }'
-  echo "# Properties"
-  tail -n +2 "$TOP_PREDICATES_CSV" | sed 's/"//g' | awk -F',' -v pp="$PROP_PREFIX" '{
-    pred=$1
-    sub(pp, "gptkbp:", pred)
-    if (pred !~ /rdf-syntax-ns|rdf-schema/) {
-      printf "%s\n  a owl:ObjectProperty .\n\n", pred
+    if (key != "" && !(key in seen_pred)) {
+        seen_pred[key] = 1
+        print key >> pred_out
     }
-  }'
-) > "$VOCAB_OUT"
-echo "  Created $VOCAB_OUT: $(wc -l < "$VOCAB_OUT") lines"
+
+    # ── route triple to the right output file ────────────────
+    is_prop   = (index(subj, prop_prefix)   == 1)
+    is_entity = (index(subj, entity_prefix) == 1)
+
+    # Schema-level predicates: describe the vocabulary itself.
+    # rdfs:domain and rdfs:range are reserved for future addition here.
+    is_schema_pred = (pred == rdfs_subclassof || \
+                      pred == rdf_type_uri    || \
+                      pred == rdfs_label_uri  || \
+                      pred == rdfs_comment_uri)
+
+    if (is_prop) {
+        # All prop-subject triples go to vocab unchanged.
+        print line >> prop_out
+    } else if (is_entity) {
+        if (is_schema_pred) {
+            # Class annotations, subClassOf, etc. → vocab
+            print line >> schema_out
+            # Also harvest both endpoints of subClassOf so that
+            # classes appearing only here (never in the types file)
+            # still receive owl:Class + rdfs:label in the vocab.
+            if (pred == rdfs_subclassof) {
+                obj = $3
+                gsub(/[[:space:]]*\.[[:space:]]*$/, "", obj)
+                if (!(subj in seen_sc)) { seen_sc[subj] = 1; print subj >> subclasses_out }
+                if (!(obj  in seen_sc)) { seen_sc[obj]  = 1; print obj  >> subclasses_out }
+            }
+        } else {
+            # Everything else with an entity subject is instance data.
+            print line >> ent_out
+        }
+    }
+    # Triples with other subjects are silently ignored.
+}
+' "$NT_MAIN"
+
+echo "  Pass complete."
+
+# ============================================================
+# SINGLE PASS over NT_TYPES
+#
+# Collects:
+#   (f) unique class IRIs from rdf:type objects → type_classes.txt
+#   (g) entity rdf:type triples                 → type_triples.nt (instances)
+#
+# After this pass, classes.txt is assembled by merging type_classes.txt
+# with subclassof_classes.txt (harvested in the main pass), so that
+# classes present only in rdfs:subClassOf statements — but never
+# instantiated — still receive owl:Class + rdfs:label in the vocab.
+# ============================================================
+echo ""
+echo "============================================================"
+echo "  Single pass over $NT_TYPES"
+echo "============================================================"
+
+awk \
+    -v rdf_type="$RDF_TYPE" \
+    -v entity_prefix="$ENTITY_PREFIX" \
+    -v type_classes_out="$TMPDIR_WORK/type_classes.txt" \
+    -v types_out="$TMPDIR_WORK/type_triples.nt" \
+'
+BEGIN {
+    print "" > type_classes_out; close(type_classes_out)
+    print "" > types_out;        close(types_out)
+}
+/^[[:space:]]*#/ { next }
+/^[[:space:]]*$/ { next }
+{
+    # Only process rdf:type triples (all lines in this file should be,
+    # but guard anyway for safety)
+    if ($2 != rdf_type) next
+
+    subj = $1
+    obj  = $3
+    # strip trailing " ." if present
+    gsub(/[[:space:]]*\.[[:space:]]*$/, "", obj)
+
+    # entity-subject lines go to instances
+    if (index(subj, entity_prefix) == 1) {
+        print $0 >> types_out
+    }
+
+    # collect unique class IRIs (objects of rdf:type)
+    if (substr(obj, 1, 1) == "<" && !(obj in seen_class)) {
+        seen_class[obj] = 1
+        print obj >> type_classes_out
+    }
+}
+' "$NT_TYPES"
+
+# Merge class IRIs from both sources into a single deduplicated list.
+sort -u "$TMPDIR_WORK/type_classes.txt" "$TMPDIR_WORK/subclassof_classes.txt" \
+    > "$TMPDIR_WORK/classes.txt"
+
+echo "  Classes from rdf:type:        $(wc -l < "$TMPDIR_WORK/type_classes.txt")"
+echo "  Classes from rdfs:subClassOf: $(wc -l < "$TMPDIR_WORK/subclassof_classes.txt")"
+echo "  Total unique classes:         $(wc -l < "$TMPDIR_WORK/classes.txt")"
+
+# ============================================================
+# Aggregate predicate classification
+# ============================================================
+echo ""
+echo "============================================================"
+echo "  Classifying predicates"
+echo "============================================================"
+
+sort -u "$TMPDIR_WORK/pred_kind_pairs.txt" \
+| awk -F'\t' '
+{
+    pred = $1; kind = $2
+    if (!(pred in seen)) {
+        seen[pred] = kind
+    } else if (index(seen[pred], kind) == 0) {
+        seen[pred] = seen[pred] " " kind
+    }
+}
+END {
+    for (p in seen) print p "\t" seen[p]
+}
+' | sort > "$TMPDIR_WORK/pred_aggregated.txt"
+
+> "$TMPDIR_WORK/predicates_datatype.txt"
+> "$TMPDIR_WORK/predicates_object.txt"
+> "$TMPDIR_WORK/predicates_both.txt"
+
+while IFS=$'\t' read -r iri kinds; do
+    [ -z "$iri" ] && continue
+    case "$kinds" in
+        "D")         echo "$iri" >> "$TMPDIR_WORK/predicates_datatype.txt" ;;
+        "O")         echo "$iri" >> "$TMPDIR_WORK/predicates_object.txt" ;;
+        "D O"|"O D") echo "$iri" >> "$TMPDIR_WORK/predicates_both.txt" ;;
+    esac
+done < "$TMPDIR_WORK/pred_aggregated.txt"
+
+echo "  owl:DatatypeProperty : $(wc -l < "$TMPDIR_WORK/predicates_datatype.txt")"
+echo "  owl:ObjectProperty   : $(wc -l < "$TMPDIR_WORK/predicates_object.txt")"
+echo "  Both (review)        : $(wc -l < "$TMPDIR_WORK/predicates_both.txt")"
+
+cp "$TMPDIR_WORK/predicates_datatype.txt" "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt"
+cp "$TMPDIR_WORK/predicates_object.txt"   "$OUTPUT_DIR/$PREFIX-predicates_object.txt"
+cp "$TMPDIR_WORK/predicates_both.txt"     "$OUTPUT_DIR/$PREFIX-predicates_both.txt"
+echo "  Saved predicate files to $OUTPUT_DIR/"
+
+# ============================================================
+# Generate vocab NT
+# ============================================================
+echo ""
+echo "============================================================"
+echo "  Generating $VOCAB_OUT"
+echo "============================================================"
+
+{
+    echo "# ============================================================"
+    echo "# $VOCAB_OUT"
+    echo "# Auto-generated vocabulary for GPTKB"
+    echo "# Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "# ============================================================"
+
+    # prop-subject triples (property definitions)
+    cat "$TMPDIR_WORK/prop_triples.nt"
+
+    # Entity schema triples (rdfs:label, rdfs:comment, rdfs:subClassOf, etc.)
+    cat "$TMPDIR_WORK/entity_schema.nt"
+
+    # owl:Class + rdfs:label for every class
+    awk \
+        -v rdf_type="$RDF_TYPE" \
+        -v rdfs_label="$RDFS_LABEL" \
+        -v owl_class="$OWL_CLASS" \
+    '
+    /^[[:space:]]*$/ { next }
+    {
+        iri = $0
+        # derive local name: take part after last # or /
+        local_name = iri
+        gsub(/^</, "", local_name)
+        gsub(/>$/, "", local_name)
+        n = split(local_name, parts, "/")
+        local_name = parts[n]
+        if (index(local_name, "#")) {
+            split(local_name, hparts, "#")
+            local_name = hparts[length(hparts)]
+        }
+        print iri, rdf_type, owl_class, "."
+        print iri, rdfs_label, "\"" local_name "\"@en ."
+    }
+    ' "$TMPDIR_WORK/classes.txt"
+
+    # Synthesise owl:DatatypeProperty / owl:ObjectProperty + rdfs:label
+    # for predicates that have no prop-subject triples of their own.
+    write_props() {
+        local src="$1" ptype="$2"
+        [ -s "$src" ] || return 0
+        awk \
+            -v rdf_type="$RDF_TYPE" \
+            -v rdfs_label="$RDFS_LABEL" \
+            -v prop_type="$ptype" \
+        '
+        /^[[:space:]]*$/ { next }
+        {
+            iri = $0
+            local_name = iri
+            gsub(/^</, "", local_name); gsub(/>$/, "", local_name)
+            n = split(local_name, parts, "/")
+            local_name = parts[n]
+            if (index(local_name, "#")) {
+                split(local_name, hparts, "#")
+                local_name = hparts[length(hparts)]
+            }
+            print iri, rdf_type, prop_type, "."
+            print iri, rdfs_label, "\"" local_name "\"@en ."
+        }
+        ' "$src"
+    }
+
+    write_props "$TMPDIR_WORK/predicates_datatype.txt" "$OWL_DTYPE"
+    write_props "$TMPDIR_WORK/predicates_object.txt"   "$OWL_OBJ"
+    if [ -s "$TMPDIR_WORK/predicates_both.txt" ]; then
+        echo "# ============================================================"
+        echo "# WARNING: predicates that appear as BOTH DatatypeProperty AND ObjectProperty"
+        echo "# Typed as ObjectProperty below — review manually"
+        echo "# ============================================================"
+        write_props "$TMPDIR_WORK/predicates_both.txt" "$OWL_OBJ"
+    fi
+
+} > "$VOCAB_OUT"
+
+SUBCLASSOF_COUNT=$(grep -c " $RDFS_SUBCLASSOF " "$VOCAB_OUT" || true)
+echo "  rdfs:subClassOf triples: $SUBCLASSOF_COUNT"
+echo "  Written: $VOCAB_OUT ($(wc -l < "$VOCAB_OUT") lines)"
+
+# ============================================================
+# Generate instances NT
+# ============================================================
+echo ""
+echo "============================================================"
+echo "  Generating $INSTANCES_OUT"
+echo "============================================================"
+
+{
+    echo "# ============================================================"
+    echo "# $INSTANCES_OUT"
+    echo "# Auto-generated from: $NT_MAIN + $NT_TYPES"
+    echo "# Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "# ============================================================"
+
+    # entity triples from main NT (instance data)
+    cat "$TMPDIR_WORK/entity_triples.nt"
+
+    # rdf:type triples from types file
+    cat "$TMPDIR_WORK/type_triples.nt"
+
+} > "$INSTANCES_OUT"
+
+echo "  Written: $INSTANCES_OUT ($(wc -l < "$INSTANCES_OUT") lines)"
+
+# ============================================================
+# NT → TTL
+# ============================================================
+echo ""
+echo "============================================================"
+echo "  Converting to TTL"
+echo "============================================================"
+
+PREFIXES_OUT="$OUTPUT_DIR/$PREFIX-prefixes.ttl"
+VOCAB_TTL="${VOCAB_OUT%.nt}.ttl"
+INSTANCES_TTL="${INSTANCES_OUT%.nt}.ttl"
+
+cat > "$PREFIXES_OUT" <<'EOF'
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix gptkb: <https://gptkb.org/entity/> .
+@prefix gptkbp: <https://gptkb.org/prop/> .
+EOF
+
+if [ -f "$SOURCE_TTL" ]; then
+    echo "  Adding extra prefixes from $SOURCE_TTL ..."
+    grep '^@prefix' "$SOURCE_TTL" | grep -v -E '(rdf:|rdfs:|owl:|xsd:|gptkb:|gptkbp:)' >> "$PREFIXES_OUT" || true
+fi
+
+echo "  Prefixes: $(grep -c '^@prefix' "$PREFIXES_OUT")"
+
+if command -v riot &> /dev/null; then
+    echo "  Converting $VOCAB_OUT → $VOCAB_TTL ..."
+    cat "$PREFIXES_OUT" "$VOCAB_OUT" | riot --output=turtle --syntax=turtle > "$VOCAB_TTL"
+
+    echo "  Converting $INSTANCES_OUT → $INSTANCES_TTL ..."
+    cat "$PREFIXES_OUT" "$INSTANCES_OUT" | riot --output=turtle --syntax=turtle > "$INSTANCES_TTL"
+
+    echo "  Written: $VOCAB_TTL"
+    echo "  Written: $INSTANCES_TTL"
+else
+    echo "  ERROR: riot not found - cannot convert to TTL"
+    echo "  Install Apache Jena or use manual conversion:"
+    echo "    cat $PREFIXES_OUT $VOCAB_OUT | riot --output=turtle --syntax=turtle > $VOCAB_TTL"
+    echo "    cat $PREFIXES_OUT $INSTANCES_OUT | riot --output=turtle --syntax=turtle > $INSTANCES_TTL"
+    exit 1
+fi
 
 echo ""
-echo "Step 8: Converting instances to TTL..."
-(
-  echo "$PREFIX_HEADER"
-  echo ""
-  awk -v ep="$PREFIX" -v pp="$PROP_PREFIX" '{
-    gsub(/\r/, "", $0)
-    if ($NF == ".") NF--
-
-    if (index($1, "<" ep) == 1) {
-      $1 = "gptkb:" substr($1, length(ep) + 2)
-      sub(">$", "", $1)
-    }
-
-    if (index($2, "<" pp) == 1) {
-      $2 = "gptkbp:" substr($2, length(pp) + 2)
-      sub(">$", "", $2)
-    }
-
-    if (index($3, "<" ep) == 1) {
-      $3 = "gptkb:" substr($3, length(ep) + 2)
-      sub(">$", "", $3)
-    }
-
-    print $0 " ."
-  }' "$WORKDIR/inst_raw.nt"
-) > "$INST_OUT"
-echo "  Created $INST_OUT: $(wc -l < "$INST_OUT") lines"
-
+echo "============================================================"
+echo "  Done"
+echo "============================================================"
 echo ""
-echo "=========================================="
-echo "Pipeline Complete"
-echo "=========================================="
-echo "Output files:"
-echo "  - $VOCAB_OUT     ($(wc -l < "$VOCAB_OUT") lines)"
-echo "  - $INST_OUT      ($(wc -l < "$INST_OUT") lines)"
-echo "Intermediate files in $WORKDIR:"
-echo "  - classes_iris.csv"
-echo "  - predicates_iris.csv"
-echo "  - class_definitions.csv"
-echo "  - top_predicates.csv"
-echo "  - classes.txt"
-echo "  - properties.txt"
-echo "  - instances.txt"
+ls -lh "$VOCAB_OUT" "$INSTANCES_OUT" \
+       "$OUTPUT_DIR/$PREFIX-predicates_datatype.txt" \
+       "$OUTPUT_DIR/$PREFIX-predicates_object.txt" \
+       "$OUTPUT_DIR/$PREFIX-predicates_both.txt"
+echo ""
+echo "Validate with:"
+echo "  riot --validate $VOCAB_OUT"
+echo "  riot --validate $INSTANCES_OUT"
+echo ""
+if [ -s "$TMPDIR_WORK/predicates_both.txt" ]; then
+    echo "WARNING: $(wc -l < "$TMPDIR_WORK/predicates_both.txt") predicates appear as both DatatypeProperty and ObjectProperty"
+    echo "Check $OUTPUT_DIR/$PREFIX-predicates_both.txt for manual review"
+fi

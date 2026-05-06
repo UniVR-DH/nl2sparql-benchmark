@@ -108,15 +108,15 @@ WHERE {
 def test_classify_strips_cr_from_text(tmp_path):
     """CRLF (\\r\\n) in lsqv:text must be normalized to LF; standalone \\r preserved."""
     import textwrap
-    from pathlib import Path
-    from rdflib import Graph, URIRef
+    from rdflib import URIRef
     from sparql_annotator.classifier import QuestionTypeClassifier
     from sparql_annotator.namespaces import LSQV
     from sparql_annotator.cli import _generate_type_assertions
     import logging
 
     onto = tmp_path / "mini.ttl"
-    onto.write_text(textwrap.dedent("""
+    onto.write_text(
+        textwrap.dedent("""
         @prefix owl:  <http://www.w3.org/2002/07/owl#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
         @prefix lsqv: <http://lsq.aksw.org/vocab#> .
@@ -128,7 +128,9 @@ def test_classify_strips_cr_from_text(tmp_path):
                 owl:someValuesFrom [
                     owl:onProperty lsqv:usesFeature ;
                     owl:hasValue lsqv:Select ] ] .
-    """), encoding="utf-8")
+    """),
+        encoding="utf-8",
+    )
 
     # Query 1: CRLF line endings — \r\n should become \n
     # Query 2: standalone \r (not followed by \n) — should be preserved
