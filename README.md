@@ -50,7 +50,37 @@ Derived from the [CK25 dataset](https://github.com/eccenca/ck25-dataset), adapte
 
 ### `graphs/gptkb/`
 
-Derived from the [GPT-KB dataset](), adapted for this benchmark.
+Derived from the [GPT-KB dataset](https://huggingface.co/datasets/Knowledge-aware-AI/GPTKB_v1.5/resolve/main/gptkb_v1.5.3.ttl), adapted for this benchmark.
+
+To regenerate the GPTKB derived artifacts from a source TTL/NT, run the extraction script. Replace the `VERSION` and `DOWNLOAD_URL` values below with the appropriate release and download location for the GPTKB release you are using.
+
+```bash
+cd graphs/gptkb
+VERSION="gptkb_v1.5.3"
+# Direct download URL for the GPTKB release TTL
+DOWNLOAD_URL="https://huggingface.co/datasets/Knowledge-aware-AI/GPTKB_v1.5/resolve/main/gptkb_v1.5.3.ttl"
+
+# Download the source TTL
+curl -L -o "${VERSION}.ttl" "${DOWNLOAD_URL}"
+
+# Convert TTL → N-Triples using Apache Jena `riot` (via Docker)
+docker run --rm --platform=linux/amd64 -v "$PWD":/data stain/jena:5.1.0 bash -lc "riot --output=ntriples --syntax=turtle /data/${VERSION}.ttl > /data/${VERSION}.nt"
+
+# Create the types file (instanceOf → rdf:type) if not provided
+awk '$2 == "<https://gptkb.org/prop/instanceOf>"' "${VERSION}.nt" \
+  | sed 's|<https://gptkb.org/prop/instanceOf>|<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>|' \
+  > "${VERSION}_types.nt"
+
+# Run the extractor (this writes outputs into graphs/gptkb)
+bash ../../scripts/extract.sh "${VERSION}.nt" "${VERSION}_types.nt" "./" "${VERSION}.ttl" "${VERSION}"
+```
+
+> Notes:
+> The extractor produces NT and TTL vocab/instances files plus predicate lists. The predicate lists are generated for inspection and manual review.
+> Companion `.graph` files are written with the named graph IRI `http://gptkb.org/` for both `*-vocab.graph` and `*-instances.graph`.
+> Existing `.graph` files are not overwritten, so manually curated graph IRIs are preserved across re-runs.
+
+
 
 ### `.external/`
 

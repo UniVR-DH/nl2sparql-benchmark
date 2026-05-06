@@ -47,7 +47,7 @@
   <http://shaclshapes.org/support> "63"^^xsd:int ;
   <http://www.w3.org/ns/shacl#property> <http://shaclshapes.org/instanceTypeCountryShapeProperty> ;
   <http://www.w3.org/ns/shacl#property> <http://shaclshapes.org/labelCountryShapeProperty> ;
-  <http://www.w3.org/ns/shacl#targetClass> <http://dbpedia.org/ontology/Country> .
+  <http://www.w3.org/ns/shacl#targetClass> <http://dbpedia.org/ontology/596693> .
 
 <http://shaclshapes.org/DatasetShape> rdf:type <http://www.w3.org/ns/shacl#NodeShape> ;
   <http://shaclshapes.org/support> "1"^^xsd:int ;
@@ -313,7 +313,7 @@
   <http://shaclshapes.org/confidence> 9.08E-1 ;
   <http://shaclshapes.org/support> "227"^^xsd:int ;
   <http://www.w3.org/ns/shacl#NodeKind> <http://www.w3.org/ns/shacl#IRI> ;
-  <http://www.w3.org/ns/shacl#class> <http://dbpedia.org/ontology/Country> ;
+  <http://www.w3.org/ns/shacl#class> <http://dbpedia.org/ontology/596693> ;
   <http://www.w3.org/ns/shacl#node> <http://shaclshapes.org/CountryShape> ;
   <http://www.w3.org/ns/shacl#path> <http://ld.company.org/prod-vocab/347609> .
 
@@ -574,7 +574,7 @@
 <http://shaclshapes.org/instanceTypeCountryShapeProperty> rdf:type <http://www.w3.org/ns/shacl#PropertyShape> ;
   <http://shaclshapes.org/confidence> 1E0 ;
   <http://shaclshapes.org/support> "63"^^xsd:int ;
-  <http://www.w3.org/ns/shacl#in> ( <http://dbpedia.org/ontology/Country> ) ;
+  <http://www.w3.org/ns/shacl#in> ( <http://dbpedia.org/ontology/596693> ) ;
   <http://www.w3.org/ns/shacl#path> rdf:type .
 
 <http://shaclshapes.org/instanceTypeDatasetShapeProperty> rdf:type <http://www.w3.org/ns/shacl#PropertyShape> ;

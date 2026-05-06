@@ -16,7 +16,7 @@
     a owl:AnnotationProperty ;
     rdfs:isDefinedBy <http://creativecommons.org/ns> .
 
-<http://dbpedia.org/ontology/Country>
+<http://dbpedia.org/ontology/596693>
     a owl:Class ;
     rdfs:label "Country"@en ;
     foaf:depiction <https://api.iconify.design/gis/search-country.svg?color=%23D6AF00&format=svg> .
@@ -194,7 +194,7 @@ pv:347609
     rdfs:domain pv:173093 ;
     rdfs:isDefinedBy <http://ld.company.org/prod-vocab/> ;
     rdfs:label "country"@en ;
-    rdfs:range <http://dbpedia.org/ontology/Country> ;
+    rdfs:range <http://dbpedia.org/ontology/596693> ;
     foaf:depiction <https://api.iconify.design/carbon:property-relationship.svg?color=%230085C6&format=svg> .
 
 pv:020472

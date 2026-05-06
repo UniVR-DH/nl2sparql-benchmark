@@ -20,6 +20,7 @@ DEFAULT_NAMESPACES = [
     "http://ld.company.org/prod-vocab/",
     "http://ld.company.org/prod-instances/",
     "http://ld.company.org/prod-inst/",
+    "http://dbpedia.org/ontology/",
 ]
 
 SKIP_FILES: set[str] = set()

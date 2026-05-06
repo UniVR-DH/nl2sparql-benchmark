@@ -26857,255 +26857,255 @@ prodi:491314
     wgs84:long "8.7932013" .
 
 dbpedia:434221
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Algeria"@en .
 
 dbpedia:358373
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Angola"@en .
 
 dbpedia:365861
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Antigua and Barbuda"@en .
 
 dbpedia:088172
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Argentina"@en .
 
 dbpedia:474626
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Australia"@en .
 
 dbpedia:307058
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Austria"@en .
 
 dbpedia:419556
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Bangladesh"@en .
 
 dbpedia:165474
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Belarus"@en .
 
 dbpedia:308484
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Bolivia"@en .
 
 dbpedia:072888
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Brazil"@en .
 
 dbpedia:820504
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Cambodia"@en .
 
 dbpedia:046866
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Cameroon"@en .
 
 dbpedia:284658
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Canada"@en .
 
 dbpedia:406388
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Central African Republic"@en .
 
 dbpedia:455177
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "China"@en .
 
 dbpedia:690384
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Colombia"@en .
 
 dbpedia:766670
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Cuba"@en .
 
 dbpedia:409187
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Czech Republic"@en .
 
 dbpedia:750743
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Egypt"@en .
 
 dbpedia:336918
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Estonia"@en .
 
 dbpedia:442610
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Finland"@en .
 
 dbpedia:952916
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "France"@en .
 
 dbpedia:209546
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Germany"@en .
 
 dbpedia:286350
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Ghana"@en .
 
 dbpedia:805274
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Honduras"@en .
 
 dbpedia:602300
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Hungary"@en .
 
 dbpedia:892781
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "India"@en .
 
 dbpedia:509622
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Indonesia"@en .
 
 dbpedia:857057
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Iran"@en .
 
 dbpedia:330149
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Iraq"@en .
 
 dbpedia:679515
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Italy"@en .
 
 dbpedia:087833
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Japan"@en .
 
 dbpedia:911943
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Kazakhstan"@en .
 
 dbpedia:849028
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Kingdom of the Netherlands"@en .
 
 dbpedia:437388
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Kiribati"@en .
 
 dbpedia:527937
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Mexico"@en .
 
 dbpedia:371962
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Morocco"@en .
 
 dbpedia:065772
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Mozambique"@en .
 
 dbpedia:173208
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Namibia"@en .
 
 dbpedia:076677
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Nigeria"@en .
 
 dbpedia:611800
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Pakistan"@en .
 
 dbpedia:841897
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Peru"@en .
 
 dbpedia:754450
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Philippines"@en .
 
 dbpedia:116361
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Poland"@en .
 
 dbpedia:914920
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Portugal"@en .
 
 dbpedia:311503
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Republic of Ireland"@en .
 
 dbpedia:367185
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Romania"@en .
 
 dbpedia:865637
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Russia"@en .
 
 dbpedia:775279
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Slovakia"@en .
 
 dbpedia:356334
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Somalia"@en .
 
 dbpedia:560573
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "South Africa"@en .
 
 dbpedia:083725
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "South Korea"@en .
 
 dbpedia:913146
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Switzerland"@en .
 
 dbpedia:561591
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Tanzania"@en .
 
 dbpedia:585559
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Thailand"@en .
 
 dbpedia:471498
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Tunisia"@en .
 
 dbpedia:993568
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Turkey"@en .
 
 dbpedia:256135
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Tuvalu"@en .
 
 dbpedia:785599
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Uganda"@en .
 
 dbpedia:286660
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "United Kingdom"@en .
 
 dbpedia:539590
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "United States"@en .
 
 dbpedia:530032
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Venezuela"@en .
 
 dbpedia:529202
-    a dbo:Country ;
+    a dbo:596693 ;
     rdfs:label "Vietnam"@en .
 
 <http://ld.company.org/prod-instances/825284>

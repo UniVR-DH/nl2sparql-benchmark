@@ -212,7 +212,8 @@ SPIN_ENCODER.md
 # *-vocab.nt     → too large for LFS, regenerate with extract.sh
 # *-instances.ttl → too large for LFS, regenerate with extract.sh
 # *-instances.nt  → too large for LFS, regenerate with extract.sh
-# *-predicates_*.txt and *-prefixes.ttl are small and ARE committed
+# *-predicates_*.txt are generated and can be ignored; prefixes.ttl remains tracked
+graphs/gptkb/*-predicates_*.txt
 graphs/gptkb/*-vocab.nt
 graphs/gptkb/*-instances.ttl
 graphs/gptkb/*-instances.nt
