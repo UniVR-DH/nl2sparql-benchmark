@@ -461,9 +461,13 @@ INSTANCES_GRAPH="$OUTPUT_DIR/$PREFIX-instances.graph"
 GPTKB_PREFIX_URI=""
 if [ -f "$SOURCE_TTL" ]; then
     GPTKB_PREFIX_URI=$(grep '^@prefix gptkb:' "$SOURCE_TTL" \
-        | sed -n "s/^@prefix gptkb:[[:space:]]*<\(.*\)>[[:space:]]*\..*/\1/p" || true)
+        | sed -n "s/^@prefix gptkb:[[:space:]]*<\(.*\)>[[:space:]]*\..*/\1/p" \
+        | head -n 1 || true)
 fi
-: "${GPTKB_PREFIX_URI:=https://gptkb.org/entity/}"
+if [ -z "$GPTKB_PREFIX_URI" ]; then
+    GPTKB_PREFIX_URI="https://gptkb.org/entity/"
+    echo "WARNING: could not extract gptkb: prefix from SOURCE_TTL; using fallback <$GPTKB_PREFIX_URI>" >&2
+fi
 
 VOCAB_URI=$(echo "$GPTKB_PREFIX_URI" | sed -E 's#(/entity/?)$#/vocab/#')
 INST_URI=$(echo "$GPTKB_PREFIX_URI"  | sed -E 's#(/entity/?)$#/#')

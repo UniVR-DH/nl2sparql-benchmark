@@ -52,7 +52,7 @@ Derived from the [CK25 dataset](https://github.com/eccenca/ck25-dataset), adapte
 
 Derived from the [GPT-KB dataset](https://huggingface.co/datasets/Knowledge-aware-AI/GPTKB_v1.5/resolve/main/gptkb_v1.5.3.ttl), adapted for this benchmark.
 
-To regenerate the GPTKB derived artifacts from a source TTL/NT, run the extraction script. Replace the `VERSION` and `BASE_URL` values below with the appropriate release and download location for the GPTKB release you are using.
+To regenerate the GPTKB derived artifacts from a source TTL/NT, run the extraction script. Replace the `VERSION` and `DOWNLOAD_URL` values below with the appropriate release and download location for the GPTKB release you are using.
 
 ```bash
 cd graphs/gptkb
@@ -60,12 +60,11 @@ VERSION="gptkb_v1.5.3"
 # Direct download URL for the GPTKB release TTL
 DOWNLOAD_URL="https://huggingface.co/datasets/Knowledge-aware-AI/GPTKB_v1.5/resolve/main/gptkb_v1.5.3.ttl"
 
-# Download the source TTL 
+# Download the source TTL
 curl -L -o "${VERSION}.ttl" "${DOWNLOAD_URL}"
 
-# Convert TTL → N-Triples using Apache Jena `riot` (via Docker `stain/jena`)
-# We use `stain/jena` Docker image to run `riot` without local install:
-docker run --rm -v "$PWD":/data stain/jena bash -lc "riot --output=ntriples --syntax=turtle /data/${VERSION}.ttl > /data/${VERSION}.nt"
+# Convert TTL → N-Triples using Apache Jena `riot` (via Docker)
+docker run --rm --platform=linux/amd64 -v "$PWD":/data stain/jena:5.1.0 bash -lc "riot --output=ntriples --syntax=turtle /data/${VERSION}.ttl > /data/${VERSION}.nt"
 
 # Create the types file (instanceOf → rdf:type) if not provided
 awk '$2 == "<https://gptkb.org/prop/instanceOf>"' "${VERSION}.nt" \
@@ -73,11 +72,15 @@ awk '$2 == "<https://gptkb.org/prop/instanceOf>"' "${VERSION}.nt" \
   > "${VERSION}_types.nt"
 
 # Run the extractor (this writes outputs into graphs/gptkb)
+# extract.sh requires `riot` on the host PATH to convert NT → TTL.
+# If riot is not installed locally, use the same Docker image:
+#   alias riot='docker run --rm -v "$PWD":/data -w /data stain/jena:5.1.0 riot'
 bash ../../scripts/extract.sh "${VERSION}.nt" "${VERSION}_types.nt" "./" "${VERSION}.ttl" "${VERSION}"
 ```
 
 > Notes:
 > The extractor produces NT and TTL vocab/instances files plus predicate lists. The predicate lists are generated for inspection and manual review.
+> `riot` must be available on the host PATH for the TTL conversion step. Install [Apache Jena](https://jena.apache.org/download/) or use the Docker alias shown above.
 
 
 
