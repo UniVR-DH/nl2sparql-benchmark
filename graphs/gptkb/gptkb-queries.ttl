@@ -4,6 +4,7 @@
 @prefix gptkbp: <https://gptkb.org/prop/> .
 @prefix lsqv: <http://lsq.aksw.org/vocab#> .
 @prefix qat: <https://w3id.org/univr-qa/qatypes#> .
+@prefix qat1: <https://w3id.org/qatypes#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -420,12 +421,127 @@ WHERE {
 LIMIT 5""" ;
     dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
     dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
-    dct:subject gptkb:person ,
-    gptkb:France ,
-    gptkbp:instanceOf ,
-    gptkbp:birthPlace .
+    dct:subject gptkb:France,
+        gptkb:person,
+        gptkbp:birthPlace,
+        gptkbp:instanceOf .
+
+:22 a lsqv:Query,
+        qat:Sampling ;
+    rdfs:label "Show me 5 notable employees of Bolt Beranek and Newman." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+    PREFIX gptkbp: <https://gptkb.org/prop/>
+    SELECT ?employee
+    WHERE {
+          gptkb:Bolt_Beranek_and_Newman gptkbp:notableEmployee ?employee .
+        }
+        LIMIT 5""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:Bolt_Beranek_and_Newman,
+        gptkbp:notableEmployee .
+
+:23 a lsqv:Query,
+        qat1:AggregateEnumeration ;
+    rdfs:label "For each person, how many distinct organisations are they a member of?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:OrderBy,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+SELECT ?person (COUNT(DISTINCT ?org) AS ?orgCount)
+        WHERE {
+          ?person gptkbp:instanceOf gptkb:person ;
+                  gptkbp:memberOf ?org .
+        }
+        GROUP BY ?person
+        HAVING (COUNT(DISTINCT ?org) >= 2)
+        ORDER BY DESC(?orgCount)""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:person,
+    gptkbp:instanceOf,
+        gptkbp:memberOf .
+
+:24 a lsqv:Query,
+        qat1:LimitedRankedListing ;
+    rdfs:label "List the five notable employees of Bolt Beranek and Newman ordered alphabetically by IRI." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:OrderBy,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+ SELECT ?employee
+        WHERE {
+          gptkb:Bolt_Beranek_and_Newman gptkbp:notableEmployee ?employee .
+        }
+ORDER BY ASC (?employee )
+        LIMIT 5""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:Bolt_Beranek_and_Newman,
+        gptkbp:notableEmployee .
+
+:25 a lsqv:Query,
+        qat1:AggregateEnumeration,
+        qat1:Comparative ;
+    rdfs:label "Which person is associated with the maximum number of notable works in the dataset?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:SubQuery ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+        SELECT ?person ?workCount
+        WHERE {
+          {
+            SELECT ?person (COUNT(DISTINCT ?work) AS ?workCount)
+            WHERE {
+              ?person gptkbp:instanceOf gptkb:person ;
+                      gptkbp:notableWork ?work .
+            }
+            GROUP BY ?person
+          }
+          {
+            SELECT (MAX(?c_inner) AS ?maxCount)
+            WHERE {
+              SELECT ?p_inner
+                     (COUNT(DISTINCT ?w_inner) AS ?c_inner)
+              WHERE {
+                ?p_inner gptkbp:instanceOf gptkb:person ;
+                         gptkbp:notableWork ?w_inner .
+              }
+              GROUP BY ?p_inner
+            }
+          }
+          FILTER(?workCount = ?maxCount)
+        }""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:person,
+        gptkbp:instanceOf,
+        gptkbp:notableWork .
 
 :3 a lsqv:Query,
+        qat1:Factoid,
         qat:Factoid ;
     rdfs:label "Which city hosted the 2012 Summer Olympics and what was the main venue?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
@@ -449,6 +565,7 @@ WHERE {
         gptkbp:mainVenue .
 
 :4 a lsqv:Query,
+        qat1:Factoid,
         qat:Factoid ;
     rdfs:label "Which people are influenced by someone who was influenced by Mahatma Gandhi?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
@@ -469,6 +586,7 @@ SELECT ?s WHERE {
         gptkbp:influencedBy .
 
 :5 a lsqv:Query,
+        qat1:Factoid,
         qat:Factoid ;
     rdfs:label "Which entities are headquartered in Mountain View, California?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
@@ -485,10 +603,11 @@ WHERE {
 }""" ;
     dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
     dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
-    dct:subject gptkbp:headquarters ,
-    gptkb:Mountain_View%2C_California .
+    dct:subject gptkb:Mountain_View%2C_California,
+        gptkbp:headquarters .
 
 :6 a lsqv:Query,
+        qat1:Enumeration,
         qat:Enumeration ;
     rdfs:label "Which entities are directly connected to Isaac Newton, either as people influenced by him or as entities that influenced him?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
@@ -517,6 +636,7 @@ WHERE {
         gptkbp:influenced .
 
 :7 a lsqv:Query,
+        qat1:Aggregation,
         qat:Aggregation ;
     rdfs:label "How many people have a nationality that is either German or French?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
@@ -540,11 +660,12 @@ WHERE {
 }""" ;
     dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
     dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
-    dct:subject gptkbp:nationality,
-    gptkb:German,
-    gptkb:French .
+    dct:subject gptkb:French,
+        gptkb:German,
+        gptkbp:nationality .
 
 :8 a lsqv:Query,
+        qat1:Enumeration,
         qat:Enumeration ;
     rdfs:label "What are the notable works of A. A. Milne?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
@@ -566,6 +687,8 @@ WHERE {
         gptkbp:notableWork .
 
 :9 a lsqv:Query,
+        qat1:Enumeration,
+        qat1:RankedListing,
         qat:Enumeration,
         qat:RankedListing ;
     rdfs:label "Which persons work in chemistry or physics, either by their field of work or by their occupation, have received at least one award, and are members of at least one organisation? Return each person together with their field, award, and organisation." ;
