@@ -10,7 +10,10 @@ The project is expected to evolve over time. Structure can grow, but a few conve
 .
 ├── .external/              # Vendored external vocabularies
 │   ├── lsq-vocab.ttl        
-│   └── ...
+│   ├── oa.ttl
+│   ├── qanary.ttl
+│   ├── sp.ttl
+│   └── sparql-service-description.ttl
 ├── .github/                # GitHub-specific files
 ├── GUIDELINE.md            # Canonical encoding guidance for test data
 ├── LICENSE
@@ -87,6 +90,8 @@ bash ../../scripts/extract.sh "${VERSION}.nt" "${VERSION}_types.nt" "./" "${VERS
 Vendored vocabulary resources that the benchmark relies on:
 
 - `lsq-vocab.ttl` the Linked SPARQL Queries Vocabulary, used for annotating SPARQL query features and patterns in the benchmark.
+- `oa.ttl` the W3C Open Annotation (Web Annotation) vocabulary, used for attaching diagnostic issue annotations to questions.
+- `qanary.ttl` the Qanary vocabulary, used for QA answer types and annotation question patterns.
 - `sp.ttl` the SP vocabulary, used for representing SPARQL query structures.
 - `sparql-service-description.ttl` the SPARQL Service Description vocabulary, used for describing SPARQL endpoints.
 
