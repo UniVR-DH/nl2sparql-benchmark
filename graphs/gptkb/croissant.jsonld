@@ -11,7 +11,7 @@
   },
   "@type": "sc:Dataset",
   "@id": "https://text2sparql.aksw.org/2025/corporate/",
-  "sc:name": "TEXT2SPARQL-Benchmark-GPTKB-Knowledge-Graph",
+  "sc:name": "GPTKB: A large general-domain knowledge base entirely from a large language model",
   "sc:description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads.",
   "sc:license": "https://creativecommons.org/licenses/by/4.0/",
   "sc:datePublished": "2026-05-07",
