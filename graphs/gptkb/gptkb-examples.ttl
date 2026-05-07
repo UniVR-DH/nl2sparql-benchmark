@@ -1,0 +1,67 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Example 1: People influenced by Gandhi within 2 hops
+<http://example.org/gptkb/example#people_influenced_by_gandhi_2hops>
+  a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+  rdfs:comment "Find people influenced by Mahatma Gandhi within 2 hops."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML> ;
+  sh:prefixes _:genid_people_influenced_prefixes ;
+  sh:select """
+PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT ?s ?o WHERE {
+  ?s gptkbp:influencedBy ?o.
+  ?o gptkbp:influencedBy gptkb:Mahatma_Gandhi.
+}
+""" ;
+  <https://schema.org/target> <https://gptkb.org/sparql> ;
+  <https://purl.expasy.org/sparql-examples/ontology#file_name> "people_influenced_by_gandhi_2hops.ttl" ;
+  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/people_influenced_by_gandhi_2hops.ttl" ;
+  <https://purl.expasy.org/sparql-examples/ontology#project> "examples" .
+
+# Example 2: Count people with EU nationality
+<http://example.org/gptkb/example#eu_citizens_count>
+  a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+  rdfs:comment "Count people with European Union nationality."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML> ;
+  sh:prefixes _:genid_eu_citizens_prefixes ;
+  sh:select """
+PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT (COUNT(DISTINCT ?person) AS ?count)
+WHERE {
+  ?person gptkbp:nationality ?citizenship.
+  VALUES ?citizenship {
+    gptkb:German gptkb:French gptkb:Italian gptkb:Spanish gptkb:Austrian
+    gptkb:Belgian gptkb:Bulgarian gptkb:Croatian gptkb:Cypriot gptkb:Czech
+    gptkb:Danish gptkb:Estonian gptkb:Finnish gptkb:Greek gptkb:Hungarian
+    gptkb:Irish gptkb:Latvian gptkb:Lithuanian gptkb:Luxembourgish gptkb:Maltese
+    gptkb:Dutch gptkb:Polish gptkb:Portuguese gptkb:Romanian gptkb:Slovak
+    gptkb:Slovene gptkb:Swedish
+  }
+}
+""" ;
+  <https://schema.org/target> <https://gptkb.org/sparql> ;
+  <https://purl.expasy.org/sparql-examples/ontology#file_name> "eu_citizens_count.ttl" ;
+  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/eu_citizens_count.ttl" ;
+  <https://purl.expasy.org/sparql-examples/ontology#project> "examples" .
+
+# Example 3: Organizations headquartered in Mountain View
+<http://example.org/gptkb/example#headquartered_in_mountain_view>
+  a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+  rdfs:comment "Find organizations headquartered in Mountain View, California."^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML> ;
+  sh:prefixes _:genid_headquartered_prefixes ;
+  sh:select """
+PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT ?s
+WHERE {
+  ?s gptkbp:headquarters <https://gptkb.org/entity/Mountain_View%2C_California>.
+}
+""" ;
+  <https://schema.org/target> <https://gptkb.org/sparql> ;
+  <https://purl.expasy.org/sparql-examples/ontology#file_name> "headquartered_in_mountain_view.ttl" ;
+  <https://purl.expasy.org/sparql-examples/ontology#file_path> "examples/headquartered_in_mountain_view.ttl" ;
+  <https://purl.expasy.org/sparql-examples/ontology#project> "examples" .
