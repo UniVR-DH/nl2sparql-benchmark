@@ -1,51 +1,55 @@
 {
   "@context": {
-    "@vocab": "https://mlcommons.org/croissant/",
-    "dct": "http://purl.org/dc/terms/",
-    "lsqv": "http://lsq.aksw.org/vocab#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "schema": "http://schema.org/",
-    "sc": "http://schema.org/",
-    "sp": "http://spinrdf.org/sp#"
+  "@vocab": "https://mlcommons.org/croissant/",
+  "@language": "en",
+  "dct": "http://purl.org/dc/terms/",
+  "lsqv": "http://lsq.aksw.org/vocab#",
+  "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+  "sc": "https://schema.org/",
+  "sp": "http://spinrdf.org/sp#"
   },
-  "@type": "Dataset",
+  "@type": "sc:Dataset",
   "@id": "https://text2sparql.aksw.org/2025/corporate/",
-  "name": "TEXT2SPARQL Benchmark — Corporate Knowledge Graph",
-  "description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads.",
-  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "sc:name": "TEXT2SPARQL-Benchmark-Hashed-Corporate-Knowledge-Graph",
+  "sc:description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads. The IRIs are hashed.",
+  "sc:license": "https://creativecommons.org/licenses/by/4.0/",
+  "sc:datePublished": "2026-05-07",
+  "sc:version": "1.0",
+  "sc:citation": "ref",
 
   "distribution": [
-    { "@type": "FileObject", "@id": "entrypoint", "name": "ck25.ttl", "contentUrl": "ck25.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "entrypoint-graph", "name": "ck25.graph", "contentUrl": "ck25.graph", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "entrypoint", "name": "ck25-h.ttl", "contentUrl": "ck25-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "entrypoint-graph", "name": "ck25-h.graph", "contentUrl": "ck25-h.graph", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "instances", "name": "ck25-data-instances.ttl", "contentUrl": "ck25-data-instances.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "instances-graph", "name": "ck25-data-instances.graph", "contentUrl": "ck25-data-instances.graph", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "instances", "name": "ck25-data-instances-h.ttl", "contentUrl": "ck25-data-instances-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "instances-graph", "name": "ck25-data-instances-h.graph", "contentUrl": "ck25-data-instances-h.graph", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "vocab", "name": "ck25-data-vocab.ttl", "contentUrl": "ck25-data-vocab.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "vocab-graph", "name": "ck25-data-vocab.graph", "contentUrl": "ck25-data-vocab.graph", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "vocab", "name": "ck25-data-vocab-h.ttl", "contentUrl": "ck25-data-vocab-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "vocab-graph", "name": "ck25-data-vocab-h.graph", "contentUrl": "ck25-data-vocab-h.graph", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "shapes", "name": "ck25-data-shapes.ttl", "contentUrl": "ck25-data-shapes.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "shapes-graph", "name": "ck25-data-shapes.graph", "contentUrl": "ck25-data-shapes.graph", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "shapes", "name": "ck25-data-shapes-h.ttl", "contentUrl": "ck25-data-shapes-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "shapes-graph", "name": "ck25-data-shapes-h.graph", "contentUrl": "ck25-data-shapes-h.graph", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "examples", "name": "ck25-examples.ttl", "contentUrl": "ck25-examples.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "examples-graph", "name": "ck25-examples.graph", "contentUrl": "ck25-examples.graph", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "examples", "name": "ck25-examples-h.ttl", "contentUrl": "ck25-examples-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "examples-graph", "name": "ck25-examples-h.graph", "contentUrl": "ck25-examples-h.graph", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "queries", "name": "ck25-queries.ttl", "contentUrl": "ck25-queries.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "queries-graph", "name": "ck25-queries.graph", "contentUrl": "ck25-queries.graph", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "queries", "name": "ck25-queries-h.ttl", "contentUrl": "ck25-queries-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "queries-graph", "name": "ck25-queries-h.graph", "contentUrl": "ck25-queries-h.graph", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "void", "name": "ck25-void.ttl", "contentUrl": "ck25-void.ttl", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "void-graph", "name": "ck25-void.graph", "contentUrl": "ck25-void.graph", "encodingFormat": "application/octet-stream" }
+    { "@type": "FileObject", "@id": "void", "name": "ck25-void-h.ttl", "contentUrl": "ck25-void-h.ttl", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "void-graph", "name": "ck25-void-h.graph", "contentUrl": "ck25-void-h.graph", "encodingFormat": "application/octet-stream" }
   ],
 
   "recordSet": [
     {
       "@type": "RecordSet",
+      "@id": "query-benchmark",
       "name": "Query Benchmark",
       "field": [
         {
           "@type": "Field",
           "name": "rdfs:label",
-          "dataType": "sc:Text",
+          "dataType": "Text",
           "source": {
             "fileObject": "queries",
             "extract": {
@@ -60,7 +64,7 @@
         {
           "@type": "Field",
           "name": "lsqv:text",
-          "dataType": "sc:Text",
+          "dataType": "Text",
           "source": {
             "fileObject": "queries",
             "extract": {

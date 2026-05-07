@@ -132,7 +132,27 @@ git fetch --tags
 
 ---
 
-## 3. Development Environment
+## 3. Branch & Pull Request Naming
+
+### Branch format
+
+`<prefix>/<ticket>-short-description` or `<prefix>/short-description` (no ticket)
+
+Canonical prefixes: `feature/`, `fix/`, `chore/`, `hotfix/`, `doc/`, `refactor/`, `test/`
+
+* Descriptive part: lowercase, digits, hyphens only — max ~50 chars
+* Examples: `feature/345-gptkb-split`, `fix/readme-typo`, `chore/update-deps`
+
+### PR text files
+
+Store in `.temp/PR_<branch-with-slashes-as-hyphens>.md`
+→ e.g. branch `feature/345-gptkb-split` → `.temp/PR_feature-345-gptkb-split.md`
+
+If a valid name cannot be produced → **stop and ask**.
+
+---
+
+## 4. Development Environment
 
 ### Core setup
 
@@ -209,13 +229,25 @@ export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
 ---
 
-### TTL Validation (Standard Command)
+### TTL / NT Validation (Single File)
 
 ```bash
 docker run --rm \
   --platform=linux/amd64 \
   -v "$PWD":/data \
-  stain/jena \
+  stain/jena:5.1.0 \
+  riot --validate /data/graphs/ck25/ck25.ttl
+```
+
+### TTL / NT Validation (Standard Command)
+
+```bash
+docker pull stain/jena:5.1.0
+
+docker run --rm \
+  --platform=linux/amd64 \
+  -v "$PWD":/data \
+  stain/jena:5.1.0 \
   bash -euo pipefail -c '
     status=0
     while IFS= read -r -d "" f; do
@@ -224,14 +256,14 @@ docker run --rm \
         echo "ERROR in $f" >&2
         status=1
       fi
-    done < <(find /data/graphs -type f -name "*.ttl" -print0)
+    done < <(find /data/graphs -type f \( -name "*.ttl" -o -name "*.nt" \) -print0)
     exit $status
   ' 2>&1 | tee ttl-validation.log
 ```
 
 ---
 
-## 4. Bash Best Practices
+## 5. Bash Best Practices
 
 * Prefer **readable scripts over one-liners**
 * One logical action per line
@@ -268,13 +300,10 @@ tmpfile=$(mktemp)
 
 ---
 
-## 5. Project Philosophy
+## 6. Project Philosophy
 
 * Keep structure clean and minimal
 * Avoid assumptions
 * Prefer explicit over implicit
 * Optimize for maintainability, not cleverness
 
----
-
-If anything is unclear → **ask before acting**.
