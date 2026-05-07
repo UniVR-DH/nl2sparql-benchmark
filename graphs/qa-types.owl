@@ -1,0 +1,503 @@
+<rdf:RDF
+    xmlns:oa="http://www.w3.org/ns/oa#"
+    xmlns:terms="http://purl.org/dc/terms/"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:qat="https://w3id.org/qatypes#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:lsqv="http://lsq.aksw.org/vocab#"
+    xmlns:sp="http://spinrdf.org/sp#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:sd="http://www.w3.org/ns/sparql-service-description#"
+    xmlns:qa="https://w3id.org/wdaqua/qanary#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#" > 
+  <rdf:Description rdf:nodeID="A0">
+    <owl:someValuesFrom rdf:nodeID="A1"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#Comparative">
+    <rdfs:comment xml:lang="en">Maps to GROUP BY + aggregate + subquery-based FILTER on MAX/MIN to handle ties.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Computes an aggregate across ≥2 groups and returns the entity (or entities) with the extreme aggregate value (e.g. 'Which department has the highest average salary?').</rdfs:comment>
+    <rdfs:label xml:lang="en">Comparative question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A2"/>
+    <rdfs:subClassOf rdf:nodeID="A3"/>
+    <rdfs:subClassOf rdf:nodeID="A4"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Enumeration"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Aggregation"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A5">
+    <rdf:rest rdf:nodeID="A6"/>
+    <rdf:first rdf:resource="http://lsq.aksw.org/vocab#agg-sample"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A7">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#BooleanAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#SyntacticDistortion">
+    <rdfs:comment xml:lang="en">Example: 'in Berlin departments managers list'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'salary employees highest department which'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'employees high sales?'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Ungrammatical or non-canonical syntactic structures affecting parsing and dependency analysis.</rdfs:comment>
+    <rdfs:label xml:lang="en">Syntactic distortion</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#LinguisticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A3">
+    <owl:someValuesFrom rdf:nodeID="A8"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A9">
+    <owl:someValuesFrom rdf:nodeID="A10"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A11">
+    <owl:unionOf rdf:nodeID="A5"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A12">
+    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+    <rdf:first rdf:resource="http://lsq.aksw.org/vocab#GroupBy"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#Sampling">
+    <rdfs:comment xml:lang="en">A list question where the answer is a sample of an unordered enumeration of entities or facts about entities. Maps to SELECT...SAMPLE...</rdfs:comment>
+    <rdfs:label xml:lang="en">Sampled list question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A13"/>
+    <rdfs:subClassOf rdf:nodeID="A14"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Factoid"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#ScalarAnswer">
+    <rdfs:comment xml:lang="en">Answer is a single numeric value resulting from an aggregation (MAX, MIN, AVG, COUNT, SUM).</rdfs:comment>
+    <rdfs:label xml:lang="en">Scalar answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A15">
+    <owl:someValuesFrom rdf:nodeID="A16"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#EntityLinkingAmbiguity">
+    <rdfs:comment xml:lang="en">Example: 'John' → multiple people named John.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'Paris' → city vs mythology entity.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Ambiguity where a surface form maps to multiple candidate RDF entities.</rdfs:comment>
+    <rdfs:label xml:lang="en">Entity linking ambiguity</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A1">
+    <owl:someValuesFrom rdf:nodeID="A17"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A18">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#ScalarAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#hasAnswerType">
+    <rdfs:comment xml:lang="en">Relates a question type to the class of answer it expects.</rdfs:comment>
+    <rdfs:label xml:lang="en">has answer type</rdfs:label>
+    <rdfs:range rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdfs:domain rdf:resource="https://w3id.org/qatypes#QuestionType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#AggregateEnumeration">
+    <rdfs:comment xml:lang="en">A list question where each item pairs a group with its computed aggregate value (e.g. 'What is the average salary per department?'). Maps to SELECT ?group (AGG(?x) AS ?val) … GROUP BY ?group.</rdfs:comment>
+    <rdfs:label xml:lang="en">Aggregation list question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A9"/>
+    <rdfs:subClassOf rdf:nodeID="A19"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Aggregation"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Enumeration"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#LimitedRankedListing">
+    <rdfs:comment xml:lang="en">A list question whose answer is ordered by an existing property, usually with an explicit cardinality limit (e.g. 'Who are the top 3 employees by seniority?'). Maps to SELECT … ORDER BY DESC(?prop) LIMIT n. No aggregation required.</rdfs:comment>
+    <rdfs:label xml:lang="en">Limited ranked list question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A20"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#RankedListing"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#BooleanAnswer">
+    <rdfs:comment xml:lang="en">Answer is YES/TRUE or NO/FALSE.</rdfs:comment>
+    <rdfs:label xml:lang="en">Boolean answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A21">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#Select"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#Confirmation">
+    <rdfs:comment xml:lang="en">A question expecting a boolean YES/NO answer. Maps to ASK { … } with BGPs.</rdfs:comment>
+    <rdfs:label xml:lang="en">Confirmation question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A22"/>
+    <rdfs:subClassOf rdf:nodeID="A7"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#QuestionType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#OrthographicNoise">
+    <rdfs:comment xml:lang="en">Example: 'averge revenu of compnies'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'emplyees with hgh salery'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Spelling mistakes, typos, ASR errors, or MT artifacts affecting token-level interpretation.</rdfs:comment>
+    <rdfs:label xml:lang="en">Orthographic noise</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#LinguisticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A23">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#EntityListAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#Enumeration">
+    <rdfs:comment xml:lang="en">Expects a deduplicated set of entities or facts (e.g. 'Which countries export cocoa?'). Maps to SELECT DISTINCT for plain enumerations, or GROUP BY for aggregate enumerations (qat:AggregateList). Both guarantee a set without duplicate rows.</rdfs:comment>
+    <rdfs:label xml:lang="en">Enumeration question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A0"/>
+    <rdfs:subClassOf rdf:nodeID="A24"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Factoid"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A22">
+    <owl:someValuesFrom rdf:nodeID="A25"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#SingleEntityAnswer">
+    <rdfs:comment xml:lang="en">Answer is a single named entity or literal fact.</rdfs:comment>
+    <rdfs:label xml:lang="en">Single entity answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#RankedListAnswer">
+    <rdfs:comment xml:lang="en">Answer is an ordered list of entities sorted by an existing property, bounded by a cardinality limit.</rdfs:comment>
+    <rdfs:label xml:lang="en">Ranked list answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A20">
+    <owl:someValuesFrom rdf:nodeID="A26"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#RankedEntityAnswer">
+    <rdfs:comment xml:lang="en">Answer is the tuple describing the entity that wins a comparative aggregation across groups. Specialises both ScalarAnswer (results from aggregation) and EntityListAnswer (identifies entities).</rdfs:comment>
+    <rdfs:label xml:lang="en">Ranked entity answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#EntityListAnswer"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#ScalarAnswer"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A13">
+    <owl:someValuesFrom rdf:nodeID="A27"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A16">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#Aggregators"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A8">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#SubQuery"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A25">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#Ask"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#SchemaCoverageMismatch">
+    <rdfs:comment xml:lang="en">Example: 'manager nationality' not modeled in schema.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'employee satisfaction score' not in schema.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Required concept is absent or not modeled in the ontology or knowledge base.</rdfs:comment>
+    <rdfs:label xml:lang="en">Schema coverage mismatch</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#AggregateListAnswer">
+    <rdfs:comment xml:lang="en">Answer is an enumeration of (group, aggregate value) pairs. Specialises both ScalarAnswer (each pair contains an aggregate) and EntityListAnswer (groups are entities).</rdfs:comment>
+    <rdfs:label xml:lang="en">Aggregate list answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#EntityListAnswer"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#ScalarAnswer"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A24">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#EntityListAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#Aggregation">
+    <rdfs:seeAlso rdf:resource="http://spinrdf.org/sp#Sum"/>
+    <rdfs:seeAlso rdf:resource="http://spinrdf.org/sp#Count"/>
+    <rdfs:seeAlso rdf:resource="http://spinrdf.org/sp#Avg"/>
+    <rdfs:seeAlso rdf:resource="http://spinrdf.org/sp#Min"/>
+    <rdfs:seeAlso rdf:resource="http://spinrdf.org/sp#Max"/>
+    <rdfs:comment xml:lang="en">A question whose answer requires an aggregation operation (MAX, MIN, AVG, COUNT, SUM) over a set of values. Maps to SELECT (AGG(?x) AS ?val) WHERE.</rdfs:comment>
+    <rdfs:label xml:lang="en">Aggregate factoid question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A15"/>
+    <rdfs:subClassOf rdf:nodeID="A18"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Factoid"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#DiscourseReferenceFailure">
+    <rdfs:comment xml:lang="en">Example: 'Which companies acquired startups and where are they located?'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'Who is John's manager and what is his salary?'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Failures in resolving pronouns, ellipsis, or implicit discourse references.</rdfs:comment>
+    <rdfs:label xml:lang="en">Discourse reference failure</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#LinguisticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A28">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#RankedListAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A19">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#AggregateListAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#AggregationUnderspecification">
+    <rdfs:comment xml:lang="en">Example: 'number of employees in each department'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'top selling products'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Ambiguity in aggregation operators, grouping, ranking, or aggregation scope (COUNT, SUM, ORDER BY).</rdfs:comment>
+    <rdfs:label xml:lang="en">Aggregation underspecification</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#AbbreviationAmbiguity">
+    <rdfs:comment xml:lang="en">Example: 'avg temp in US states'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'GDP growth in EU'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Underspecified abbreviations or acronyms requiring expansion or contextual disambiguation.</rdfs:comment>
+    <rdfs:label xml:lang="en">Abbreviation ambiguity</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#LinguisticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#RankedListing">
+    <rdfs:comment xml:lang="en">A list question whose answer is ordered by an existing property (e.g. 'Who are the employees by seniority?'). Maps to SELECT … ORDER BY DESC(?prop). No aggregation required.</rdfs:comment>
+    <rdfs:label xml:lang="en">Ranked list question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A29"/>
+    <rdfs:subClassOf rdf:nodeID="A28"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Factoid"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#Factoid">
+    <owl:disjointWith rdf:resource="https://w3id.org/qatypes#Confirmation"/>
+    <rdfs:comment xml:lang="en">A question expecting as answer one or more facts. Typically introduced by a wh-word. Maps to a plain SELECT … WHERE pattern.</rdfs:comment>
+    <rdfs:label xml:lang="en">Factoid question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A30"/>
+    <rdfs:subClassOf rdf:nodeID="A31"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#QuestionType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A31">
+    <owl:someValuesFrom rdf:nodeID="A32"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/wdaqua/qanary#AnswerType">
+    <rdfs:label xml:lang="en">Answer type</rdfs:label>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#QuestionType">
+    <rdfs:comment xml:lang="en">Abstract superclass for all question type categories.</rdfs:comment>
+    <rdfs:label xml:lang="en">Question type</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#Question"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#EntityAttributeMismatch">
+    <rdfs:comment xml:lang="en">Example: 'products with volume &lt; 15 cm3' → computed from length × width × height.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'company size' → number of employees.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'customer age' → derived from birthDate.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Concept is present but requires transformation or derived computation from available attributes.</rdfs:comment>
+    <rdfs:label xml:lang="en">Entity/attribute mismatch</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A4">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#RankedEntityAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A33">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#OrderBy"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A14">
+    <owl:someValuesFrom rdf:resource="https://w3id.org/qatypes#SampledListAnswer"/>
+    <owl:onProperty rdf:resource="https://w3id.org/qatypes#hasAnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A34">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#NotExists"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#VaguePredicateGrounding">
+    <rdfs:comment xml:lang="en">Example: 'recent publications'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'high salary'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'young employees'.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Predicates lacking explicit thresholds or formal schema grounding requiring external interpretation.</rdfs:comment>
+    <rdfs:label xml:lang="en">Vague predicate grounding</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A30">
+    <owl:someValuesFrom rdf:nodeID="A21"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A10">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#GroupBy"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#SemanticIssue">
+    <rdfs:seeAlso rdf:resource="http://www.w3.org/ns/oa#hasBody"/>
+    <rdfs:seeAlso rdf:resource="http://www.w3.org/ns/oa#hasTarget"/>
+    <rdfs:comment xml:lang="en">This layer complements lsqv:hasStructuralFeatures analysis by capturing mismatches between intended meaning, RDF modeling, and query structure.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Issues related to meaning representation, schema alignment, ontology mapping, and SPARQL structural-semantic correspondence.</rdfs:comment>
+    <rdfs:label xml:lang="en">Semantic issue</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#Entity"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A29">
+    <owl:someValuesFrom rdf:nodeID="A33"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A32">
+    <owl:unionOf rdf:nodeID="A35"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#LogicalFormAmbiguity">
+    <rdfs:comment xml:lang="en">Example: 'number of employees in sales or marketing who are managers' → different AND/OR groupings.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'average salary of employees in hardware departments' → per-department vs global average.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'departments where employees earn more than 50k' → all vs at least one employee.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Ambiguity in quantification, scope, and logical composition (AND/OR/NOT/OPTIONAL).</rdfs:comment>
+    <rdfs:label xml:lang="en">Logical form ambiguity</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#LexicalGroundingMismatch">
+    <rdfs:comment xml:lang="en">Example: 'companies that make cars' → automotive manufacturers.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'pay' → salary.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'French poets' → poets with France as nationality/affiliation.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Lexical variation requiring normalization such as synonyms, paraphrases, or compositional expressions.</rdfs:comment>
+    <rdfs:label xml:lang="en">Lexical grounding mismatch</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#LinguisticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#EntityListAnswer">
+    <rdfs:comment xml:lang="en">Answer is an unordered enumeration of entities or facts.</rdfs:comment>
+    <rdfs:label xml:lang="en">Entity list answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A36">
+    <owl:someValuesFrom rdf:nodeID="A34"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#LinguisticIssue">
+    <owl:disjointWith rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdfs:seeAlso rdf:resource="http://www.w3.org/ns/oa#hasBody"/>
+    <rdfs:seeAlso rdf:resource="http://www.w3.org/ns/oa#hasTarget"/>
+    <rdfs:comment xml:lang="en">This layer captures failures in surface form interpretation before or alongside schema grounding.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Issues related to linguistic realization of the question, including syntax, lexical choice, ambiguity, and phrasing.</rdfs:comment>
+    <rdfs:label xml:lang="en">Linguistic issue</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#Entity"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A37">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#Filter"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A38">
+    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+    <rdf:first rdf:resource="https://w3id.org/qatypes#EntityListAnswer"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#CounterFactualIdentification">
+    <rdfs:comment xml:lang="en">A question that asks about entities or facts that lack a certain property or relationship, using FILTER NOT EXISTS to exclude results where a given pattern holds.</rdfs:comment>
+    <rdfs:label xml:lang="en">Counterfactual question</rdfs:label>
+    <rdfs:subClassOf rdf:nodeID="A36"/>
+    <rdfs:subClassOf rdf:nodeID="A23"/>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#Factoid"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A26">
+    <owl:hasValue rdf:resource="http://lsq.aksw.org/vocab#Limit"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A27">
+    <owl:someValuesFrom rdf:nodeID="A11"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#usesFeature"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A6">
+    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+    <rdf:first rdf:resource="http://lsq.aksw.org/vocab#Limit"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A17">
+    <owl:unionOf rdf:nodeID="A39"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#SampledListAnswer">
+    <rdfs:comment xml:lang="en">Answer is a sample of an unordered enumeration of entities or facts.</rdfs:comment>
+    <rdfs:label xml:lang="en">Sampled list answer</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/wdaqua/qanary#AnswerType"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#">
+    <owl:imports rdf:resource="http://www.w3.org/ns/sparql-service-description#"/>
+    <owl:imports rdf:resource="http://spinrdf.org/sp"/>
+    <owl:imports rdf:resource="http://lsq.aksw.org/vocab#"/>
+    <owl:imports rdf:resource="http://www.w3.org/ns/oa#"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+    <terms:title xml:lang="en">QA Question Types</terms:title>
+    <terms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-04-08</terms:created>
+    <terms:creator rdf:resource="https://orcid.org/0009-0000-9511-450X"/>
+    <terms:creator rdf:resource="https://orcid.org/0009-0001-1135-191X"/>
+    <terms:creator rdf:resource="https://orcid.org/0000-0001-6988-1203"/>
+    <terms:creator rdf:resource="https://orcid.org/0000-0001-6092-6831"/>
+    <terms:creator rdf:resource="https://orcid.org/0000-0001-7922-5998"/>
+    <terms:license rdf:resource="https://creativecommons.org/publicdomain/zero/1.0/"/>
+    <rdfs:label xml:lang="en">QA Question Types taxonomy</rdfs:label>
+    <rdfs:comment xml:lang="en">Taxonomy of natural language question types for QA systems, extending Qanary.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Question types are defined based on expected answer shape, structural features, and LSQ feature alignment. SPARQL structural signatures are expressed via lsqv:usesFeature.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Ontology structure and taxonomy co-edited interactively with Claude Sonnet 4.6 (Anthropic) on 2026-04-08. Question type hierarchy, disjointness axioms, and vocabulary alignment with lsqv: and sp: developed interactively.</rdfs:comment>
+    <rdfs:comment xml:lang="en">The ontology also defines a lightweight diagnostic issue layer for question-level QA error analysis, aligned with Qanary annotations and Open Annotation targeting/body relations.</rdfs:comment>
+    <owl:versionInfo rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.0</owl:versionInfo>
+    <owl:imports rdf:resource="https://w3id.org/wdaqua/qanary#"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A35">
+    <rdf:rest rdf:nodeID="A38"/>
+    <rdf:first rdf:resource="https://w3id.org/qatypes#SingleEntityAnswer"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://w3id.org/qatypes#ImplicitRelationInference">
+    <rdfs:comment xml:lang="en">Example: 'People married in 2020' → requires join through marriage event and date.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'employees with skills in data science' → employee → hasSkill → skillCategory.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Example: 'managers in departments in Berlin' → manager → department → location.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Missing explicit predicates requiring multi-hop traversal or inferred joins between entities.</rdfs:comment>
+    <rdfs:label xml:lang="en">Implicit relation inference</rdfs:label>
+    <rdfs:subClassOf rdf:resource="https://w3id.org/qatypes#SemanticIssue"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A39">
+    <rdf:rest rdf:nodeID="A12"/>
+    <rdf:first rdf:resource="http://lsq.aksw.org/vocab#Distinct"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A2">
+    <owl:someValuesFrom rdf:nodeID="A37"/>
+    <owl:onProperty rdf:resource="http://lsq.aksw.org/vocab#hasStructuralFeatures"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+  </rdf:Description>
+</rdf:RDF>
