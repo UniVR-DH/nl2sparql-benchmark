@@ -19,26 +19,26 @@
   "sc:citation": "Benelli, B., Balasooriya, I., Marastoni, N., QUINTARELLI, E., & Lissandrini, M. (2026). Supplementary material for FAULT: Failure Analysis and Understanding for Language-to-SPARQL Testing [Data set]. Zenodo. https://doi.org/10.5281/zenodo.20073837",
 
   "distribution": [
-    { "@type": "FileObject", "@id": "entrypoint", "name": "ck25.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "entrypoint-graph", "name": "ck25.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "entrypoint", "name": "ck25.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "entrypoint-graph", "name": "ck25.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "instances", "name": "ck25-data-instances.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "instances-graph", "name": "ck25-data-instances.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "instances", "name": "ck25-data-instances.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "instances-graph", "name": "ck25-data-instances.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "vocab", "name": "ck25-data-vocab.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "vocab-graph", "name": "ck25-data-vocab.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "vocab", "name": "ck25-data-vocab.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "vocab-graph", "name": "ck25-data-vocab.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "shapes", "name": "ck25-data-shapes.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "shapes-graph", "name": "ck25-data-shapes.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "shapes", "name": "ck25-data-shapes.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "shapes-graph", "name": "ck25-data-shapes.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "examples", "name": "ck25-examples.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "examples-graph", "name": "ck25-examples.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "examples", "name": "ck25-examples.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "examples-graph", "name": "ck25-examples.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "queries", "name": "ck25-queries.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "queries-graph", "name": "ck25-queries.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" },
+    { "@type": "FileObject", "@id": "queries", "name": "ck25-queries.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "queries-graph", "name": "ck25-queries.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
-    { "@type": "FileObject", "@id": "void", "name": "ck25-void.ttl", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "void-graph", "name": "ck25-void.graph", "contentUrl": "https://zenodo.org/records/20073837", "encodingFormat": "application/octet-stream" }
+    { "@type": "FileObject", "@id": "void", "name": "ck25-void.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "void-graph", "name": "ck25-void.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" }
   ],
 
   "recordSet": [
