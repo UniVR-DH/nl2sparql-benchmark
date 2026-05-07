@@ -19,7 +19,7 @@ The project is expected to evolve over time. Structure can grow, but a few conve
 ├── LICENSE
 ├── README.md
 ├── scripts/
-│   ├── sparql-annotator/   # SPARQL annotation & classification CLI
+│   ├── sparql-annotator/   # Stub — moved to github.com/UniVR-DH/sparql-annotator
 │   └── ...
 └── graphs/                 # Core benchmark graph assets
     ├── ck25/
@@ -221,18 +221,21 @@ qat:SemanticIssue
 
 ## Question Classification
 
-Query classification is handled by the `sparql-annotator` CLI in `scripts/sparql-annotator/`.
-See [`scripts/sparql-annotator/README.md`](scripts/sparql-annotator/README.md) for full documentation.
+Query classification is handled by the `sparql-annotator` CLI, now maintained in its own repository:
+**[https://github.com/UniVR-DH/sparql-annotator](https://github.com/UniVR-DH/sparql-annotator)**
+
 For a related workflow focused on annotating queries with the `qa-types` ontology, see [nl-to-sparql_query_annotation](https://github.com/niccolomarastoni/nl-to-sparql_query_annotation).
 
 Quick start:
 
 ```bash
-cd scripts/sparql-annotator
+# Install from the standalone repo
+git clone git@github.com:UniVR-DH/sparql-annotator.git
+cd sparql-annotator
 uv venv .venv && uv pip install -e .
 source .venv/bin/activate
 
-# Classify queries
+# Classify queries (run from nl2s-bench root)
 python -m sparql_annotator.cli classify \
     --query-file graphs/ck25/ck25-queries.ttl \
     --ontology   graphs/qa-types.ttl \
