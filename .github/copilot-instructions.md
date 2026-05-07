@@ -229,13 +229,25 @@ export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
 ---
 
-### TTL Validation (Standard Command)
+### TTL / NT Validation (Single File)
 
 ```bash
 docker run --rm \
   --platform=linux/amd64 \
   -v "$PWD":/data \
-  stain/jena \
+  stain/jena:5.1.0 \
+  riot --validate /data/graphs/ck25/ck25.ttl
+```
+
+### TTL / NT Validation (Standard Command)
+
+```bash
+docker pull stain/jena:5.1.0
+
+docker run --rm \
+  --platform=linux/amd64 \
+  -v "$PWD":/data \
+  stain/jena:5.1.0 \
   bash -euo pipefail -c '
     status=0
     while IFS= read -r -d "" f; do
@@ -244,7 +256,7 @@ docker run --rm \
         echo "ERROR in $f" >&2
         status=1
       fi
-    done < <(find /data/graphs -type f -name "*.ttl" -print0)
+    done < <(find /data/graphs -type f \( -name "*.ttl" -o -name "*.nt" \) -print0)
     exit $status
   ' 2>&1 | tee ttl-validation.log
 ```
