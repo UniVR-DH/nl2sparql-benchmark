@@ -98,7 +98,7 @@ Use `GUIDELINE.md` as the source of truth for query encoding patterns, LSQ featu
 
 ## QA Types Ontology (`graphs/qa-types.ttl`)
 
-The benchmark uses a dedicated ontology for question typing in `graphs/qa-types.ttl` with prefix `qat:` (`https://w3id.org/univr-qa/qatypes#`).
+The benchmark uses a dedicated ontology for question typing in `graphs/qa-types.ttl` with prefix `qat:` (`https://w3id.org/qatypes#`).
 
 ### Purpose
 
