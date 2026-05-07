@@ -31,7 +31,7 @@ These guidelines are based on the existing `text2sparql` encoding and explain ho
 4. Always attach one summary node via `lsqv:hasStructuralFeatures`.
 5. Use `lsqv:usesFeature` and structural counters (`lsqv:projectVarCount`, `lsqv:tpCount`, optional `lsqv:bgpCount`) in the summary node.
 6. Use `lsqv:resultCount` to indicate the number of results from the provided ground truth graph.
-7. Use `dct:subject` only, and include all IRIs appearing in the query (classes, predicates, and any concrete resource/entity IRIs).
+7. Add `dct:subject` to **both** the `lsqv:Query` resource and the `lsqv:StructuralFeatures` blank node, including all IRIs appearing in the query (classes, predicates, and any concrete resource/entity IRIs).
 
 
 #### Blank Node Policy (Summary Encoding)
@@ -236,7 +236,7 @@ _:sf30 a lsqv:StructuralFeatures ;
 - Create one `lsqv:Query` resource.
 - Set `rdfs:label`, `dct:created`, `dct:modified`, and `lsqv:text`.
 - Add `lsqv:hasStructuralFeatures` and explicit `lsqv:usesFeature` values.
-- Add `dct:subject` to capture classes, predicates, and any concrete resource/entity IRIs appearing in the query.
+- Add `dct:subject` to **both** the `lsqv:Query` resource and the `_:sf` blank node, capturing all classes, predicates, and concrete resource/entity IRIs appearing in the query.
 - Add `lsqv:resultCount` to capture the number of results when in the benchmark output.
 
 
@@ -273,7 +273,7 @@ A 2-Level Taxonomy of Failure Sources in NL → SPARQL Generation
 
 * **Abbreviation ambiguity**
 
- * Underspecified shorthand requiring expansion or contextual disambiguation
+  * Underspecified shorthand requiring expansion or contextual disambiguation
 
   * *Example:* “GDP growth in EU”
   * *Example:* “avg temp in US states”
@@ -313,7 +313,7 @@ A 2-Level Taxonomy of Failure Sources in NL → SPARQL Generation
 
 * **Aggregation underspecification**
 
-  * * Missing or ambiguous aggregation intent or ranking criteria generating ambiguity in constructs (COUNT, SUM, ORDER BY, LIMIT)
+  * Missing or ambiguous aggregation intent or ranking criteria generating ambiguity in constructs (COUNT, SUM, ORDER BY, LIMIT)
   * *Example:* “top selling products”
   * *Example:* “number of employees in each department” (COUNT vs GROUP BY)
 
@@ -345,3 +345,28 @@ A 2-Level Taxonomy of Failure Sources in NL → SPARQL Generation
 
 
 
+
+---
+
+# 3. Question Type Reference
+
+The following question types are defined in `graphs/qa-types.ttl` (`qat:` prefix). They are used for classification and are grounded in LSQ structural features.
+
+| Type | LSQ feature(s) | Answer type |
+|---|---|---|
+| `qat:Confirmation` | `lsqv:Ask` | `qat:BooleanAnswer` |
+| `qat:Factoid` | `lsqv:Select` | `qat:SingleEntityAnswer` / `qat:EntityListAnswer` |
+| `qat:Aggregation` | `lsqv:Aggregators` | `qat:ScalarAnswer` |
+| `qat:Enumeration` | `lsqv:Distinct` or `lsqv:GroupBy` | `qat:EntityListAnswer` |
+| `qat:RankedListing` | `lsqv:OrderBy` | `qat:RankedListAnswer` |
+| `qat:LimitedRankedListing` | `lsqv:OrderBy` + `lsqv:Limit` | `qat:RankedListAnswer` |
+| `qat:Comparative` | `lsqv:Aggregators` + `lsqv:SubQuery` + `lsqv:Filter` | `qat:RankedEntityAnswer` |
+| `qat:AggregateEnumeration` | `lsqv:Aggregators` + `lsqv:GroupBy` | `qat:AggregateListAnswer` |
+| `qat:Sampling` | `lsqv:agg-sample` or `lsqv:Limit` | `qat:SampledListAnswer` |
+| `qat:CounterFactualIdentification` | `lsqv:NotExists` | `qat:EntityListAnswer` |
+
+Notes:
+- `qat:Comparative` ⊑ `qat:Aggregation` ⊓ `qat:Enumeration` (multiple inheritance).
+- `qat:AggregateEnumeration` ⊑ `qat:Aggregation` ⊓ `qat:Enumeration` (multiple inheritance).
+- `qat:Sampling` maps to `SELECT (SAMPLE(?x) AS ?s) …` (using the SPARQL `SAMPLE` aggregation function) or to a plain `SELECT … LIMIT n` when no aggregation is needed.
+- `qat:CounterFactualIdentification` asks about entities that *lack* a property or relationship; maps to `SELECT … WHERE { … FILTER NOT EXISTS { … } }`.
