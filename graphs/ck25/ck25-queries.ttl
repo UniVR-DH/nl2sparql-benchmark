@@ -50,83 +50,6 @@ WHERE {
     dct:subject pv:addressLocality,
         pv:hasSupplier .
 
-:18 a lsqv:Query,
-        qat:Comparative ;
-    rdfs:label "What is the cheapest Oscillator we have?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 6 ;
-            lsqv:usesFeature lsqv:Aggregators,
-                lsqv:Distinct,
-                lsqv:Filter,
-                lsqv:Select,
-                lsqv:SubQuery,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result 
-WHERE {
-  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
-  ?result pv:price ?priceR .
-  ?priceR pv:amount ?price .
-
-  {
-    SELECT (MIN(?p) AS ?minPrice)
-    WHERE {
-      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
-      ?r pv:price ?pr .
-      ?pr pv:amount ?p .
-    }
-  }
-
-  FILTER (?price = ?minPrice)
-}""" ;
-    dct:created "2026-03-30T16:02:31.732348+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.732348+00:00"^^xsd:dateTime ;
-    dct:subject <http://ld.company.org/prod-instances/prod-cat-Oscillator>,
-        pv:amount,
-        pv:hasCategory,
-        pv:price .
-
-:19 a lsqv:Query,
-        qat:Comparative ;
-    rdfs:label "What is the most expensive service we offer?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 6 ;
-            lsqv:usesFeature lsqv:Aggregators,
-                lsqv:Distinct,
-                lsqv:Filter,
-                lsqv:Select,
-                lsqv:SubQuery,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result 
-WHERE {
-  ?result a pv:Service .
-  ?result pv:price ?priceR .
-  ?priceR pv:amount ?price .
-
-  {
-    SELECT (MAX(?p) AS ?maxPrice)
-    WHERE {
-      ?r a pv:Service .
-      ?r pv:price ?pr .
-      ?pr pv:amount ?p .
-    }
-  }
-
-  FILTER (?price = ?maxPrice)
-}""" ;
-    dct:created "2026-03-30T16:02:31.732382+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.732382+00:00"^^xsd:dateTime ;
-    dct:subject pv:Service,
-        pv:amount,
-        pv:price .
-
 :3 a lsqv:Query,
         qat:Enumeration ;
     rdfs:label "Who is the manager of Heinrich Hoch?" ;
@@ -188,43 +111,27 @@ WHERE {
         pv:memberOf,
         pv:name .
 
-:45 a lsqv:Query,
-        qat:Comparative ;
-    rdfs:label "Which supplier delivers the most reliable Inductor?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 5 ;
-            lsqv:usesFeature lsqv:Aggregators,
-                lsqv:Distinct,
-                lsqv:Filter,
+:43 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "Show me any cycles of product compatibility — i.e. product A says it's compatible with B, and B says it's compatible with A (mutual pairs)." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Filter,
                 lsqv:Select,
-                lsqv:SubQuery,
                 lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
+    lsqv:resultCount 969 ;
     lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
 
-SELECT DISTINCT ?result
+SELECT ?a ?b
 WHERE {
-  ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
-  ?hardware pv:reliabilityIndex ?reliabilityIndex .
-  ?hardware pv:hasSupplier ?result .
-
-  {
-    SELECT (MAX(?ri) AS ?maxRI)
-    WHERE {
-      ?h pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
-      ?h pv:reliabilityIndex ?ri .
-    }
-  }
-
-  FILTER(?reliabilityIndex = ?maxRI)
+  ?a pv:compatibleProduct ?b .
+  ?b pv:compatibleProduct ?a .
+  FILTER (STR(?a) < STR(?b))
 }""" ;
-    dct:created "2026-03-30T16:02:31.733565+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.733565+00:00"^^xsd:dateTime ;
-    dct:subject <http://ld.company.org/prod-instances/prod-cat-Inductor>,
-        pv:hasCategory,
-        pv:hasSupplier,
-        pv:reliabilityIndex .
+    dct:created "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
+    dct:subject pv:compatibleProduct .
 
 :51 a lsqv:Query ;
     rdfs:label "In which department is Karen Brant?" ;
@@ -437,51 +344,63 @@ WHERE {
     skos:closeMatch :42 .
 
 :86 a lsqv:Query ;
-    rdfs:label "List all product pairs where the first product is compatible with the second product." ;
-    dct:created "2026-04-17T16:09:58.132146+00:00"^^xsd:dateTime ;
-    dct:modified "2026-04-17T16:09:58.132146+00:00"^^xsd:dateTime ;
-    skos:closeMatch :43 .
-
-:87 a lsqv:Query ;
     rdfs:label "Which hardware items have widths in the top 10% of the width range (based on minimum and maximum widths), and what are their IDs, names, and widths?" ;
     dct:created "2026-04-17T16:10:01.402147+00:00"^^xsd:dateTime ;
     dct:modified "2026-04-17T16:10:01.402147+00:00"^^xsd:dateTime ;
     skos:closeMatch :44 .
 
-:88 a lsqv:Query ;
+:87 a lsqv:Query ;
     rdfs:label "What are the top 5 suppliers with the highest average reliability index across the hardware items they supply?" ;
     dct:created "2026-04-17T16:10:05.252147+00:00"^^xsd:dateTime ;
     dct:modified "2026-04-17T16:10:05.252147+00:00"^^xsd:dateTime ;
     skos:closeMatch :46 .
 
-:89 a lsqv:Query ;
+:88 a lsqv:Query ;
     rdfs:label "From which countries do the suppliers of the BOM parts of SkySync MechWave come?" ;
     dct:created "2026-04-17T16:10:12.242146+00:00"^^xsd:dateTime ;
     dct:modified "2026-04-17T16:10:12.242146+00:00"^^xsd:dateTime ;
     skos:closeMatch :47 .
 
-:90 a lsqv:Query ;
+:89 a lsqv:Query ;
     rdfs:label "Which Bill of Materials (BOMs) have at least one part supplied by a supplier from Poland?" ;
     dct:created "2026-04-17T16:10:15.632746+00:00"^^xsd:dateTime ;
     dct:modified "2026-04-17T16:10:15.632746+00:00"^^xsd:dateTime ;
     skos:closeMatch :48 .
 
-:91 a lsqv:Query ;
+:90 a lsqv:Query ;
     rdfs:label "How many suppliers provide products that are compatible with the K367-1320550 - Strain Encoder?" ;
     dct:created "2026-04-17T16:10:18.572149+00:00"^^xsd:dateTime ;
     dct:modified "2026-04-17T16:10:18.572149+00:00"^^xsd:dateTime ;
     skos:closeMatch :49 .
 
-:92 a lsqv:Query ;
-    rdfs:label "Which department is responsible for the most products, and how many products does it handle?" ;
+:91 a lsqv:Query ;
+    rdfs:label "Which department is responsible for the most products, and how many products is it responsible for?" ;
     dct:created "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
     dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
     skos:closeMatch :50 .
 
+:92 a lsqv:Query ;
+    rdfs:label "Which Oscillator has the lowest price amount?" ;
+    dct:created "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :18 .
+
 :93 a lsqv:Query ;
+    rdfs:label "What is the service we offer with the maximum price amount?" ;
+    dct:created "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :19 .
+
+:94 a lsqv:Query ;
+    rdfs:label "Which suppliers deliver Inductors with the maximum reliability index?" ;
+    dct:created "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    skos:closeMatch :45 .
+
+:95 a lsqv:Query ;
     rdfs:label "What is the email of Sabrina from the department with name Marketing?" ;
-    dct:created "2026-05-05T16:10:20.132146+00:00"^^xsd:dateTime ;
-    dct:modified "2026-05-05T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:created "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
+    dct:modified "2026-04-17T16:10:20.132146+00:00"^^xsd:dateTime ;
     skos:closeMatch :4 .
 
 :1 a lsqv:Query,
@@ -505,6 +424,31 @@ WHERE {
     dct:subject <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org>,
         pv:Department,
         pv:memberOf .
+
+:10 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What is the name of the Network expert from the Marketing Department?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 2 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?employee pv:memberOf <http://ld.company.org/prod-instances/dept-85880> .
+  ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Network> .
+  ?employee pv:name ?result .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732089+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732089+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/dept-85880>,
+        <http://ld.company.org/prod-instances/prod-cat-Network>,
+        pv:areaOfExpertise,
+        pv:memberOf,
+        pv:name .
 
 :11 a lsqv:Query,
         qat:Enumeration ;
@@ -561,7 +505,7 @@ WHERE {
                 lsqv:TriplePattern,
                 lsqv:agg-count ] ;
     lsqv:resultCount 1 ;
-    lsqv:text """PREFIX dbPedia: <http://dbpedia.org/resource/> 
+    lsqv:text """"PREFIX dbPedia: <http://dbpedia.org/resource/> 
 PREFIX pv: <http://ld.company.org/prod-vocab/> 
 
 SELECT (COUNT(DISTINCT ?supplier) as ?result)
@@ -571,7 +515,7 @@ WHERE {
 }""" ;
     dct:created "2026-03-30T16:02:31.732186+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.732186+00:00"^^xsd:dateTime ;
-    dct:subject pv:addressCountry,
+    dct:subject pv:country,
         pv:hasSupplier .
 
 :14 a lsqv:Query,
@@ -596,7 +540,7 @@ WHERE {
     dct:created "2026-03-30T16:02:31.732213+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.732213+00:00"^^xsd:dateTime ;
     dct:subject <http://ld.company.org/prod-instances/prod-cat-Compensator>,
-        pv:addressCountry,
+        pv:country,
         pv:hasCategory,
         pv:hasSupplier .
 
@@ -637,8 +581,7 @@ WHERE {
   }
 
   FILTER (?price = ?minPrice)
-}
-""" ;
+}""" ;
     dct:created "2026-03-30T16:02:31.732247+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.732247+00:00"^^xsd:dateTime ;
     dct:subject <http://ld.company.org/prod-instances/prod-cat-Encoder>,
@@ -646,6 +589,83 @@ WHERE {
         pv:amount,
         pv:hasCategory,
         pv:hasSupplier,
+        pv:price .
+
+:18 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the cheapest Oscillator we have?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result 
+WHERE {
+  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
+  ?result pv:price ?priceR .
+  ?priceR pv:amount ?price .
+
+  {
+    SELECT (MIN(?p) AS ?minPrice)
+    WHERE {
+      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .
+      ?r pv:price ?pr .
+      ?pr pv:amount ?p .
+    }
+  }
+
+  FILTER (?price = ?minPrice)
+}""" ;
+    dct:created "2026-03-30T16:02:31.732348+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732348+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Oscillator>,
+        pv:amount,
+        pv:hasCategory,
+        pv:price .
+
+:19 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the most expensive service we offer?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result 
+WHERE {
+  ?result a pv:Service .
+  ?result pv:price ?priceR .
+  ?priceR pv:amount ?price .
+
+  {
+    SELECT (MAX(?p) AS ?maxPrice)
+    WHERE {
+      ?r a pv:Service .
+      ?r pv:price ?pr .
+      ?pr pv:amount ?p .
+    }
+  }
+
+  FILTER (?price = ?maxPrice)
+}""" ;
+    dct:created "2026-03-30T16:02:31.732382+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732382+00:00"^^xsd:dateTime ;
+    dct:subject pv:Service,
+        pv:amount,
         pv:price .
 
 :2 a lsqv:Query,
@@ -707,6 +727,53 @@ WHERE {
         pv:amount,
         pv:hasProductManager,
         pv:price .
+
+:21 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "What is the heaviest coil that does not exceed a base area of 15x15 milimeter?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 8 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result 
+WHERE {
+  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
+  ?result pv:weight_g ?weight_g .
+  ?result pv:width_mm ?width_mm .
+  ?result pv:depth_mm ?depth_mm .
+
+  FILTER (?width_mm <= 15)
+  FILTER (?depth_mm <= 15)
+
+  {
+    SELECT (MAX(?w) AS ?maxWeight)
+    WHERE {
+      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
+      ?r pv:weight_g ?w .
+      ?r pv:width_mm ?wmm .
+      ?r pv:depth_mm ?dmm .
+      FILTER (?wmm <= 15)
+      FILTER (?dmm <= 15)
+    }
+  }
+
+  FILTER (?weight_g = ?maxWeight)
+}""" ;
+    dct:created "2026-03-30T16:02:31.732449+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732449+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Coil>,
+        pv:depth_mm,
+        pv:hasCategory,
+        pv:weight_g,
+        pv:width_mm .
 
 :22 a lsqv:Query,
         qat:Enumeration ;
@@ -915,6 +982,46 @@ ORDER BY ?name""" ;
         pv:name,
         pv:phone .
 
+:28 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Do we have any service that does apply to a BOM where parts are sourced from Russia?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 6 ;
+            lsqv:usesFeature lsqv:Ask,
+                lsqv:Filter,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+ASK
+WHERE {
+  { # all Russia-sourced hardware in any BOM
+    SELECT ?bom ?hw
+    WHERE {
+      ?bom pv:hasBomPart ?bomPart .
+      ?bomPart pv:hasPart ?hw .
+      ?hw pv:hasSupplier ?suppl .
+      ?suppl pv:addressCountry ?country .
+      FILTER (CONTAINS(LCASE(?country), LCASE("Russia")))
+    }
+  }
+
+  # is there a service eligible for that specific Russia-sourced hardware?
+  ?s a pv:Service .
+  ?s pv:eligibleFor ?hw .
+}""" ;
+    dct:created "2026-03-30T16:02:31.732781+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732781+00:00"^^xsd:dateTime ;
+    dct:subject pv:Service,
+        pv:addressCountry,
+        pv:eligibleFor,
+        pv:hasBomPart,
+        pv:hasPart,
+        pv:hasSupplier .
+
 :29 a lsqv:Query,
         qat:LimitedRankedListing ;
     rdfs:label "What suppliers - I need name, country and price - deliver the 6th to 10th most expensive hardware items." ;
@@ -985,6 +1092,37 @@ HAVING (COUNT(?emp) > 5)""" ;
         pv:Employee,
         pv:memberOf,
         pv:name .
+
+:31 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "Per product category, what's our lightest and heaviest hardware item?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 26 ;
+    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT ?cat (MIN(?w) AS ?minWeight) (MAX(?w) AS ?maxWeight)
+WHERE {
+  ?catItem a pv:ProductCategory ;
+    pv:name ?cat .
+  ?hw a pv:Hardware ;
+    pv:hasCategory ?catItem ;
+    pv:weight_g ?w .
+}
+GROUP BY ?cat""" ;
+    dct:created "2026-03-30T16:02:31.732941+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.732941+00:00"^^xsd:dateTime ;
+    dct:subject pv:Hardware,
+        pv:ProductCategory,
+        pv:hasCategory,
+        pv:name,
+        pv:weight_g .
 
 :32 a lsqv:Query,
         qat:AggregateEnumeration ;
@@ -1107,8 +1245,7 @@ WHERE {
 
 :36 a lsqv:Query,
         qat:AggregateEnumeration,
-        qat:Comparative,
-        qat:LimitedRankedListing ;
+        qat:Comparative ;
     rdfs:label "Which area of expertise is most relevant among our products, what are the top three skills?" ;
     lsqv:hasStructuralFeatures [ lsqv:bgpCount 4 ;
             lsqv:projectVarCount 2 ;
@@ -1117,7 +1254,6 @@ WHERE {
                 lsqv:Bind,
                 lsqv:Filter,
                 lsqv:GroupBy,
-                lsqv:Limit,
                 lsqv:OrderBy,
                 lsqv:Select,
                 lsqv:SubQuery,
@@ -1186,6 +1322,42 @@ ORDER BY DESC(?cnt)""" ;
         pv:hasCategory,
         pv:name .
 
+:37 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "For each Bill of Material, how many parts does it contain and what is the total material quantity — show me only those BOMs exceeding 600 total items and order them descending." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count,
+                lsqv:fn-gt ] ;
+    lsqv:resultCount 7 ;
+    lsqv:text """PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prodi: <http://ld.company.org/prod-instances/>
+PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT ?bom (COUNT(?part) AS ?partCount) (SUM(?qty) AS ?totalQty)
+WHERE {
+  ?bom a pv:BillOfMaterial ;
+    pv:hasBomPart ?part .
+  ?part pv:quantity ?qty_ .
+  BIND(xsd:int(?qty_) AS ?qty)
+}
+GROUP BY ?bom
+HAVING (SUM(?qty) > 600)
+ORDER BY DESC(SUM(?qty))""" ;
+    dct:created "2026-03-30T16:02:31.733199+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733199+00:00"^^xsd:dateTime ;
+    dct:subject pv:BillOfMaterial,
+        pv:hasBomPart,
+        pv:quantity .
+
 :38 a lsqv:Query,
         qat:Factoid ;
     rdfs:label "I want to update my contact list, for each Employee give me name, email, phone number and the department they belong to as well as their direct report." ;
@@ -1247,6 +1419,32 @@ WHERE {
         pv:depth_mm,
         pv:height_mm,
         pv:width_mm .
+
+:4 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "What is the email of Sabrina from Marketing?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?department pv:name "Marketing" .
+  ?person pv:memberOf ?department .
+  ?person pv:email ?result .
+  ?person pv:name ?name .
+  FILTER (CONTAINS(?name, "Sabrina"))
+}""" ;
+    dct:created "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
+    dct:subject pv:email,
+        pv:memberOf,
+        pv:name .
 
 :40 a lsqv:Query,
         qat:CounterFactualIdentification ;
@@ -1350,27 +1548,6 @@ WHERE {
         pv:price,
         pv:quantity .
 
-:43 a lsqv:Query,
-        qat:Factoid ;
-    rdfs:label "Show me any cycles of product compatibility — i.e. product A says it's compatible with B, and B says it's compatible with A (mutual pairs)." ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 2 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Filter,
-                lsqv:Select,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 969 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT ?a ?b
-WHERE {
-  ?a pv:compatibleProduct ?b .
-  FILTER (STR(?a) < STR(?b))
-}""" ;
-    dct:created "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.733487+00:00"^^xsd:dateTime ;
-    dct:subject pv:compatibleProduct .
-
 :44 a lsqv:Query,
         qat:Aggregation,
         qat:RankedListing ;
@@ -1416,6 +1593,44 @@ ORDER BY DESC(?width)""" ;
         pv:id,
         pv:name,
         pv:width_mm .
+
+:45 a lsqv:Query,
+        qat:Comparative ;
+    rdfs:label "Which supplier delivers the most reliable Inductor?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+
+SELECT DISTINCT ?result
+WHERE {
+  ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
+  ?hardware pv:reliabilityIndex ?reliabilityIndex .
+  ?hardware pv:hasSupplier ?result .
+
+  {
+    SELECT (MAX(?ri) AS ?maxRI)
+    WHERE {
+      ?h pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .
+      ?h pv:reliabilityIndex ?ri .
+    }
+  }
+
+  FILTER(?reliabilityIndex = ?maxRI)
+}""" ;
+    dct:created "2026-03-30T16:02:31.733565+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.733565+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Inductor>,
+        pv:hasCategory,
+        pv:hasSupplier,
+        pv:reliabilityIndex .
 
 :46 a lsqv:Query,
         qat:AggregateEnumeration,
@@ -1464,8 +1679,7 @@ WHERE {
 
   FILTER(?avgReliability >= ?threshold)
 }
-ORDER BY DESC(?avgReliability) ?supplier
-""" ;
+ORDER BY DESC(?avgReliability) ?supplier""" ;
     dct:created "2026-03-30T16:02:31.733601+00:00"^^xsd:dateTime ;
     dct:modified "2026-03-30T16:02:31.733601+00:00"^^xsd:dateTime ;
     dct:subject pv:hasSupplier,
@@ -1610,6 +1824,26 @@ WHERE {
     dct:modified "2026-03-30T16:02:31.733737+00:00"^^xsd:dateTime ;
     dct:subject pv:responsibleFor .
 
+:6 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Who is our Sensor expert?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 7 ;
+    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
+SELECT DISTINCT ?result
+WHERE {
+  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Sensor> .
+}""" ;
+    dct:created "2026-03-30T16:02:31.731971+00:00"^^xsd:dateTime ;
+    dct:modified "2026-03-30T16:02:31.731971+00:00"^^xsd:dateTime ;
+    dct:subject <http://ld.company.org/prod-instances/prod-cat-Sensor>,
+        pv:areaOfExpertise .
+
 :7 a lsqv:Query,
         qat:Enumeration ;
     rdfs:label "Who is the manager of the Data Services department?" ;
@@ -1675,257 +1909,14 @@ WHERE {
         <http://ld.company.org/prod-instances/prod-cat-Switch>,
         pv:hasCategory .
 
-:10 a lsqv:Query,
-        qat:Enumeration ;
-    rdfs:label "What is the name of the Network expert from the Marketing Department?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 3 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 2 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?employee pv:memberOf <http://ld.company.org/prod-instances/dept-85880> .
-  ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Network> .
-  ?employee pv:name ?result .
-}""" ;
-    dct:created "2026-03-30T16:02:31.732089+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.732089+00:00"^^xsd:dateTime ;
-    dct:subject <http://ld.company.org/prod-instances/dept-85880>,
-        <http://ld.company.org/prod-instances/prod-cat-Network>,
-        pv:areaOfExpertise,
-        pv:memberOf,
-        pv:name .
-
-:21 a lsqv:Query,
-        qat:Comparative ;
-    rdfs:label "What is the heaviest coil that does not exceed a base area of 15x15 milimeter?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 8 ;
-            lsqv:usesFeature lsqv:Aggregators,
-                lsqv:Distinct,
-                lsqv:Filter,
-                lsqv:Select,
-                lsqv:SubQuery,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT DISTINCT ?result 
-WHERE {
-  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
-  ?result pv:weight_g ?weight_g .
-  ?result pv:width_mm ?width_mm .
-  ?result pv:depth_mm ?depth_mm .
-
-  FILTER (?width_mm <= 15)
-  FILTER (?depth_mm <= 15)
-
-  {
-    SELECT (MAX(?w) AS ?maxWeight)
-    WHERE {
-      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .
-      ?r pv:weight_g ?w .
-      ?r pv:width_mm ?wmm .
-      ?r pv:depth_mm ?dmm .
-      FILTER (?wmm <= 15)
-      FILTER (?dmm <= 15)
-    }
-  }
-
-  FILTER (?weight_g = ?maxWeight)
-}""" ;
-    dct:created "2026-03-30T16:02:31.732449+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.732449+00:00"^^xsd:dateTime ;
-    dct:subject <http://ld.company.org/prod-instances/prod-cat-Coil>,
-        pv:depth_mm,
-        pv:hasCategory,
-        pv:weight_g,
-        pv:width_mm .
-
-:28 a lsqv:Query,
-        qat:Confirmation ;
-    rdfs:label "Do we have any service that does apply to a BOM where parts are sourced from Russia?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
-            lsqv:projectVarCount 0 ;
-            lsqv:tpCount 6 ;
-            lsqv:usesFeature lsqv:Ask,
-                lsqv:Filter,
-                lsqv:SubQuery,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-ASK
-WHERE {
-  { # all Russia-sourced hardware in any BOM
-    SELECT ?bom ?hw
-    WHERE {
-      ?bom pv:hasBomPart ?bomPart .
-      ?bomPart pv:hasPart ?hw .
-      ?hw pv:hasSupplier ?suppl .
-      ?suppl pv:addressCountry ?country .
-      FILTER (CONTAINS(LCASE(?country), LCASE("Russia")))
-    }
-  }
-
-  # is there a service eligible for that specific Russia-sourced hardware?
-  ?s a pv:Service .
-  ?s pv:eligibleFor ?hw .
-}""" ;
-    dct:created "2026-03-30T16:02:31.732781+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.732781+00:00"^^xsd:dateTime ;
-    dct:subject pv:Service,
-        pv:addressCountry,
-        pv:eligibleFor,
-        pv:hasBomPart,
-        pv:hasPart,
-        pv:hasSupplier .
-
-:31 a lsqv:Query,
-        qat:AggregateEnumeration ;
-    rdfs:label "Per product category, what's our lightest and heaviest hardware item?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 3 ;
-            lsqv:tpCount 5 ;
-            lsqv:usesFeature lsqv:Aggregators,
-                lsqv:GroupBy,
-                lsqv:Select,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 26 ;
-    lsqv:text """PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT ?cat (MIN(?w) AS ?minWeight) (MAX(?w) AS ?maxWeight)
-WHERE {
-  ?catItem a pv:ProductCategory ;
-    pv:name ?cat .
-  ?hw a pv:Hardware ;
-    pv:hasCategory ?catItem ;
-    pv:weight_g ?w .
-}
-GROUP BY ?cat""" ;
-    dct:created "2026-03-30T16:02:31.732941+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.732941+00:00"^^xsd:dateTime ;
-    dct:subject pv:Hardware,
-        pv:ProductCategory,
-        pv:hasCategory,
-        pv:name,
-        pv:weight_g .
-
-:37 a lsqv:Query,
-        qat:AggregateEnumeration ;
-    rdfs:label "For each Bill of Material, how many parts does it contain and what is the total material quantity — show me only those BOMs exceeding 600 total items and order them descending." ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 3 ;
-            lsqv:tpCount 3 ;
-            lsqv:usesFeature lsqv:Aggregators,
-                lsqv:Bind,
-                lsqv:GroupBy,
-                lsqv:Having,
-                lsqv:OrderBy,
-                lsqv:Select,
-                lsqv:TriplePattern,
-                lsqv:agg-count,
-                lsqv:fn-gt ] ;
-    lsqv:resultCount 7 ;
-    lsqv:text """PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX prodi: <http://ld.company.org/prod-instances/>
-PREFIX pv: <http://ld.company.org/prod-vocab/>
-
-SELECT ?bom (COUNT(?part) AS ?partCount) (SUM(?qty) AS ?totalQty)
-WHERE {
-  ?bom a pv:BillOfMaterial ;
-    pv:hasBomPart ?part .
-  ?part pv:quantity ?qty_ .
-  BIND(xsd:int(?qty_) AS ?qty)
-}
-GROUP BY ?bom
-HAVING (SUM(?qty) > 600)
-ORDER BY DESC(SUM(?qty))""" ;
-    dct:created "2026-03-30T16:02:31.733199+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.733199+00:00"^^xsd:dateTime ;
-    dct:subject pv:BillOfMaterial,
-        pv:hasBomPart,
-        pv:quantity .
-
-:4 a lsqv:Query,
-        qat:Enumeration ;
-    rdfs:label "What is the email of Sabrina from Marketing?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 4 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Filter,
-                lsqv:Select,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?department pv:name "Marketing" .
-  ?person pv:memberOf ?department .
-  ?person pv:email ?result .
-  ?person pv:name ?name .
-  FILTER (CONTAINS(?name, "Sabrina"))
-}""" ;
-    dct:created "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.731899+00:00"^^xsd:dateTime ;
-    dct:subject pv:email,
-        pv:memberOf,
-        pv:name .
-
-:6 a lsqv:Query,
-        qat:Enumeration ;
-    rdfs:label "Who is our Sensor expert?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select,
-                lsqv:TriplePattern ] ;
-    lsqv:resultCount 7 ;
-    lsqv:text """PREFIX pv: <http://ld.company.org/prod-vocab/>
-SELECT DISTINCT ?result
-WHERE {
-  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Sensor> .
-}""" ;
-    dct:created "2026-03-30T16:02:31.731971+00:00"^^xsd:dateTime ;
-    dct:modified "2026-03-30T16:02:31.731971+00:00"^^xsd:dateTime ;
-    dct:subject <http://ld.company.org/prod-instances/prod-cat-Sensor>,
-        pv:areaOfExpertise .
-
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
-    oa:hasTarget :28 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
-    oa:hasTarget :29 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
-    oa:hasTarget :30 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
-    oa:hasTarget :31 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
-    oa:hasTarget :31 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:AggregationUnderspecification,
+                qat:SemanticIssue ] ;
     oa:hasTarget :32 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
     oa:hasTarget :33 .
 
 [] a qa:AnnotationQuestion ;
@@ -1937,23 +1928,27 @@ WHERE {
     oa:hasTarget :35 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:AggregationUnderspecification,
+                qat:SchemaCoverageMismatch,
+                qat:SemanticIssue ] ;
     oa:hasTarget :36 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:AbbreviationAmbiguity,
+                qat:EntityAttributeMismatch,
+                qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SemanticIssue ] ;
     oa:hasTarget :37 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
-    oa:hasTarget :37 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
     oa:hasTarget :38 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :39 .
 
 [] a qa:AnnotationQuestion ;
@@ -1966,90 +1961,113 @@ WHERE {
 
 [] a qa:AnnotationQuestion ;
     oa:hasBody [ a qat:SemanticIssue ] ;
-    oa:hasTarget :43 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
     oa:hasTarget :44 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
     oa:hasTarget :46 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:EntityAttributeMismatch,
+                qat:SemanticIssue ] ;
     oa:hasTarget :47 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :48 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :49 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LinguisticIssue,
+                qat:OrthographicNoise ] ;
     oa:hasTarget :50 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SemanticIssue ] ;
+    oa:hasTarget :18 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SemanticIssue ] ;
+    oa:hasTarget :19 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue,
+                qat:VaguePredicateGrounding ] ;
+    oa:hasTarget :45 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
     oa:hasTarget :4 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
-    oa:hasTarget :4 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:EntityLinkingAmbiguity,
+                qat:SemanticIssue ] ;
     oa:hasTarget :1 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :2 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :5 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SyntacticDistortion ] ;
     oa:hasTarget :6 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
-    oa:hasTarget :6 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
     oa:hasTarget :7 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :8 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SemanticIssue ] ;
     oa:hasTarget :9 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SyntacticDistortion ] ;
     oa:hasTarget :10 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
-    oa:hasTarget :10 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :11 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:LinguisticIssue,
+                qat:SemanticIssue ] ;
     oa:hasTarget :12 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
     oa:hasTarget :13 .
 
 [] a qa:AnnotationQuestion ;
@@ -2057,46 +2075,68 @@ WHERE {
     oa:hasTarget :14 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue,
+                qat:SemanticIssue ] ;
     oa:hasTarget :15 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:EntityAttributeMismatch,
+                qat:SemanticIssue ] ;
     oa:hasTarget :20 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:EntityAttributeMismatch,
+                qat:SemanticIssue ] ;
     oa:hasTarget :21 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
-    oa:hasTarget :21 .
-
-[] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :22 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:AbbreviationAmbiguity,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :23 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:LinguisticIssue,
+                qat:OrthographicNoise ] ;
     oa:hasTarget :24 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:EntityAttributeMismatch,
+                qat:SemanticIssue ] ;
     oa:hasTarget :25 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:AbbreviationAmbiguity,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :26 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
     oa:hasTarget :27 .
 
 [] a qa:AnnotationQuestion ;
-    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
     oa:hasTarget :28 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue ] ;
+    oa:hasTarget :29 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:DiscourseReferenceFailure,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :30 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:AggregationUnderspecification,
+                qat:SemanticIssue ] ;
+    oa:hasTarget :31 .
 
