@@ -11,15 +11,15 @@
 @prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
 
 #Introducing new prefix
-@prefix qat: <https://w3id.org/univr-qa/qatypes#> .
+@prefix qat: <https://w3id.org/qatypes#> .
 
 
 # ── Ontology declaration ──────────────────────────────────────────────────────
 
-<https://w3id.org/univr-qa/qatypes#> rdf:type owl:Ontology ;
+<https://w3id.org/qatypes#> rdf:type owl:Ontology ;
     terms:title "QA Question Types"@en ;
     terms:created "2026-04-08"^^xsd:date ;
-    terms:creator <https://w3id.org/univr-qa> ;
+    terms:creator <https://orcid.org/0009-0000-9511-450X>, <https://orcid.org/0009-0001-1135-191X>, <https://orcid.org/0000-0001-6988-1203>, <https://orcid.org/0000-0001-6092-6831>, <https://orcid.org/0000-0001-7922-5998> ;
     terms:license <https://creativecommons.org/publicdomain/zero/1.0/> ;
     rdfs:label "QA Question Types taxonomy"@en ;
     rdfs:comment "Taxonomy of natural language question types for QA systems, extending Qanary."@en ;
