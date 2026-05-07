@@ -16,7 +16,7 @@ _MINI_ONTOLOGY = textwrap.dedent("""
     @prefix owl:  <http://www.w3.org/2002/07/owl#> .
     @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
     @prefix lsqv: <http://lsq.aksw.org/vocab#> .
-    @prefix qat:  <https://w3id.org/univr-qa/qatypes#> .
+    @prefix qat:  <https://w3id.org/qatypes#> .
 
     qat:QuestionType a owl:Class .
 
