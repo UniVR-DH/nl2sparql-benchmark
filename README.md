@@ -218,6 +218,7 @@ qat:SemanticIssue
 
 Query classification is handled by the `sparql-annotator` CLI in `scripts/sparql-annotator/`.
 See [`scripts/sparql-annotator/README.md`](scripts/sparql-annotator/README.md) for full documentation.
+For a related workflow focused on annotating queries with the `qa-types` ontology, see [nl-to-sparql_query_annotation](https://github.com/niccolomarastoni/nl-to-sparql_query_annotation).
 
 Quick start:
 
