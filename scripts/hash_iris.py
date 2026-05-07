@@ -25,7 +25,7 @@ DEFAULT_NAMESPACES = [
 
 SKIP_FILES: set[str] = set()
 
-COPY_ONLY_FILES: set[str] = {"croissant.jsonld"}
+COPY_ONLY_FILES: set[str] = {"ck25-croissant.jsonld"}
 
 SPARQL_STRING_PREDICATES = {
     "http://lsq.aksw.org/vocab#text",
