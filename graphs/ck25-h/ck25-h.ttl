@@ -3,7 +3,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <https://text2sparql.aksw.org/2025/corporate/> a void:Dataset;
-  rdfs:label "TEXT2SPARQL Benchmark- Corporate Knowledge Graph"@en;
+  rdfs:label "Hashed TEXT2SPARQL Benchmark - Corporate Knowledge Graph"@en;
   owl:imports <http://ld.company.org/prod-inst/>, 
     <http://ld.company.org/prod-vocab/>, 
     <http://ld.company.org/.well-known/void#>,
