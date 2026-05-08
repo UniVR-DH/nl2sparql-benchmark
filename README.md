@@ -326,10 +326,10 @@ If you use this benchmark, please cite:
 
 ```bibtex
 @dataset{benelli_2026_20074201,
-  author       = {Benelli, Bianca and
-                  Balasooriya, Indeewari and
+  author       = {Balasooriya, Indeewari and
+                  Benelli, Bianca and
                   Marastoni, Niccolò and
-                  QUINTARELLI, ELISA and
+                  Quintarelli, Elisa and
                   Lissandrini, Matteo},
   title        = {Supplementary material for FAULT: Failure Analysis
                    and Understanding for Language-to-SPARQL Testing
