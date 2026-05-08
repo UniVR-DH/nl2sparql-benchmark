@@ -325,7 +325,7 @@ uv run ruff format .
 If you use this benchmark, please cite:
 
 ```bibtex
-@dataset{benelli_2026_20074201,
+@dataset{fault-bench,
   author       = {Balasooriya, Indeewari and
                   Benelli, Bianca and
                   Marastoni, Niccolò and
