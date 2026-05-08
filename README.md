@@ -319,3 +319,25 @@ uv run ruff format .
 - Qanary (`qa:`)
 - QA Types ontology (`qat:` — `https://w3id.org/qatypes#`)
 
+
+## Citation
+
+If you use this benchmark, please cite:
+
+```bibtex
+@dataset{benelli_2026_20074201,
+  author       = {Benelli, Bianca and
+                  Balasooriya, Indeewari and
+                  Marastoni, Niccolò and
+                  QUINTARELLI, ELISA and
+                  Lissandrini, Matteo},
+  title        = {Supplementary material for FAULT: Failure Analysis
+                   and Understanding for Language-to-SPARQL Testing
+                  },
+  month        = may,
+  year         = 2026,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.20074201},
+  url          = {https://doi.org/10.5281/zenodo.20074201},
+}
+```
