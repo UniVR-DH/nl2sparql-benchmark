@@ -341,3 +341,11 @@ If you use this benchmark, please cite:
   url          = {https://doi.org/10.5281/zenodo.20074201},
 }
 ```
+
+## Generative AI Disclosure
+
+Portions of the code, documentation, and ontology content in this repository were drafted with the assistance of generative AI tools, including GitHub Copilot and Kiro (powered by Claude, Anthropic). Where AI contributions were substantive, explicit acknowledgements have been recorded in the relevant artifacts.
+
+All AI-generated contributions were subject to both automated checks (linting, formatting, and validation pipelines) and manual review by the human authors prior to inclusion. Each contribution was either accepted as-is, modified, or rejected at the sole discretion of the human authors.
+
+The human authors retain full responsibility for the accuracy, integrity, and appropriateness of all content in this repository. AI assistance was used strictly as a productivity tool; no AI-generated content was incorporated without deliberate human oversight and approval. The human authors are the accountable parties for all design decisions, factual claims, and published artifacts.
