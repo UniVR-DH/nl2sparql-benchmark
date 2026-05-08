@@ -306,9 +306,16 @@ uv run ruff format .
 
 - RDF 1.1 (`rdf:`)
 - RDFS (`rdfs:`)
+- OWL (`owl:`)
 - XML Schema Datatypes (`xsd:`)
 - Dublin Core Terms (`dct:`)
+- SKOS (`skos:`)
+- FOAF (`foaf:`)
+- VoID (`void:`)
 - SPARQL Service Description (`sd:`)
 - Linked SPARQL Queries Vocabulary (`lsqv:`)
 - SP vocabulary (`sp:`)
+- W3C Open Annotation (`oa:`)
+- Qanary (`qa:`)
+- QA Types ontology (`qat:` — `https://w3id.org/qatypes#`)
 
