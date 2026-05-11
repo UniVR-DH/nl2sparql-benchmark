@@ -474,9 +474,13 @@ def process_folder(
             continue
 
         if src.name in copy_only_files:
-            dst = output_dir / src.name
+            if src.suffixes:
+                out_name = f"{src.stem}-h{''.join(src.suffixes)}"
+            else:
+                out_name = f"{src.name}-h"
+            dst = output_dir / out_name
             shutil.copy2(src, dst)
-            print(f"  Copied:     {src.name}")
+            print(f"  Copied:     {src.name} -> {out_name}")
             copied_count += 1
             continue
 
