@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Hash selected IRIs while preserving file structure — streaming edition.
 
-The script creates a mirrored output directory with the same file names as the
-input directory. It hashes only IRIs under configured namespace prefixes.
+The script creates a mirrored output directory structure and writes output files
+using the input file names with a ``-h`` suffix. It hashes only IRIs under
+configured namespace prefixes.
 
 Processing modes:
 - streaming for large files (instances/vocab/shapes/void), 
@@ -11,7 +12,7 @@ Processing modes:
 Typical usage
 -------------
 # GPTKB
-python scripts/hash-iris.py \
+uv run python scripts/hash-iris.py \
   --input-dir graphs/gptkb \
   --output-dir graphs/gptkb-h \
   --namespace https://gptkb.org/entity/ \
@@ -20,7 +21,7 @@ python scripts/hash-iris.py \
   --hash-format int
 
 # CK25
-python scripts/hash-iris.py \
+uv run python scripts/hash-iris.py \
   --input-dir graphs/ck25 \
   --output-dir graphs/ck25-h \
   --namespace http://dbpedia.org/resource/ \
