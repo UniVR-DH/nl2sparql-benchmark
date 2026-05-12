@@ -182,21 +182,11 @@ def check_collision_warnings(hash_len: int, fmt: str) -> None:
 # Hashing
 # ---------------------------------------------------------------------------
 
-_hash_cache: dict[tuple[str, int, str], str] = {}
-
 def short_hash(text: str, length: int, fmt: str = "hex") -> str:
-    key = (text, length, fmt)
-    if key in _hash_cache:
-        return _hash_cache[key]
-    
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     if fmt == "int":
-        result = str(int(digest, 16) % (10 ** length)).zfill(length)
-    else:
-        result = digest[:length]
-    
-    _hash_cache[key] = result
-    return result
+        return str(int(digest, 16) % (10 ** length)).zfill(length)
+    return digest[:length]
 
 def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> str:
     for ns in namespaces:
