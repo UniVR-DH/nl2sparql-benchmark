@@ -85,18 +85,25 @@ ANGLE_IRI_RE = re.compile(r"<([^>]+)>")
 # ---------------------------------------------------------------------------
 
 
+def normalize_namespace(ns: str) -> str:
+    """Normalize a namespace IRI by appending a trailing slash if no separator present.
+    
+    Preserves existing separators (/, #, =, :) as-is. Only appends '/' when the IRI
+    ends with a plain path segment that has no separator at all.
+    """
+    value = ns.strip()
+    if not value:
+        return value
+    if not value[-1] in ("/", "#", "=", ":"):
+        value += "/"
+    return value
+
+
 def normalize_namespaces(namespaces: list[str]) -> list[str]:
     normalized: list[str] = []
     for ns in namespaces:
-        value = ns.strip()
-        if not value:
-            continue
-        # Preserve namespaces that already end with a recognised separator
-        # (/, #, =, :) exactly as supplied.  Only append '/' when the IRI
-        # ends with a plain path segment that has no separator at all.
-        if not value[-1] in ("/" , "#", "=", ":"):
-            value += "/"
-        if value not in normalized:
+        value = normalize_namespace(ns)
+        if value and value not in normalized:
             normalized.append(value)
     return normalized
 
@@ -206,18 +213,17 @@ def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> s
 
 def collect_prefixes(path: Path, namespaces: list[str]) -> dict[str, str]:
     """First pass: return {prefix: namespace} for all declarations in *path*."""
+    # Create normalized set for matching (preserves #, =, : separators)
+    normalized_ns_set = {normalize_namespace(ns) for ns in namespaces}
+    
     prefix_to_ns: dict[str, str] = {}
     with path.open("r", encoding="utf-8") as fh:
         for line in fh:
             m = PREFIX_DECL_RE.search(line)
             if m:
                 prefix, ns = m.group(1), m.group(2)
-                # Normalise: ensure trailing slash
-                if not ns.endswith("/"):
-                    ns_norm = ns + "/"
-                else:
-                    ns_norm = ns
-                if ns_norm in namespaces:
+                ns_norm = normalize_namespace(ns)
+                if ns_norm in normalized_ns_set:
                     prefix_to_ns[prefix] = ns_norm
     return prefix_to_ns
 
@@ -237,10 +243,9 @@ def hash_sparql_string(
         sm = SPARQL_PREFIX_RE.search(line)
         if sm:
             pref, ns = sm.group(1), sm.group(2)
-            if not ns.endswith("/"):
-                ns += "/"
-            if ns in namespaces:
-                prefix_to_ns[pref] = ns
+            ns_norm = normalize_namespace(ns)
+            if ns_norm in namespaces:
+                prefix_to_ns[pref] = ns_norm
 
     def hash_angle_line(line: str) -> str:
         if SPARQL_PREFIX_RE.match(line.strip()):
@@ -296,12 +301,6 @@ def _turtle_reescape(s: str) -> str:
 # delimiters so we can hash it and splice the result back in-place.
 _TRIPLE_QUOTED_RE = re.compile(r'"""(.*?)"""', re.DOTALL)
 
-# Predicate local names used to gate which triple-quoted literals we hash.
-# We match them as substrings of the line that precedes the opening """.
-_SPARQL_PRED_SUFFIXES = tuple(
-    iri.split("#")[-1].split("/")[-1] for iri in SPARQL_STRING_PREDICATES
-)
-
 
 def hash_sparql_literals_in_text(
     text: str, namespaces: list[str], hash_len: int, fmt: str
@@ -310,15 +309,15 @@ def hash_sparql_literals_in_text(
     try:
         import rdflib
     except ImportError:
-        # Fall back to regex heuristic if rdflib not available
-        return _hash_sparql_literals_heuristic(text, namespaces, hash_len, fmt)
+        # Fall back to simple string replace if rdflib not available
+        return text
     
     # Parse with rdflib to identify SPARQL literals
     g = rdflib.Graph()
     try:
         g.parse(data=text, format="turtle")
     except Exception:
-        return _hash_sparql_literals_heuristic(text, namespaces, hash_len, fmt)
+        return text
     
     # Collect literal values from SPARQL predicates
     sparql_pred_refs = {rdflib.URIRef(iri) for iri in SPARQL_STRING_PREDICATES}
@@ -376,11 +375,8 @@ def _transform_outside_literals(
     ``\"\"\"`` delimiters.  Odd-indexed spans are inside a literal and are
     written verbatim; even-indexed spans are outside and are transformed.
     This correctly handles the case where a literal opens and closes on the
-    same line (even-count ``\"\"\"`` occurrences).
-
-    *in_multiline* is not needed here; the caller already ensures this
-    function is only called for lines that are not in the interior of a
-    multiline literal.
+    same line (even-count ``\"\"\"`` occurrences) as well as content after
+    a closing delimiter on the same line.
     """
     # Find all """ positions on this line.
     positions = [m.start() for m in _TRIPLE_QUOTE_RE.finditer(line)]
@@ -512,11 +508,11 @@ def process_file_streaming(
     # Multiline-string guard logic
     # ----------------------------
     # in_multiline_string tracks whether we are *inside* a triple-quoted
-    # literal between lines.  A line is "opening" if the number of """
-    # delimiters on it is odd and we are currently outside; "closing" if
-    # the count is odd and we are currently inside.  Same-line open+close
-    # (even count > 0) is handled inside _transform_outside_literals, which
-    # only hashes segments that lie outside the delimiters.
+    # literal between lines.  When we encounter a line that closes a multiline
+    # literal (has odd number of """ and we are currently inside), we write
+    # the line verbatim but exit the multiline state.  The next line will
+    # be processed normally, including transformation of any content after
+    # the closing delimiter (handled by _transform_outside_literals).
     try:
         with dst.open("w", encoding="utf-8") as out:
             in_multiline_string = False
@@ -559,6 +555,20 @@ def process_file_streaming(
 # ---------------------------------------------------------------------------
 
 
+def _get_output_filename(src: Path) -> str:
+    """Generate output filename with -h inserted before all extensions.
+    
+    Handles multi-suffix files correctly:
+        file.ttl → file-h.ttl
+        file.tar.gz → file-h.tar.gz
+        gptkb_v1.5.3-instances.ttl → gptkb_v1.5.3-instances-h.ttl
+    """
+    name = src.name
+    suffixes = ''.join(src.suffixes)
+    stem = name[:-len(suffixes)] if suffixes else name
+    return f"{stem}-h{suffixes}"
+
+
 def process_folder(
     input_dir: Path,
     output_dir: Path,
@@ -570,6 +580,10 @@ def process_folder(
     copy_only_files: set[str],
     query_string_files: set[str],
 ) -> tuple[int, int, int, int, int]:
+    # Safety: never delete the input directory
+    if output_dir == input_dir:
+        raise ValueError(f"Output directory cannot be the same as input directory: {output_dir}")
+    
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -586,14 +600,7 @@ def process_folder(
             skipped_count += 1
             continue
 
-        # Determine output filename: insert -h before the first suffix so that
-        # multi-suffix names like foo.ttl.gz become foo-h.ttl.gz (not
-        # foo.ttl-h.ttl.gz, which the old src.stem approach produced).
-        first_dot = src.name.find(".")
-        if first_dot == -1:
-            out_name = f"{src.name}-h"
-        else:
-            out_name = f"{src.name[:first_dot]}-h{src.name[first_dot:]}"
+        out_name = _get_output_filename(src)
         dst = output_dir / out_name
 
         # Handle copy-only files (croissant, etc.) - copy content but rename with -h
@@ -676,7 +683,7 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=True,
         help=(
-            "Hash IRIs inside embedded SPARQL strings using regex-based parsing. "
+            "Hash IRIs inside embedded SPARQL strings using rdflib-based parsing. "
             "(only applied to --query-string-file entries; default: on)."
         ),
     )
@@ -686,7 +693,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "File name that contains embedded SPARQL strings and should be "
-            "processed with regex-based parsing (repeatable). "
+            "processed with rdflib (repeatable). "
             "Default: auto-detected as {kg}-queries.ttl and {kg}-examples.ttl "
             "where {kg} is the input directory name."
         ),
