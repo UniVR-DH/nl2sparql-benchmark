@@ -91,7 +91,10 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
         value = ns.strip()
         if not value:
             continue
-        if not value.endswith("/"):
+        # Preserve namespaces that already end with a recognised separator
+        # (/, #, =, :) exactly as supplied.  Only append '/' when the IRI
+        # ends with a plain path segment that has no separator at all.
+        if not value[-1] in ("/" , "#", "=", ":"):
             value += "/"
         if value not in normalized:
             normalized.append(value)
@@ -169,19 +172,19 @@ def check_collision_warnings(hash_len: int, fmt: str) -> None:
 
 _hash_cache: dict[tuple[str, int, str], str] = {}
 
-
 def short_hash(text: str, length: int, fmt: str = "hex") -> str:
     key = (text, length, fmt)
     if key in _hash_cache:
         return _hash_cache[key]
+    
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     if fmt == "int":
         result = str(int(digest, 16) % (10 ** length)).zfill(length)
     else:
         result = digest[:length]
+    
     _hash_cache[key] = result
     return result
-
 
 def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> str:
     for ns in namespaces:
@@ -303,37 +306,44 @@ _SPARQL_PRED_SUFFIXES = tuple(
 def hash_sparql_literals_in_text(
     text: str, namespaces: list[str], hash_len: int, fmt: str
 ) -> str:
-    """Find triple-quoted SPARQL literals in *text* and hash IRIs inside them.
-
-    This operates purely on the raw file text — no rdflib parsing — so
-    Turtle escape sequences (e.g. ``\\\\\\\\``) are preserved verbatim and
-    the replacement is always found.
-
-    The predicate check is a lightweight heuristic: we look at the text on
-    the same line as the opening ``\"\"\"`` and check whether it contains one
-    of the known SPARQL-predicate local names (``text``, ``select``, …).
-    """
+    """Find triple-quoted SPARQL literals using rdflib parsing."""
+    try:
+        import rdflib
+    except ImportError:
+        # Fall back to regex heuristic if rdflib not available
+        return _hash_sparql_literals_heuristic(text, namespaces, hash_len, fmt)
+    
+    # Parse with rdflib to identify SPARQL literals
+    g = rdflib.Graph()
+    try:
+        g.parse(data=text, format="turtle")
+    except Exception:
+        return _hash_sparql_literals_heuristic(text, namespaces, hash_len, fmt)
+    
+    # Collect literal values from SPARQL predicates
+    sparql_pred_refs = {rdflib.URIRef(iri) for iri in SPARQL_STRING_PREDICATES}
+    literals_to_hash: dict[str, str] = {}
+    for s, p, o in g:
+        if p in sparql_pred_refs and isinstance(o, rdflib.term.Literal):
+            literals_to_hash[str(o)] = str(p)
+    
+    if not literals_to_hash:
+        return text
+    
+    # Replace matching literals
     def replace_literal(m: re.Match[str]) -> str:
         raw_content = m.group(1)
-
-        # Heuristic gate: only process literals that follow a SPARQL predicate.
-        # Look at the text on the line that contains the opening """.
-        start = m.start()
-        line_start = text.rfind("\n", 0, start) + 1
-        prefix_line = text[line_start:start]
-        if not any(suf in prefix_line for suf in _SPARQL_PRED_SUFFIXES):
-            return m.group(0)
-
-        # Decode only the escape sequences that affect IRI content, hash, then
-        # re-encode them back so the file remains valid Turtle.
         decoded = _turtle_unescape(raw_content)
-        hashed_decoded = hash_sparql_string(decoded, namespaces, hash_len, fmt)
-
-        if hashed_decoded == decoded:
-            return m.group(0)  # nothing changed
-
-        return f'"""{_turtle_reescape(hashed_decoded)}"""'
-
+        
+        if decoded not in literals_to_hash:
+            return m.group(0)
+        
+        hashed = hash_sparql_string(decoded, namespaces, hash_len, fmt)
+        if hashed == decoded:
+            return m.group(0)
+        
+        return f'"""{_turtle_reescape(hashed)}"""'
+    
     return _TRIPLE_QUOTED_RE.sub(replace_literal, text)
 
 
@@ -345,6 +355,67 @@ def hash_sparql_literals_in_text(
 def _is_prefix_line(line: str) -> bool:
     stripped = line.lstrip()
     return stripped.startswith("@prefix ") or stripped.upper().startswith("PREFIX ")
+
+
+# Regex that finds all """ occurrences on a line.
+_TRIPLE_QUOTE_RE = re.compile(r'"""')
+
+
+def _transform_outside_literals(
+    line: str,
+    prefix_to_ns: dict[str, str],
+    patterns: dict[str, re.Pattern[str]],
+    namespaces: list[str],
+    hash_len: int,
+    fmt: str,
+) -> str:
+    """Apply IRI hashing only to the segments of *line* that lie outside
+    triple-quoted literals.
+
+    We split the line into alternating outside/inside spans by scanning for
+    ``\"\"\"`` delimiters.  Odd-indexed spans are inside a literal and are
+    written verbatim; even-indexed spans are outside and are transformed.
+    This correctly handles the case where a literal opens and closes on the
+    same line (even-count ``\"\"\"`` occurrences).
+
+    *in_multiline* is not needed here; the caller already ensures this
+    function is only called for lines that are not in the interior of a
+    multiline literal.
+    """
+    # Find all """ positions on this line.
+    positions = [m.start() for m in _TRIPLE_QUOTE_RE.finditer(line)]
+
+    if not positions:
+        # Fast path: no triple quotes on this line — transform the whole thing.
+        result = transform_line_prefixed(line, prefix_to_ns, patterns, hash_len, fmt)
+        return transform_line_angle(result, namespaces, hash_len, fmt)
+
+    # Build spans: split the line at every """ boundary.
+    # Span i is inside a literal when i is odd (0-indexed).
+    parts: list[str] = []
+    cursor = 0
+    inside = False
+    for pos in positions:
+        segment = line[cursor:pos]
+        if not inside:
+            # Outside a literal → transform.
+            segment = transform_line_prefixed(
+                segment, prefix_to_ns, patterns, hash_len, fmt
+            )
+            segment = transform_line_angle(segment, namespaces, hash_len, fmt)
+        # else: inside a literal → keep verbatim.
+        parts.append(segment)
+        parts.append('"""')   # the delimiter itself is always kept as-is
+        cursor = pos + 3
+        inside = not inside
+
+    # Remainder after the last delimiter (outside if positions count is even).
+    tail = line[cursor:]
+    if not inside:
+        tail = transform_line_prefixed(tail, prefix_to_ns, patterns, hash_len, fmt)
+        tail = transform_line_angle(tail, namespaces, hash_len, fmt)
+    parts.append(tail)
+    return "".join(parts)
 
 
 def transform_line_angle(
@@ -441,40 +512,39 @@ def process_file_streaming(
     # Multiline-string guard logic
     # ----------------------------
     # in_multiline_string tracks whether we are *inside* a triple-quoted
-    # literal between lines.  For each line we need to know:
-    #
-    #   opening line  (in_ml=False, odd """)  → transform (before/around """)
-    #                                            then mark next lines as inside
-    #   interior line (in_ml=True,  even """) → skip verbatim
-    #   closing line  (in_ml=True,  odd """)  → skip verbatim, then mark outside
-    #   normal line   (in_ml=False, even """) → transform
+    # literal between lines.  A line is "opening" if the number of """
+    # delimiters on it is odd and we are currently outside; "closing" if
+    # the count is odd and we are currently inside.  Same-line open+close
+    # (even count > 0) is handled inside _transform_outside_literals, which
+    # only hashes segments that lie outside the delimiters.
     try:
         with dst.open("w", encoding="utf-8") as out:
             in_multiline_string = False
             for line in lines_iter:
-                toggles = line.count('"""') % 2 == 1
+                n_delimiters = line.count('"""')
 
                 if in_multiline_string:
-                    # Interior or closing line — write verbatim, then update flag.
+                    # Interior or closing line — write verbatim, then update.
                     out.write(line)
-                    if toggles:
+                    if n_delimiters % 2 == 1:
                         in_multiline_string = False
                     continue
 
                 # Outside a multiline string at the start of this line.
-                if toggles:
-                    # Opening line — transform it, but mark inside for next line.
+                if n_delimiters % 2 == 1:
+                    # Odd number of delimiters → will be inside after this line.
                     in_multiline_string = True
 
                 if _is_prefix_line(line):
                     out.write(line)
                     continue
 
-                line = transform_line_prefixed(
-                    line, prefix_to_ns, patterns, hash_len, fmt
+                # Transform only the parts of the line that are outside literals.
+                out.write(
+                    _transform_outside_literals(
+                        line, prefix_to_ns, patterns, namespaces, hash_len, fmt
+                    )
                 )
-                line = transform_line_angle(line, namespaces, hash_len, fmt)
-                out.write(line)
     finally:
         if not hash_query_strings:
             # lines_iter is an open file handle when not hash_query_strings
@@ -499,7 +569,7 @@ def process_folder(
     skip_files: set[str],
     copy_only_files: set[str],
     query_string_files: set[str],
-) -> tuple[int, int, int, int]:
+) -> tuple[int, int, int, int, int]:
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -508,6 +578,7 @@ def process_folder(
     transformed_count = 0
     skipped_count = 0
     copied_count = 0
+    error_count = 0
 
     for src in in_files:
         if src.name in skip_files:
@@ -515,11 +586,14 @@ def process_folder(
             skipped_count += 1
             continue
 
-        # Determine output filename (add -h suffix for all files)
-        if src.suffixes:
-            out_name = f"{src.stem}-h{''.join(src.suffixes)}"
-        else:
+        # Determine output filename: insert -h before the first suffix so that
+        # multi-suffix names like foo.ttl.gz become foo-h.ttl.gz (not
+        # foo.ttl-h.ttl.gz, which the old src.stem approach produced).
+        first_dot = src.name.find(".")
+        if first_dot == -1:
             out_name = f"{src.name}-h"
+        else:
+            out_name = f"{src.name[:first_dot]}-h{src.name[first_dot:]}"
         dst = output_dir / out_name
 
         # Handle copy-only files (croissant, etc.) - copy content but rename with -h
@@ -538,8 +612,13 @@ def process_folder(
             transformed_count += 1
         except Exception as exc:
             print(f"  ERROR:      {src.name}: {exc}")
+            error_count += 1
+            # Remove partial output so the output directory is never left in a
+            # half-written state.
+            if dst.exists():
+                dst.unlink()
 
-    return len(in_files), transformed_count, skipped_count, copied_count
+    return len(in_files), transformed_count, skipped_count, copied_count, error_count
 
 
 # ---------------------------------------------------------------------------
@@ -664,16 +743,18 @@ def main() -> int:
     print(f"Query files:  {', '.join(sorted(query_string_files))}")
     print("")
 
-    file_count, transformed_count, skipped_count, copied_count = process_folder(
-        input_dir=input_dir,
-        output_dir=output_dir,
-        namespaces=namespaces,
-        hash_len=args.hash_len,
-        fmt=args.hash_format,
-        hash_query_strings=args.hash_query_strings,
-        skip_files=skip_files,
-        copy_only_files=copy_only_files,
-        query_string_files=query_string_files,
+    file_count, transformed_count, skipped_count, copied_count, error_count = (
+        process_folder(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            namespaces=namespaces,
+            hash_len=args.hash_len,
+            fmt=args.hash_format,
+            hash_query_strings=args.hash_query_strings,
+            skip_files=skip_files,
+            copy_only_files=copy_only_files,
+            query_string_files=query_string_files,
+        )
     )
 
     print("")
@@ -684,9 +765,11 @@ def main() -> int:
     print(f"  Processed:    {transformed_count}")
     print(f"  Copied:       {copied_count}")
     print(f"  Skipped:      {skipped_count}")
+    if error_count:
+        print(f"  Errors:       {error_count}")
     check_collision_warnings(args.hash_len, args.hash_format)
 
-    return 0
+    return 1 if error_count else 0
 
 
 if __name__ == "__main__":
