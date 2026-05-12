@@ -27,14 +27,14 @@ Differences from the original batch script
 Typical usage
 -------------
 # GPTKB
-python hash-iris.py \\
+python hash_iris_streaming.py \\
     --input-dir  graphs/gptkb \\
     --output-dir graphs/gptkb-h \\
     --namespace  https://gptkb.org/entity/ \\
     --namespace  https://gptkb.org/prop/
 
 # CK25
-python hash-iris.py \\
+python hash_iris_streaming.py \\
     --input-dir  graphs/ck25 \\
     --output-dir graphs/ck25-h \\
     --namespace  http://dbpedia.org/resource/ \\
@@ -273,7 +273,7 @@ def hash_sparql_string(
         hashed_line = hash_angle_line(line)
         for prefix, ns in prefix_to_ns.items():
             pattern = re.compile(
-                rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([A-Za-z0-9._~%-]+)"
+                rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([A-Za-z0-9_~%-][A-Za-z0-9._~%-]*[A-Za-z0-9_~%-]|[A-Za-z0-9_~%-]+)"
             )
 
             def repl_pref(
@@ -289,31 +289,68 @@ def hash_sparql_string(
     return "".join(result)
 
 
-def hash_sparql_literals_via_rdflib(
+def _turtle_unescape(raw: str) -> str:
+    """Decode ``\\\\`` → ``\\`` in a triple-quoted Turtle literal.
+
+    Inside ``\"\"\"...\"\"\"`` delimiters a single ``"`` is valid as-is and
+    does *not* need escaping, so we must NOT touch ``\\"`` sequences — they
+    are a literal backslash followed by a quote, not an escaped quote.
+    Only ``\\\\`` (escaped backslash) needs decoding to ``\\``.
+    """
+    return raw.replace("\\\\", "\\")
+
+
+def _turtle_reescape(s: str) -> str:
+    """Re-encode ``\\`` → ``\\\\`` for a triple-quoted Turtle literal."""
+    return s.replace("\\", "\\\\")
+
+
+# Matches a triple-quoted literal: captures the raw content between the
+# delimiters so we can hash it and splice the result back in-place.
+_TRIPLE_QUOTED_RE = re.compile(r'"""(.*?)"""', re.DOTALL)
+
+# Predicate local names used to gate which triple-quoted literals we hash.
+# We match them as substrings of the line that precedes the opening """.
+_SPARQL_PRED_SUFFIXES = tuple(
+    iri.split("#")[-1].split("/")[-1] for iri in SPARQL_STRING_PREDICATES
+)
+
+
+def hash_sparql_literals_in_text(
     text: str, namespaces: list[str], hash_len: int, fmt: str
 ) -> str:
-    from rdflib import Graph, Literal, URIRef
+    """Find triple-quoted SPARQL literals in *text* and hash IRIs inside them.
 
-    g = Graph()
-    try:
-        g.parse(data=text, format="turtle")
-    except Exception:
-        return text
+    This operates purely on the raw file text — no rdflib parsing — so
+    Turtle escape sequences (e.g. ``\\\\\\\\``) are preserved verbatim and
+    the replacement is always found.
 
-    replacements: list[tuple[str, str]] = []
-    for pred_iri in SPARQL_STRING_PREDICATES:
-        pred = URIRef(pred_iri)
-        for s, p, o in g.triples((None, pred, None)):
-            if isinstance(o, Literal):
-                original = str(o)
-                hashed = hash_sparql_string(original, namespaces, hash_len, fmt)
-                if original != hashed:
-                    replacements.append((original, hashed))
+    The predicate check is a lightweight heuristic: we look at the text on
+    the same line as the opening ``\"\"\"`` and check whether it contains one
+    of the known SPARQL-predicate local names (``text``, ``select``, …).
+    """
+    def replace_literal(m: re.Match[str]) -> str:
+        raw_content = m.group(1)
 
-    result = text
-    for original, hashed in replacements:
-        result = result.replace(original, hashed)
-    return result
+        # Heuristic gate: only process literals that follow a SPARQL predicate.
+        # Look at the text on the line that contains the opening """.
+        start = m.start()
+        line_start = text.rfind("\n", 0, start) + 1
+        prefix_line = text[line_start:start]
+        if not any(suf in prefix_line for suf in _SPARQL_PRED_SUFFIXES):
+            return m.group(0)
+
+        # Decode only the escape sequences that affect IRI content, hash, then
+        # re-encode them back so the file remains valid Turtle.
+        decoded = _turtle_unescape(raw_content)
+        hashed_decoded = hash_sparql_string(decoded, namespaces, hash_len, fmt)
+
+        if hashed_decoded == decoded:
+            return m.group(0)  # nothing changed
+
+        return f'"""{_turtle_reescape(hashed_decoded)}"""'
+
+    return _TRIPLE_QUOTED_RE.sub(replace_literal, text)
 
 
 # ---------------------------------------------------------------------------
@@ -410,21 +447,42 @@ def process_file_streaming(
     # Step 2 (optional): rdflib SPARQL-literal hashing (small files only).
     if hash_query_strings:
         text = src.read_text(encoding="utf-8")
-        text = hash_sparql_literals_via_rdflib(text, namespaces, hash_len, fmt)
+        text = hash_sparql_literals_in_text(text, namespaces, hash_len, fmt)
         lines_iter = iter(text.splitlines(keepends=True))
     else:
         lines_iter = src.open("r", encoding="utf-8")  # type: ignore[assignment]
 
     # Step 3: stream transform.
+    #
+    # Multiline-string guard logic
+    # ----------------------------
+    # in_multiline_string tracks whether we are *inside* a triple-quoted
+    # literal between lines.  For each line we need to know:
+    #
+    #   opening line  (in_ml=False, odd """)  → transform (before/around """)
+    #                                            then mark next lines as inside
+    #   interior line (in_ml=True,  even """) → skip verbatim
+    #   closing line  (in_ml=True,  odd """)  → skip verbatim, then mark outside
+    #   normal line   (in_ml=False, even """) → transform
     try:
         with dst.open("w", encoding="utf-8") as out:
             in_multiline_string = False
             for line in lines_iter:
-                # Track triple-quoted strings so we don't mangle literals.
-                if line.count('"""') % 2 == 1:
-                    in_multiline_string = not in_multiline_string
+                toggles = line.count('"""') % 2 == 1
 
-                if in_multiline_string or _is_prefix_line(line):
+                if in_multiline_string:
+                    # Interior or closing line — write verbatim, then update flag.
+                    out.write(line)
+                    if toggles:
+                        in_multiline_string = False
+                    continue
+
+                # Outside a multiline string at the start of this line.
+                if toggles:
+                    # Opening line — transform it, but mark inside for next line.
+                    in_multiline_string = True
+
+                if _is_prefix_line(line):
                     out.write(line)
                     continue
 
@@ -473,22 +531,19 @@ def process_folder(
             skipped_count += 1
             continue
 
-        if src.name in copy_only_files:
-            if src.suffixes:
-                out_name = f"{src.stem}-h{''.join(src.suffixes)}"
-            else:
-                out_name = f"{src.name}-h"
-            dst = output_dir / out_name
-            shutil.copy2(src, dst)
-            print(f"  Copied:     {src.name} -> {out_name}")
-            copied_count += 1
-            continue
-
+        # Determine output filename (add -h suffix for all files)
         if src.suffixes:
             out_name = f"{src.stem}-h{''.join(src.suffixes)}"
         else:
             out_name = f"{src.name}-h"
         dst = output_dir / out_name
+
+        # Handle copy-only files (croissant, etc.) - copy content but rename with -h
+        if src.name in copy_only_files:
+            shutil.copy2(src, dst)
+            print(f"  Copied:     {src.name} -> {out_name}")
+            copied_count += 1
+            continue
 
         # Per-file decision: hash embedded SPARQL strings only for small files.
         file_hash_qs = hash_query_strings and (src.name in query_string_files)
