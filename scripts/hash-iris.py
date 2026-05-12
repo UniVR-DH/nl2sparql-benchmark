@@ -48,8 +48,8 @@ def _auto_defaults(input_dir: Path) -> tuple[set[str], set[str]]:
 
     Convention (shared by CK25, GPTKB, and expected future KGs):
       * ``{kg}-croissant.jsonld``  → copy without hashing
-      * ``{kg}-queries.ttl``       → process with rdflib SPARQL-literal hashing
-      * ``{kg}-examples.ttl``      → process with rdflib SPARQL-literal hashing
+      * ``{kg}-queries.ttl``       → process with regex-based SPARQL-literal hashing
+      * ``{kg}-examples.ttl``      → process with regex-based SPARQL-literal hashing
 
     Returns ``(copy_only_files, query_string_files)``.
     """
@@ -597,7 +597,7 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=True,
         help=(
-            "Hash IRIs inside embedded SPARQL strings using rdflib "
+            "Hash IRIs inside embedded SPARQL strings using regex-based parsing. "
             "(only applied to --query-string-file entries; default: on)."
         ),
     )
@@ -607,7 +607,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "File name that contains embedded SPARQL strings and should be "
-            "processed with rdflib (repeatable). "
+            "processed with regex-based parsing (repeatable). "
             "Default: auto-detected as {kg}-queries.ttl and {kg}-examples.ttl "
             "where {kg} is the input directory name."
         ),
