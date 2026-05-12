@@ -4,6 +4,10 @@
 The script creates a mirrored output directory with the same file names as the
 input directory. It hashes only IRIs under configured namespace prefixes.
 
+Processing modes:
+- streaming for large files (instances/vocab/shapes/void), 
+- rdflib for small files (queries/examples) - loads entirely into memory (KB scale)
+
 Typical usage
 -------------
 # GPTKB
@@ -305,7 +309,9 @@ _TRIPLE_QUOTED_RE = re.compile(r'"""(.*?)"""', re.DOTALL)
 def hash_sparql_literals_in_text(
     text: str, namespaces: list[str], hash_len: int, fmt: str
 ) -> str:
-    """Find triple-quoted SPARQL literals using rdflib parsing."""
+    """Find triple-quoted SPARQL literals using rdflib parsing.
+    
+    WARNING: Loads entire Turtle into memory. Only for small files."""
     try:
         import rdflib
     except ImportError as exc:
@@ -483,7 +489,10 @@ def process_file_streaming(
     fmt: str,
     hash_query_strings: bool,
 ) -> None:
-    """Transform *src* into *dst* using constant-memory streaming."""
+    """Transform *src* into *dst*.
+    Mode: streaming (constant memory) for large files.
+    Mode: full load + rdflib for small query/example files (KB scale).
+    """
     # Step 1: collect prefixes (fast scan).
     prefix_to_ns = collect_prefixes(src, namespaces)
 
@@ -497,10 +506,12 @@ def process_file_streaming(
 
     # Step 2 (optional): rdflib SPARQL-literal hashing (small files only).
     if hash_query_strings:
+        # Small file (KB scale) - load entirely for rdflib parsing
         text = src.read_text(encoding="utf-8")
         text = hash_sparql_literals_in_text(text, namespaces, hash_len, fmt)
         lines_iter = iter(text.splitlines(keepends=True))
     else:
+        # Large file (GB scale) - streaming line by line
         lines_iter = src.open("r", encoding="utf-8")
 
     # Step 3: stream transform with state tracking.
@@ -525,7 +536,7 @@ def process_file_streaming(
                 lines_iter.close()
             except Exception:
                 pass
-
+            
 
 # ---------------------------------------------------------------------------
 # Folder processor
