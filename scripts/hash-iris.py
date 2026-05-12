@@ -1,28 +1,8 @@
 #!/usr/bin/env python3
 """Hash selected IRIs while preserving file structure — streaming edition.
 
-Differences from the original batch script
-==========================================
-* **Streaming I/O**: files are never fully loaded into RAM.  Each line is
-  read, transformed, and written individually, so even multi-GB TTL files
-  stay within a small, constant memory footprint.
-* **SPARQL-style PREFIX support**: recognises both Turtle ``@prefix`` and
-  SPARQL ``PREFIX`` declarations when building the prefix→namespace map, so
-  prefixed names such as ``gptkb:Mahatma_Gandhi`` or ``gptkbp:birthDate`` are
-  hashed correctly.
-* **Per-file query-string hashing control**: files matching the pattern
-  ``{kg}-queries.ttl`` and ``{kg}-examples.ttl`` (auto-detected from the
-  input directory name) are processed with rdflib-based SPARQL-literal
-  hashing enabled (they are small).  All other files skip that step entirely,
-  avoiding the need to load the full file into rdflib.
-* **Dataset-agnostic**: works with any KG; no hardcoded dataset names.
-  Pass ``--namespace``, ``--copy-only-file``, ``--query-string-file`` etc.
-  on the CLI, or let the script auto-detect sensible defaults from the
-  input directory name.
-* **Collision warnings**: a HyperLogLog sketch (p=12, ~4 KB, ±1.6 % error)
-  tracks unique IRIs per namespace and prints a birthday-problem collision
-  probability at the end of the run if the count exceeds 10 % of the hash
-  space — prompting you to increase ``--hash-len`` if needed.
+The script creates a mirrored output directory with the same file names as the
+input directory. It hashes only IRIs under configured namespace prefixes.
 
 Typical usage
 -------------
