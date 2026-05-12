@@ -308,9 +308,12 @@ def hash_sparql_literals_in_text(
     """Find triple-quoted SPARQL literals using rdflib parsing."""
     try:
         import rdflib
-    except ImportError:
-        # Fall back to simple string replace if rdflib not available
-        return text
+    except ImportError as exc:
+        raise RuntimeError(
+            "hash_sparql_literals_in_text requires 'rdflib' to hash SPARQL "
+            "query strings. Install rdflib or disable query-string hashing."
+        ) from exc
+
     
     # Parse with rdflib to identify SPARQL literals
     g = rdflib.Graph()
@@ -360,58 +363,66 @@ def _is_prefix_line(line: str) -> bool:
 _TRIPLE_QUOTE_RE = re.compile(r'"""')
 
 
-def _transform_outside_literals(
+def _transform_line_with_state(
     line: str,
     prefix_to_ns: dict[str, str],
     patterns: dict[str, re.Pattern[str]],
     namespaces: list[str],
     hash_len: int,
     fmt: str,
-) -> str:
-    """Apply IRI hashing only to the segments of *line* that lie outside
-    triple-quoted literals.
-
-    We split the line into alternating outside/inside spans by scanning for
-    ``\"\"\"`` delimiters.  Odd-indexed spans are inside a literal and are
-    written verbatim; even-indexed spans are outside and are transformed.
-    This correctly handles the case where a literal opens and closes on the
-    same line (even-count ``\"\"\"`` occurrences) as well as content after
-    a closing delimiter on the same line.
+    starts_inside: bool = False,
+) -> tuple[str, bool]:
+    """Transform line, tracking literal state across lines.
+    
+    Returns (transformed_line, ends_inside) where ends_inside indicates whether
+    the line ends inside a literal (odd number of unclosed delimiters).
+    
+    Handles:
+    - Lines with no literals: transform everything if not inside literal
+    - Lines that open/close literals: only transform segments outside quotes
+    - Content after closing delimiter on same line: gets transformed
+    - Multiline literals spanning multiple lines: preserves interior verbatim
     """
-    # Find all """ positions on this line.
+    # Find all """ positions on this line
     positions = [m.start() for m in _TRIPLE_QUOTE_RE.finditer(line)]
-
+    
     if not positions:
-        # Fast path: no triple quotes on this line — transform the whole thing.
-        result = transform_line_prefixed(line, prefix_to_ns, patterns, hash_len, fmt)
-        return transform_line_angle(result, namespaces, hash_len, fmt)
-
-    # Build spans: split the line at every """ boundary.
-    # Span i is inside a literal when i is odd (0-indexed).
-    parts: list[str] = []
+        # No triple quotes on this line
+        if not starts_inside:
+            # Outside literal → transform the whole line
+            line = transform_line_prefixed(line, prefix_to_ns, patterns, hash_len, fmt)
+            line = transform_line_angle(line, namespaces, hash_len, fmt)
+        # else: inside literal → keep verbatim
+        return line, starts_inside
+    
+    # Split line at each delimiter
+    parts = []
     cursor = 0
-    inside = False
+    inside = starts_inside
+    
     for pos in positions:
+        # Segment before this delimiter
         segment = line[cursor:pos]
         if not inside:
-            # Outside a literal → transform.
+            # Outside literal → transform
             segment = transform_line_prefixed(
                 segment, prefix_to_ns, patterns, hash_len, fmt
             )
             segment = transform_line_angle(segment, namespaces, hash_len, fmt)
-        # else: inside a literal → keep verbatim.
         parts.append(segment)
-        parts.append('"""')   # the delimiter itself is always kept as-is
+        parts.append('"""')  # Keep the delimiter itself
         cursor = pos + 3
-        inside = not inside
-
-    # Remainder after the last delimiter (outside if positions count is even).
+        inside = not inside  # Toggle state
+    
+    # Remainder after last delimiter
     tail = line[cursor:]
     if not inside:
+        # Outside literal → transform
         tail = transform_line_prefixed(tail, prefix_to_ns, patterns, hash_len, fmt)
         tail = transform_line_angle(tail, namespaces, hash_len, fmt)
     parts.append(tail)
-    return "".join(parts)
+    
+    return "".join(parts), inside
 
 
 def transform_line_angle(
@@ -472,18 +483,7 @@ def process_file_streaming(
     fmt: str,
     hash_query_strings: bool,
 ) -> None:
-    """Transform *src* into *dst* using constant-memory streaming.
-
-    Strategy
-    --------
-    1. First pass  — collect all prefix declarations.
-    2. (Optional)  — if *hash_query_strings*, load entire file into memory,
-                     run rdflib to find/replace SPARQL literals, write to a
-                     temp string; then stream that string line by line.
-                     Only used for small query/example files.
-    3. Second pass — stream line by line, applying prefixed-name and
-                     angle-IRI transforms.
-    """
+    """Transform *src* into *dst* using constant-memory streaming."""
     # Step 1: collect prefixes (fast scan).
     prefix_to_ns = collect_prefixes(src, namespaces)
 
@@ -501,54 +501,31 @@ def process_file_streaming(
         text = hash_sparql_literals_in_text(text, namespaces, hash_len, fmt)
         lines_iter = iter(text.splitlines(keepends=True))
     else:
-        lines_iter = src.open("r", encoding="utf-8")  # type: ignore[assignment]
+        lines_iter = src.open("r", encoding="utf-8")
 
-    # Step 3: stream transform.
-    #
-    # Multiline-string guard logic
-    # ----------------------------
-    # in_multiline_string tracks whether we are *inside* a triple-quoted
-    # literal between lines.  When we encounter a line that closes a multiline
-    # literal (has odd number of """ and we are currently inside), we write
-    # the line verbatim but exit the multiline state.  The next line will
-    # be processed normally, including transformation of any content after
-    # the closing delimiter (handled by _transform_outside_literals).
+    # Step 3: stream transform with state tracking.
     try:
         with dst.open("w", encoding="utf-8") as out:
-            in_multiline_string = False
+            inside_literal = False
             for line in lines_iter:
-                n_delimiters = line.count('"""')
-
-                if in_multiline_string:
-                    # Interior or closing line — write verbatim, then update.
-                    out.write(line)
-                    if n_delimiters % 2 == 1:
-                        in_multiline_string = False
-                    continue
-
-                # Outside a multiline string at the start of this line.
-                if n_delimiters % 2 == 1:
-                    # Odd number of delimiters → will be inside after this line.
-                    in_multiline_string = True
-
+                # Preserve prefix lines exactly (they contain no IRIs to hash)
                 if _is_prefix_line(line):
                     out.write(line)
                     continue
-
-                # Transform only the parts of the line that are outside literals.
-                out.write(
-                    _transform_outside_literals(
-                        line, prefix_to_ns, patterns, namespaces, hash_len, fmt
-                    )
+                
+                # Transform line, tracking literal state
+                transformed_line, inside_literal = _transform_line_with_state(
+                    line, prefix_to_ns, patterns, namespaces, hash_len, fmt,
+                    starts_inside=inside_literal
                 )
+                out.write(transformed_line)
     finally:
         if not hash_query_strings:
-            # lines_iter is an open file handle when not hash_query_strings
             try:
-                lines_iter.close()  # type: ignore[union-attr]
+                lines_iter.close()
             except Exception:
                 pass
-
+            
 
 # ---------------------------------------------------------------------------
 # Folder processor
@@ -584,6 +561,7 @@ def process_folder(
     if output_dir == input_dir:
         raise ValueError(f"Output directory cannot be the same as input directory: {output_dir}")
     
+    # This is a destructive operation on the output directory, but the artifact can be generated again at any time
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
