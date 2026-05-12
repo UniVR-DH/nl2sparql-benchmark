@@ -7,21 +7,25 @@ input directory. It hashes only IRIs under configured namespace prefixes.
 Typical usage
 -------------
 # GPTKB
-python hash_iris_streaming.py \\
-    --input-dir  graphs/gptkb \\
-    --output-dir graphs/gptkb-h \\
-    --namespace  https://gptkb.org/entity/ \\
-    --namespace  https://gptkb.org/prop/
+python scripts/hash-iris.py \
+  --input-dir graphs/gptkb \
+  --output-dir graphs/gptkb-h \
+  --namespace https://gptkb.org/entity/ \
+  --namespace https://gptkb.org/prop/ \
+  --hash-len 10 \
+  --hash-format int
 
 # CK25
-python hash_iris_streaming.py \\
-    --input-dir  graphs/ck25 \\
-    --output-dir graphs/ck25-h \\
-    --namespace  http://dbpedia.org/resource/ \\
-    --namespace  http://ld.company.org/prod-vocab/ \\
-    --namespace  http://ld.company.org/prod-instances/ \\
-    --namespace  http://ld.company.org/prod-inst/ \\
-    --namespace  http://dbpedia.org/ontology/
+python scripts/hash-iris.py \
+  --input-dir graphs/ck25 \
+  --output-dir graphs/ck25-h \
+  --namespace http://dbpedia.org/resource/ \
+  --namespace http://ld.company.org/prod-vocab/ \
+  --namespace http://ld.company.org/prod-instances/ \
+  --namespace http://ld.company.org/prod-inst/ \
+  --namespace http://dbpedia.org/ontology/ \
+  --hash-len 6 \
+  --hash-format int
 """
 
 from __future__ import annotations
