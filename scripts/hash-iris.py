@@ -525,7 +525,7 @@ def process_file_streaming(
                 lines_iter.close()
             except Exception:
                 pass
-            
+
 
 # ---------------------------------------------------------------------------
 # Folder processor
@@ -598,8 +598,8 @@ def process_folder(
         except Exception as exc:
             print(f"  ERROR:      {src.name}: {exc}")
             error_count += 1
-            # Remove partial output so the output directory is never left in a
-            # half-written state.
+            # Remove any partially written output for this file. Previously
+            # processed files may still remain in output_dir.
             if dst.exists():
                 dst.unlink()
 
