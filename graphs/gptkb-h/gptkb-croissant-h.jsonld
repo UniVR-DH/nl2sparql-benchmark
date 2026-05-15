@@ -1,0 +1,85 @@
+{
+  "@context": {
+  "@base": "https://text2sparql.aksw.org/2025/corporate/",
+  "@vocab": "https://mlcommons.org/croissant/",
+  "@language": "en",
+  "dct": "http://purl.org/dc/terms/",
+  "lsqv": "http://lsq.aksw.org/vocab#",
+  "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+  "sc": "https://schema.org/",
+  "sp": "http://spinrdf.org/sp#"
+  },
+  "@type": "sc:Dataset",
+  "@id": "https://text2sparql.aksw.org/2025/corporate/",
+  "sc:name": "GPTKB: A large general-domain knowledge base entirely from a large language model",
+  "sc:description": "RDF benchmark dataset for text-to-SPARQL systems, structured as a VoID dataset with modular imports for instances, vocabularies, shapes, examples, and query workloads.",
+  "sc:license": "https://creativecommons.org/licenses/by/4.0/",
+  "sc:datePublished": "2026-05-07",
+  "sc:version": "1.0",
+  "sc:citation": "Benelli, B., Balasooriya, I., Marastoni, N., QUINTARELLI, E., & Lissandrini, M. (2026). Supplementary material for FAULT: Failure Analysis and Understanding for Language-to-SPARQL Testing [Data set]. Zenodo. https://doi.org/10.5281/zenodo.20073837",
+
+  "distribution": [
+    { "@type": "FileObject", "@id": "entrypoint", "name": "gptkb_v1.5.3.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "entrypoint-graph", "name": "gptkb_v1.5.3.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    { "@type": "FileObject", "@id": "instances", "name": "gptkb_v1.5.3-instances.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "instances-graph", "name": "gptkb_v1.5.3-instances.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    { "@type": "FileObject", "@id": "vocab", "name": "gptkb_v1.5.3-vocab.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "vocab-graph", "name": "gptkb_v1.5.3-vocab.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    { "@type": "FileObject", "@id": "shapes", "name": "gptkb-data-shapes.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "shapes-graph", "name": "gptkb-data-shapes.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    { "@type": "FileObject", "@id": "examples", "name": "gptkb-examples.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "examples-graph", "name": "gptkb-examples.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    { "@type": "FileObject", "@id": "queries", "name": "gptkb-queries.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "queries-graph", "name": "gptkb-queries.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    { "@type": "FileObject", "@id": "void", "name": "gptkb-void.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
+    { "@type": "FileObject", "@id": "void-graph", "name": "gptkb-void.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" }
+  ],
+
+  "recordSet": [
+    {
+      "@type": "RecordSet",
+      "@id": "query-benchmark",
+      "name": "Query Benchmark",
+      "field": [
+        {
+          "@type": "Field",
+          "@id": "label",
+          "name": "rdfs:label",
+          "dataType": "Text",
+          "source": {
+            "fileObject": {"@id": "queries" },
+            "extract": {
+              "@type": "sp:TriplePattern",
+              "sp:subject": "?s",
+              "sp:predicate": "rdfs:label",
+              "sp:object": "?l",
+              "column": "?l"
+            }
+          }
+        },
+        {
+          "@type": "Field",
+          "@id": "text",
+          "name": "lsqv:text",
+          "dataType": "Text",
+          "source": {
+            "fileObject": {"@id": "queries" },
+            "extract": {
+              "@type": "sp:TriplePattern",
+              "sp:subject": "?s",
+              "sp:predicate": "lsqv:text",
+              "sp:object": "?q",
+              "column": "?q"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

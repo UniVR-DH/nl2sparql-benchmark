@@ -1,0 +1,738 @@
+@prefix : <https://text2sparql.aksw.org/2025/gptkb/queries/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix gptkb: <https://gptkb.org/entity/> .
+@prefix gptkbp: <https://gptkb.org/prop/> .
+@prefix lsqv: <http://lsq.aksw.org/vocab#> .
+@prefix qat: <https://w3id.org/univr-qa/qatypes#> .
+@prefix qat1: <https://w3id.org/qatypes#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:1 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "When was Mahatma Gandhi born?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+SELECT ?dob WHERE { gptkb:3214889527 gptkbp:7225703459 ?dob . }""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:3214889527,
+        gptkbp:7225703459 .
+
+:10 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which artist won the Grammy Award for Best Male Pop Vocal Performance in 1999, and what was the winning work?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT DISTINCT ?winner ?work WHERE {
+  gptkb:1381080474
+      gptkbp:7317440634 ?winner ;
+      gptkbp:0920835936 ?work .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:1381080474,
+        gptkbp:7317440634,
+        gptkbp:0920835936 .
+
+:11 a lsqv:Query,
+        qat:CounterFactualIdentification,
+        qat:Enumeration ;
+    rdfs:label "Which persons do not have a recorded birth place in the dataset?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:NotExists,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT DISTINCT ?person
+WHERE {
+  ?person gptkbp:5312865579 gptkb:8670707699 .
+  FILTER NOT EXISTS {
+    ?person gptkbp:1041662894 ?birthPlace .
+  }
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:8670707699,
+        gptkbp:1041662894,
+        gptkbp:5312865579 .
+
+:12 a lsqv:Query,
+        qat:AggregateEnumeration,
+        qat:Comparative ;
+    rdfs:label "Which persons have received the highest number of awards? Return each person together with their award count and name." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Optional,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?person ?personName ?awardCount
+WHERE {
+  {
+    SELECT ?person (COUNT(DISTINCT ?award) AS ?awardCount)
+    WHERE {
+      ?person gptkbp:5312865579 gptkb:8670707699 ;
+              gptkbp:4258876171 ?award .
+    }
+    GROUP BY ?person
+  }
+
+  {
+    SELECT (MAX(?ac) AS ?maxAwardCount)
+    WHERE {
+      SELECT ?person (COUNT(DISTINCT ?award) AS ?ac)
+      WHERE {
+        ?person gptkbp:5312865579 gptkb:8670707699 ;
+                gptkbp:4258876171 ?award .
+      }
+      GROUP BY ?person
+    }
+  }
+
+  OPTIONAL {
+    ?person rdfs:label ?personName .
+    FILTER(LANG(?personName) = "en")
+  }
+
+  FILTER(?awardCount = ?maxAwardCount)
+}
+ORDER BY ?person""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:8670707699,
+        gptkbp:4258876171,
+        gptkbp:5312865579 .
+
+:13 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "How many people from each country have received both a Grammy Award and an Emmy Award?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Distinct,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT ?country (COUNT(DISTINCT ?person) AS ?count)
+WHERE {
+  ?person gptkbp:4258876171 gptkb:4003489667 ;
+          gptkbp:4258876171 gptkb:6740719676 ;
+          gptkbp:2566820213 ?country .
+}
+GROUP BY ?country""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:4003489667,
+        gptkb:6740719676,
+        gptkbp:4258876171,
+        gptkbp:2566820213 .
+
+:14 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which pairs of awards have been received by the same person?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT DISTINCT ?a1 ?a2
+WHERE {
+  ?p gptkbp:4258876171 ?a1 .
+  ?p gptkbp:4258876171 ?a2 .
+  FILTER (STR(?a1) < STR(?a2))
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkbp:4258876171 .
+
+:15 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Who won both the Academy Award for Best Director and the Golden Globe Award for Best Director?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT DISTINCT ?person WHERE {
+  ?person gptkbp:4258876171 gptkb:9472685689 .
+  ?person gptkbp:4258876171 gptkb:1794969101 .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:9472685689,
+        gptkb:1794969101,
+        gptkbp:4258876171 .
+
+:16 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Are there System Managers with problem solving ability?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Ask,
+                lsqv:Filter,
+                lsqv:TriplePattern ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+ASK {
+  gptkb:2333514137 gptkbp:1670736112 ?ability .
+  FILTER(
+    CONTAINS(LCASE(STR(?ability)), "problem solving")
+  )
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:2333514137,
+        gptkbp:1670736112 .
+
+:17 a lsqv:Query,
+        qat:Enumeration ;
+    rdfs:label "Which persons were members of the National Academy of Sciences and received at least one award? Return each person together with their awards." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT DISTINCT ?person ?award
+WHERE {
+  ?person gptkbp:5312865579 gptkb:8670707699 ;
+          gptkbp:9741577034 gptkb:5788123908 ;
+          gptkbp:4258876171 ?award .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:5788123908,
+        gptkb:8670707699,
+        gptkbp:4258876171,
+        gptkbp:5312865579,
+        gptkbp:9741577034 .
+
+:18 a lsqv:Query,
+        qat:Aggregation,
+        qat:Comparative ;
+    rdfs:label "Who served the longest term as president of an institution? Return the person, the institution, and the length of their term." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 8 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Bind,
+                lsqv:Filter,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern,
+                lsqv:agg-count ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?person ?institution ?years
+WHERE {
+  {
+    SELECT ?person ?institution ((xsd:integer(?termEnd) - xsd:integer(?termStart)) AS ?years)
+    WHERE {
+      ?person gptkbp:5312865579 gptkb:8670707699 ;
+              gptkbp:7756012812 ?institution ;
+              gptkbp:9035287078 ?termStart ;
+              gptkbp:9711468569 ?termEnd .
+    }
+  }
+
+  {
+    SELECT (MAX(?termLength) AS ?maxYears)
+    WHERE {
+      ?p gptkbp:5312865579 gptkb:8670707699 ;
+         gptkbp:7756012812 ?inst ;
+         gptkbp:9035287078 ?ts ;
+         gptkbp:9711468569 ?te .
+      BIND((xsd:integer(?te) - xsd:integer(?ts)) AS ?termLength)
+    }
+  }
+
+  FILTER(?years = ?maxYears)
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:8670707699,
+        gptkbp:5312865579,
+        gptkbp:7756012812,
+        gptkbp:9711468569,
+        gptkbp:9035287078 .
+
+:19 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "Which operas have more than 1 librettist?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count,
+                lsqv:fn-gt ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT ?opera WHERE {
+  ?opera gptkbp:6181648800 ?librettist .
+}
+GROUP BY ?opera
+HAVING (COUNT(?librettist) > 1)""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:5856565317,
+        gptkbp:6181648800 .
+
+:2 a lsqv:Query,
+        qat:Aggregation ;
+    rdfs:label "Which mountain(s) in Italy have the maximum elevation, and what are their IRIs, names and elevations?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
+            lsqv:projectVarCount 3 ;
+            lsqv:tpCount 7 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Filter,
+                lsqv:Optional,
+                lsqv:Select,
+                lsqv:SubQuery,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT ?mountain ?mountainLabel ?elev
+WHERE {
+  ?mountain gptkbp:5312865579 gptkb:1480660634 .
+  ?mountain gptkbp:7758007069 gptkb:8677556816 .
+  ?mountain gptkbp:7149552120 ?elev .
+
+  OPTIONAL { ?mountain rdfs:label ?mountainLabel }
+
+  {
+    SELECT (MAX(xsd:decimal(REPLACE(str(?e), "[^0-9\\\\.\\\\-]", ""))) AS ?maxElev)
+    WHERE {
+      ?m gptkbp:5312865579 gptkb:1480660634 .
+      ?m gptkbp:7758007069 gptkb:8677556816 .
+      ?m gptkbp:7149552120 ?e .
+    }
+  }
+
+  FILTER (
+    xsd:decimal(REPLACE(str(?elev), "[^0-9\\\\.\\\\-]", "")) = ?maxElev
+  )
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:8677556816,
+        gptkb:1480660634,
+        gptkbp:7758007069,
+        gptkbp:7149552120,
+        gptkbp:5312865579 .
+
+:20 a lsqv:Query,
+        qat:AggregateEnumeration ;
+    rdfs:label "Who are the people that have been librettist for more than 7 operas?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:agg-count,
+                lsqv:fn-gt ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT ?librettist WHERE {
+  ?opera gptkbp:6181648800 ?librettist .
+}
+GROUP BY ?librettist
+HAVING (COUNT(?opera) > 7)""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkbp:6181648800 .
+
+:21 a lsqv:Query,
+        qat:Sampling ;
+    rdfs:label "Give me any 5 people who were born in France." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT ?person
+WHERE {
+  ?person gptkbp:5312865579 gptkb:8670707699 ;
+          gptkbp:1041662894 gptkb:6963412730 .
+}
+LIMIT 5""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:6963412730,
+        gptkb:8670707699,
+        gptkbp:1041662894,
+        gptkbp:5312865579 .
+
+:22 a lsqv:Query,
+        qat:Sampling ;
+    rdfs:label "Show me 5 notable employees of Bolt Beranek and Newman." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+    PREFIX gptkbp: <https://gptkb.org/prop/>
+    SELECT ?employee
+    WHERE {
+          gptkb:5709647119 gptkbp:9438107427 ?employee .
+        }
+        LIMIT 5""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:5709647119,
+        gptkbp:9438107427 .
+
+:23 a lsqv:Query,
+        qat1:AggregateEnumeration ;
+    rdfs:label "For each person, how many distinct organisations are they a member of?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:GroupBy,
+                lsqv:Having,
+                lsqv:OrderBy,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+SELECT ?person (COUNT(DISTINCT ?org) AS ?orgCount)
+        WHERE {
+          ?person gptkbp:5312865579 gptkb:8670707699 ;
+                  gptkbp:9741577034 ?org .
+        }
+        GROUP BY ?person
+        HAVING (COUNT(DISTINCT ?org) >= 2)
+        ORDER BY DESC(?orgCount)""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:8670707699,
+    gptkbp:5312865579,
+        gptkbp:9741577034 .
+
+:24 a lsqv:Query,
+        qat1:LimitedRankedListing ;
+    rdfs:label "List the five notable employees of Bolt Beranek and Newman ordered alphabetically by IRI." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:OrderBy,
+                lsqv:Select ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+ SELECT ?employee
+        WHERE {
+          gptkb:5709647119 gptkbp:9438107427 ?employee .
+        }
+ORDER BY ASC (?employee )
+        LIMIT 5""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:5709647119,
+        gptkbp:9438107427 .
+
+:25 a lsqv:Query,
+        qat1:AggregateEnumeration,
+        qat1:Comparative ;
+    rdfs:label "Which person is associated with the maximum number of notable works in the dataset?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 4 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Filter,
+                lsqv:GroupBy,
+                lsqv:Select,
+                lsqv:SubQuery ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+        SELECT ?person ?workCount
+        WHERE {
+          {
+            SELECT ?person (COUNT(DISTINCT ?work) AS ?workCount)
+            WHERE {
+              ?person gptkbp:5312865579 gptkb:8670707699 ;
+                      gptkbp:4277969302 ?work .
+            }
+            GROUP BY ?person
+          }
+          {
+            SELECT (MAX(?c_inner) AS ?maxCount)
+            WHERE {
+              SELECT ?p_inner
+                     (COUNT(DISTINCT ?w_inner) AS ?c_inner)
+              WHERE {
+                ?p_inner gptkbp:5312865579 gptkb:8670707699 ;
+                         gptkbp:4277969302 ?w_inner .
+              }
+              GROUP BY ?p_inner
+            }
+          }
+          FILTER(?workCount = ?maxCount)
+        }""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:8670707699,
+        gptkbp:5312865579,
+        gptkbp:4277969302 .
+
+:3 a lsqv:Query,
+        qat1:Factoid,
+        qat:Factoid ;
+    rdfs:label "Which city hosted the 2012 Summer Olympics and what was the main venue?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 2 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT ?hostCity ?mainVenue
+WHERE {
+  gptkb:0858732858
+      gptkbp:7448639293 ?hostCity ;
+      gptkbp:6869890820 ?mainVenue .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:0858732858,
+        gptkbp:7448639293,
+        gptkbp:6869890820 .
+
+:4 a lsqv:Query,
+        qat1:Factoid,
+        qat:Factoid ;
+    rdfs:label "Which people are influenced by someone who was influenced by Mahatma Gandhi?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT ?s WHERE {
+  ?s gptkbp:5270165273 ?o .
+  ?o gptkbp:5270165273 gptkb:3214889527 .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:3214889527,
+        gptkbp:5270165273 .
+
+:5 a lsqv:Query,
+        qat1:Factoid,
+        qat:Factoid ;
+    rdfs:label "Which entities are headquartered in Mountain View, California?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT ?s
+WHERE {
+  ?s gptkbp:8450457312 gptkb:6612166189 .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:6612166189,
+        gptkbp:8450457312 .
+
+:6 a lsqv:Query,
+        qat1:Enumeration,
+        qat:Enumeration ;
+    rdfs:label "Which entities are directly connected to Isaac Newton, either as people influenced by him or as entities that influenced him?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:Union ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT DISTINCT ?o
+WHERE {
+  {
+    gptkb:7777637733 gptkbp:5158797418 ?o .
+  }
+  UNION
+  {
+    ?o gptkbp:5158797418 gptkb:7777637733 .
+  }
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:7777637733,
+        gptkbp:5158797418 .
+
+:7 a lsqv:Query,
+        qat1:Aggregation,
+        qat:Aggregation ;
+    rdfs:label "How many people have a nationality that is either German or French?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Aggregators,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:Values,
+                lsqv:agg-count ] ;
+    lsqv:text """PREFIX gptkb: <https://gptkb.org/entity/>
+PREFIX gptkbp: <https://gptkb.org/prop/>
+
+SELECT (COUNT(DISTINCT ?person) AS ?count)
+WHERE {
+  ?person gptkbp:2566820213 ?citizenship .
+  VALUES ?citizenship {
+    gptkb:7769257772
+    gptkb:3705166633
+  }
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:3705166633,
+        gptkb:7769257772,
+        gptkbp:2566820213 .
+
+:8 a lsqv:Query,
+        qat1:Enumeration,
+        qat:Enumeration ;
+    rdfs:label "What are the notable works of A. A. Milne?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:TriplePattern ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT DISTINCT ?work
+WHERE {
+  gptkb:3392308510 gptkbp:4277969302 ?work .
+}""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:3392308510,
+        gptkbp:4277969302 .
+
+:9 a lsqv:Query,
+        qat1:Enumeration,
+        qat1:RankedListing,
+        qat:Enumeration,
+        qat:RankedListing ;
+    rdfs:label "Which persons work in chemistry or physics, either by their field of work or by their occupation, have received at least one award, and are members of at least one organisation? Return each person together with their field, award, and organisation." ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
+            lsqv:projectVarCount 4 ;
+            lsqv:tpCount 5 ;
+            lsqv:usesFeature lsqv:Bind,
+                lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Optional,
+                lsqv:OrderBy,
+                lsqv:Select,
+                lsqv:TriplePattern,
+                lsqv:Union ] ;
+    lsqv:text """PREFIX gptkbp: <https://gptkb.org/prop/>
+PREFIX gptkb: <https://gptkb.org/entity/>
+
+SELECT DISTINCT ?person ?field ?award ?organisation
+WHERE {
+  ?person gptkbp:5312865579 gptkb:8670707699 ;
+          gptkbp:4258876171 ?award ;
+          gptkbp:9741577034 ?organisation .
+  {
+    ?person gptkbp:2126305219 ?field .
+    FILTER(CONTAINS(LCASE(STR(?field)), "chemistry")
+        || CONTAINS(LCASE(STR(?field)), "physics"))
+  }
+  UNION
+  {
+    ?person gptkbp:6127890684 ?occ .
+    FILTER(?occ = gptkb:9166019976
+        || ?occ = gptkb:2558630743)
+    BIND(STR(?occ) AS ?field)
+  }
+}
+ORDER BY ?person""" ;
+    dct:created "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:modified "2026-05-06T00:00:00+00:00"^^xsd:dateTime ;
+    dct:subject gptkb:9166019976,
+        gptkb:8670707699,
+        gptkb:2558630743,
+        gptkbp:4258876171,
+        gptkbp:2126305219,
+        gptkbp:5312865579,
+        gptkbp:9741577034,
+        gptkbp:6127890684 .
+
