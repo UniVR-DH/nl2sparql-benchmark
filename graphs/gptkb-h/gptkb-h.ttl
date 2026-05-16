@@ -2,8 +2,8 @@
 @prefix void: <http://rdfs.org/ns/void#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-<https://text2sparql.aksw.org/2025/corporate/> a void:Dataset;
-  rdfs:label "GPTKB: A large general-domain knowledge base entirely from a large language model"@en;
+<http://gptkb.org/dataset> a void:Dataset;
+  rdfs:label "Hashed GPTKB: A large general-domain knowledge base entirely from a large language model"@en;
   owl:imports <http://gptkb.org/>,
     <http://gptkb.org/.well-known/void#>,
     <http://gptkb.org/.well-known/examples#>,

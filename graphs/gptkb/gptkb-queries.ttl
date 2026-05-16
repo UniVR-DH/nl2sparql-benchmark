@@ -1,4 +1,4 @@
-@prefix : <https://text2sparql.aksw.org/2025/gptkb/queries/> .
+@prefix : <http://gptkb.org/.well-known/queries#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix gptkb: <https://gptkb.org/entity/> .
 @prefix gptkbp: <https://gptkb.org/prop/> .
