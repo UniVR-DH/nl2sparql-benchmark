@@ -49,16 +49,7 @@ SKIP_FILES: set[str] = set()
 
 
 def _auto_defaults(input_dir: Path) -> tuple[set[str], set[str]]:
-    """Derive copy-only and query-string file sets from the input directory.
-
-    Convention (shared by CK25, GPTKB, and expected future KGs):
-      * ``{kg}-croissant.jsonld``  → copy without hashing
-      * ``{kg}-queries.ttl``       → process with regex-based SPARQL-literal hashing
-      * ``{kg}-examples.ttl``      → process with regex-based SPARQL-literal hashing
-
-    Returns ``(copy_only_files, query_string_files)``.
-    """
-    kg = input_dir.name  # e.g. "gptkb" or "ck25"
+    kg = input_dir.name
     copy_only: set[str] = {f"{kg}-croissant.jsonld"}
     query_str: set[str] = {f"{kg}-queries.ttl", f"{kg}-examples.ttl"}
     return copy_only, query_str
@@ -72,9 +63,6 @@ SPARQL_STRING_PREDICATES = {
     "http://www.w3.org/ns/shacl#describe",
 }
 
-# Matches both:
-#   @prefix foo: <http://...> .
-#   PREFIX foo: <http://...>
 PREFIX_DECL_RE = re.compile(
     r"(?:@prefix|PREFIX)\s+([A-Za-z][\w-]*):\s*<([^>]+)>",
     re.IGNORECASE,
@@ -91,11 +79,6 @@ ANGLE_IRI_RE = re.compile(r"<([^>]+)>")
 
 
 def normalize_namespace(ns: str) -> str:
-    """Normalize a namespace IRI by appending a trailing slash if no separator present.
-    
-    Preserves existing separators (/, #, =, :) as-is. Only appends '/' when the IRI
-    ends with a plain path segment that has no separator at all.
-    """
     value = ns.strip()
     if not value:
         return value
@@ -115,9 +98,6 @@ def normalize_namespaces(namespaces: list[str]) -> list[str]:
 
 # ---------------------------------------------------------------------------
 # HyperLogLog cardinality estimator (p=12)
-#
-# Counts unique IRIs per namespace in fixed ~4 KB of memory. Standard error
-# is ~1.6 %, which is negligible compared to the collision probability range.
 # ---------------------------------------------------------------------------
 
 class _TinyHLL:
@@ -125,13 +105,11 @@ class _TinyHLL:
 
     def __init__(self, p: int = 12) -> None:
         self.p = p
-        self.m = 1 << p          # 4 096 registers
+        self.m = 1 << p
         self.reg = [0] * self.m
-        self._bits = 128 - p     # remaining bits after register index
+        self._bits = 128 - p
 
     def add(self, x: str) -> None:
-        # MD5 is used only as a fast uniform hash for the internal HLL sketch,
-        # not for the IRI hashing exposed to callers.
         h = int(hashlib.md5(x.encode()).hexdigest(), 16)
         idx = h & (self.m - 1)
         w = h >> self.p
@@ -150,20 +128,18 @@ class _TinyHLL:
         return raw
 
 
-# One HLL sketch per namespace; created on first encounter.
 _hll_per_ns: dict[str, _TinyHLL] = {}
-
-# Warn when unique IRIs in a namespace exceed this fraction of available slots.
-_COLLISION_WARN_THRESHOLD = 0.1  # 10 %
+_COLLISION_WARN_THRESHOLD = 0.1
 
 
 def check_collision_warnings(hash_len: int, fmt: str) -> None:
-    """Print a single warning line per namespace that exceeds the threshold.
-
-    Called once at the end of the run by ``main()``.
-    """
     import math
-    slots = (10 ** hash_len) if fmt == "int" else (16 ** hash_len)
+    if fmt == "int":
+        slots = 10 ** hash_len
+    elif fmt == "alpha":
+        slots = 26 ** hash_len
+    else:  # hex
+        slots = 16 ** hash_len
     threshold = slots * _COLLISION_WARN_THRESHOLD
     for ns, hll in _hll_per_ns.items():
         count = hll.count()
@@ -182,10 +158,26 @@ def check_collision_warnings(hash_len: int, fmt: str) -> None:
 # Hashing
 # ---------------------------------------------------------------------------
 
+def _to_base26(n: int, length: int) -> str:
+    """Convert a non-negative integer to a base-26 lowercase string of fixed length.
+
+    Digits are 'a' (0) … 'z' (25).  The result is left-padded with 'a' (the
+    zero digit) to exactly *length* characters, mirroring how ``int`` mode
+    zero-pads with '0'.
+    """
+    chars: list[str] = []
+    for _ in range(length):
+        chars.append(chr(ord("a") + n % 26))
+        n //= 26
+    return "".join(reversed(chars))
+
+
 def short_hash(text: str, length: int, fmt: str = "hex") -> str:
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     if fmt == "int":
         return str(int(digest, 16) % (10 ** length)).zfill(length)
+    if fmt == "alpha":
+        return _to_base26(int(digest, 16) % (26 ** length), length)
     return digest[:length]
 
 def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> str:
@@ -202,15 +194,12 @@ def hash_full_iri(iri: str, namespaces: list[str], hash_len: int, fmt: str) -> s
 
 
 # ---------------------------------------------------------------------------
-# Prefix extraction (two-pass: scan whole file first)
+# Prefix extraction
 # ---------------------------------------------------------------------------
 
 
 def collect_prefixes(path: Path, namespaces: list[str]) -> dict[str, str]:
-    """First pass: return {prefix: namespace} for all declarations in *path*."""
-    # Create normalized set for matching (preserves #, =, : separators)
     normalized_ns_set = {normalize_namespace(ns) for ns in namespaces}
-    
     prefix_to_ns: dict[str, str] = {}
     with path.open("r", encoding="utf-8") as fh:
         for line in fh:
@@ -224,15 +213,13 @@ def collect_prefixes(path: Path, namespaces: list[str]) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# SPARQL-string hashing (used only for small query/example files)
+# SPARQL-string hashing
 # ---------------------------------------------------------------------------
 
 
 def hash_sparql_string(
     sparql: str, namespaces: list[str], hash_len: int, fmt: str
 ) -> str:
-    """Hash IRIs inside an embedded SPARQL query string."""
-    # Collect PREFIX declarations inside the SPARQL string itself.
     prefix_to_ns: dict[str, str] = {}
     for line in sparql.splitlines():
         sm = SPARQL_PREFIX_RE.search(line)
@@ -277,32 +264,19 @@ def hash_sparql_string(
 
 
 def _turtle_unescape(raw: str) -> str:
-    """Decode ``\\\\`` → ``\\`` in a triple-quoted Turtle literal.
-
-    Inside ``\"\"\"...\"\"\"`` delimiters a single ``"`` is valid as-is and
-    does *not* need escaping, so we must NOT touch ``\\"`` sequences — they
-    are a literal backslash followed by a quote, not an escaped quote.
-    Only ``\\\\`` (escaped backslash) needs decoding to ``\\``.
-    """
     return raw.replace("\\\\", "\\")
 
 
 def _turtle_reescape(s: str) -> str:
-    """Re-encode ``\\`` → ``\\\\`` for a triple-quoted Turtle literal."""
     return s.replace("\\", "\\\\")
 
 
-# Matches a triple-quoted literal: captures the raw content between the
-# delimiters so we can hash it and splice the result back in-place.
 _TRIPLE_QUOTED_RE = re.compile(r'"""(.*?)"""', re.DOTALL)
 
 
 def hash_sparql_literals_in_text(
     text: str, namespaces: list[str], hash_len: int, fmt: str
 ) -> str:
-    """Find triple-quoted SPARQL literals using rdflib parsing.
-    
-    WARNING: Loads entire Turtle into memory. Only for small files."""
     try:
         import rdflib
     except ImportError as exc:
@@ -311,38 +285,31 @@ def hash_sparql_literals_in_text(
             "query strings. Install rdflib or disable query-string hashing."
         ) from exc
 
-    
-    # Parse with rdflib to identify SPARQL literals
     g = rdflib.Graph()
     try:
         g.parse(data=text, format="turtle")
     except Exception:
         return text
-    
-    # Collect literal values from SPARQL predicates
+
     sparql_pred_refs = {rdflib.URIRef(iri) for iri in SPARQL_STRING_PREDICATES}
     literals_to_hash: dict[str, str] = {}
     for s, p, o in g:
         if p in sparql_pred_refs and isinstance(o, rdflib.term.Literal):
             literals_to_hash[str(o)] = str(p)
-    
+
     if not literals_to_hash:
         return text
-    
-    # Replace matching literals
+
     def replace_literal(m: re.Match[str]) -> str:
         raw_content = m.group(1)
         decoded = _turtle_unescape(raw_content)
-        
         if decoded not in literals_to_hash:
             return m.group(0)
-        
         hashed = hash_sparql_string(decoded, namespaces, hash_len, fmt)
         if hashed == decoded:
             return m.group(0)
-        
         return f'"""{_turtle_reescape(hashed)}"""'
-    
+
     return _TRIPLE_QUOTED_RE.sub(replace_literal, text)
 
 
@@ -356,7 +323,6 @@ def _is_prefix_line(line: str) -> bool:
     return stripped.startswith("@prefix ") or stripped.upper().startswith("PREFIX ")
 
 
-# Regex that finds all """ occurrences on a line.
 _TRIPLE_QUOTE_RE = re.compile(r'"""')
 
 
@@ -369,56 +335,36 @@ def _transform_line_with_state(
     fmt: str,
     starts_inside: bool = False,
 ) -> tuple[str, bool]:
-    """Transform line, tracking literal state across lines.
-    
-    Returns (transformed_line, ends_inside) where ends_inside indicates whether
-    the line ends inside a literal (odd number of unclosed delimiters).
-    
-    Handles:
-    - Lines with no literals: transform everything if not inside literal
-    - Lines that open/close literals: only transform segments outside quotes
-    - Content after closing delimiter on same line: gets transformed
-    - Multiline literals spanning multiple lines: preserves interior verbatim
-    """
-    # Find all """ positions on this line
     positions = [m.start() for m in _TRIPLE_QUOTE_RE.finditer(line)]
-    
+
     if not positions:
-        # No triple quotes on this line
         if not starts_inside:
-            # Outside literal → transform the whole line
             line = transform_line_prefixed(line, prefix_to_ns, patterns, hash_len, fmt)
             line = transform_line_angle(line, namespaces, hash_len, fmt)
-        # else: inside literal → keep verbatim
         return line, starts_inside
-    
-    # Split line at each delimiter
+
     parts = []
     cursor = 0
     inside = starts_inside
-    
+
     for pos in positions:
-        # Segment before this delimiter
         segment = line[cursor:pos]
         if not inside:
-            # Outside literal → transform
             segment = transform_line_prefixed(
                 segment, prefix_to_ns, patterns, hash_len, fmt
             )
             segment = transform_line_angle(segment, namespaces, hash_len, fmt)
         parts.append(segment)
-        parts.append('"""')  # Keep the delimiter itself
+        parts.append('"""')
         cursor = pos + 3
-        inside = not inside  # Toggle state
-    
-    # Remainder after last delimiter
+        inside = not inside
+
     tail = line[cursor:]
     if not inside:
-        # Outside literal → transform
         tail = transform_line_prefixed(tail, prefix_to_ns, patterns, hash_len, fmt)
         tail = transform_line_angle(tail, namespaces, hash_len, fmt)
     parts.append(tail)
-    
+
     return "".join(parts), inside
 
 
@@ -428,7 +374,6 @@ def transform_line_angle(
     hash_len: int,
     fmt: str,
 ) -> str:
-    """Replace full IRIs in angle brackets on a single line."""
     if _is_prefix_line(line):
         return line
 
@@ -446,7 +391,6 @@ def transform_line_prefixed(
     hash_len: int,
     fmt: str,
 ) -> str:
-    """Replace prefixed names (e.g. gptkb:Foo) on a single line."""
     if _is_prefix_line(line) or not prefix_to_ns:
         return line
 
@@ -480,14 +424,8 @@ def process_file_streaming(
     fmt: str,
     hash_query_strings: bool,
 ) -> None:
-    """Transform *src* into *dst*.
-    Mode: streaming (constant memory) for large files.
-    Mode: full load + rdflib for small query/example files (KB scale).
-    """
-    # Step 1: collect prefixes (fast scan).
     prefix_to_ns = collect_prefixes(src, namespaces)
 
-    # Build compiled patterns once.
     patterns: dict[str, re.Pattern[str]] = {
         prefix: re.compile(
             rf"(?<![A-Za-z0-9_]){re.escape(prefix)}:([^\s;,/\"'<>\(\)\[\]{{}}]+)"
@@ -495,27 +433,20 @@ def process_file_streaming(
         for prefix in prefix_to_ns
     }
 
-    # Step 2 (optional): rdflib SPARQL-literal hashing (small files only).
     if hash_query_strings:
-        # Small file (KB scale) - load entirely for rdflib parsing
         text = src.read_text(encoding="utf-8")
         text = hash_sparql_literals_in_text(text, namespaces, hash_len, fmt)
         lines_iter = iter(text.splitlines(keepends=True))
     else:
-        # Large file (GB scale) - streaming line by line
         lines_iter = src.open("r", encoding="utf-8")
 
-    # Step 3: stream transform with state tracking.
     try:
         with dst.open("w", encoding="utf-8") as out:
             inside_literal = False
             for line in lines_iter:
-                # Preserve prefix lines exactly (they contain no IRIs to hash)
                 if _is_prefix_line(line):
                     out.write(line)
                     continue
-                
-                # Transform line, tracking literal state
                 transformed_line, inside_literal = _transform_line_with_state(
                     line, prefix_to_ns, patterns, namespaces, hash_len, fmt,
                     starts_inside=inside_literal
@@ -527,7 +458,7 @@ def process_file_streaming(
                 lines_iter.close()
             except Exception:
                 pass
-            
+
 
 # ---------------------------------------------------------------------------
 # Folder processor
@@ -535,13 +466,6 @@ def process_file_streaming(
 
 
 def _get_output_filename(src: Path) -> str:
-    """Generate output filename with -h inserted before all extensions.
-    
-    Handles multi-suffix files correctly:
-        file.ttl → file-h.ttl
-        file.tar.gz → file-h.tar.gz
-        gptkb_v1.5.3-instances.ttl → gptkb_v1.5.3-instances-h.ttl
-    """
     name = src.name
     suffixes = ''.join(src.suffixes)
     stem = name[:-len(suffixes)] if suffixes else name
@@ -559,11 +483,9 @@ def process_folder(
     copy_only_files: set[str],
     query_string_files: set[str],
 ) -> tuple[int, int, int, int, int]:
-    # Safety: never delete the input directory
     if output_dir == input_dir:
         raise ValueError(f"Output directory cannot be the same as input directory: {output_dir}")
-    
-    # This is a destructive operation on the output directory, but the artifact can be generated again at any time
+
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -583,14 +505,12 @@ def process_folder(
         out_name = _get_output_filename(src)
         dst = output_dir / out_name
 
-        # Handle copy-only files (croissant, etc.) - copy content but rename with -h
         if src.name in copy_only_files:
             shutil.copy2(src, dst)
             print(f"  Copied:     {src.name} -> {out_name}")
             copied_count += 1
             continue
 
-        # Per-file decision: hash embedded SPARQL strings only for small files.
         file_hash_qs = hash_query_strings and (src.name in query_string_files)
 
         try:
@@ -600,8 +520,6 @@ def process_folder(
         except Exception as exc:
             print(f"  ERROR:      {src.name}: {exc}")
             error_count += 1
-            # Remove any partially written output for this file. Previously
-            # processed files may still remain in output_dir.
             if dst.exists():
                 dst.unlink()
 
@@ -646,16 +564,18 @@ def parse_args() -> argparse.Namespace:
         "--hash-len",
         type=int,
         default=6,
-        help="Number of characters (hex) or digits (int) to keep (default: 6).",
+        help="Number of characters (hex/alpha) or digits (int) to keep (default: 6).",
     )
     parser.add_argument(
         "--hash-format",
-        choices=["hex", "int"],
+        choices=["hex", "int", "alpha"],
         default="hex",
         help=(
             "Output format for hashes: "
             "'hex' keeps the first --hash-len hex chars of the SHA-256 digest; "
-            "'int' converts the digest to a decimal integer modulo 10**hash-len."
+            "'int' converts the digest to a decimal integer modulo 10**hash-len; "
+            "'alpha' converts the digest to a lowercase letter string (a–z) "
+            "modulo 26**hash-len."
         ),
     )
     parser.add_argument(
@@ -705,7 +625,6 @@ def main() -> int:
             f"Input directory does not exist or is not a directory: {input_dir}"
         )
 
-    # Output dir: default to <input_dir>-h (e.g. graphs/gptkb → graphs/gptkb-h)
     if args.output_dir:
         output_dir = Path(args.output_dir)
     else:
@@ -715,8 +634,6 @@ def main() -> int:
     if not namespaces:
         raise SystemExit("No valid namespaces provided.")
 
-    # Auto-detect copy-only and query-string files from the KG name,
-    # unless the user supplied explicit overrides.
     auto_copy_only, auto_query_str = _auto_defaults(input_dir)
     skip_files = set(args.skip_file) if args.skip_file else SKIP_FILES
     copy_only_files = set(args.copy_only_file) if args.copy_only_file else auto_copy_only
