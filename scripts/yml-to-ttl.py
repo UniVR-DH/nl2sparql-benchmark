@@ -85,7 +85,8 @@ def yml_to_ttl(input_file, output_file):
             comment = entry['question'].replace('"', '\\"')
             ttl.append(f'  rdfs:comment "{comment}";')
         
-        ttl.append(f'  sh:select """')
+        predicate = 'sh:ask' if query_type == 'ASK' else 'sh:select'
+        ttl.append(f'  {predicate} """')
         ttl.append(query_text)
         ttl.append(f'""" ;')
         ttl.append(f'  schema:target <https://qlever.cs.uni-freiburg.de/> .')
