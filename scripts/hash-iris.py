@@ -51,7 +51,11 @@ SKIP_FILES: set[str] = set()
 def _auto_defaults(input_dir: Path) -> tuple[set[str], set[str]]:
     kg = input_dir.name
     copy_only: set[str] = {f"{kg}-croissant.jsonld"}
-    query_str: set[str] = {f"{kg}-queries.ttl", f"{kg}-examples.ttl"}
+    query_str: set[str] = {
+        f"{kg}-queries.ttl",
+        f"{kg}-examples.ttl",
+        f"{kg}-queries.yaml",
+    }
     return copy_only, query_str
 
 
@@ -414,6 +418,74 @@ def transform_line_prefixed(
 # ---------------------------------------------------------------------------
 # File processor
 # ---------------------------------------------------------------------------
+def _process_yaml_queries(
+    src: Path,
+    dst: Path,
+    namespaces: list[str],
+    hash_len: int,
+    fmt: str,
+) -> None:
+    """Hash IRIs inside SPARQL strings in a YAML question/query file.
+
+    Only values stored under a 'sparql' key are touched — dataset metadata
+    fields (id, defaultNamespace, question text, …) are left verbatim.
+    """
+    try:
+        import yaml
+    except ImportError as exc:
+        raise RuntimeError(
+            "Processing YAML query files requires 'pyyaml'. "
+            "Install it with: pip install pyyaml"
+        ) from exc
+
+    data = yaml.safe_load(src.read_text(encoding="utf-8"))
+
+    def _hash_obj(obj: object) -> object:
+        if isinstance(obj, dict):
+            return {
+                k: (
+                    hash_sparql_string(v, namespaces, hash_len, fmt)
+                    if k == "sparql" and isinstance(v, str)
+                    else _hash_obj(v)
+                )
+                for k, v in obj.items()
+            }
+        if isinstance(obj, list):
+            return [_hash_obj(item) for item in obj]
+        return obj
+
+    hashed = _hash_obj(data)
+
+    class _Lit(str):
+        """Marker so the custom representer can force block style."""
+
+    class _LiteralDumper(yaml.Dumper):
+        pass
+
+    _LiteralDumper.add_representer(
+        _Lit,
+        lambda d, s: d.represent_scalar("tag:yaml.org,2002:str", s, style="|"),
+    )
+
+    def _literalise(obj: object) -> object:
+        if isinstance(obj, dict):
+            return {k: _literalise(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [_literalise(item) for item in obj]
+        if isinstance(obj, str) and "\n" in obj:
+            return _Lit(obj)
+        return obj
+
+    dst.write_text(
+        yaml.dump(
+            _literalise(hashed),
+            Dumper=_LiteralDumper,
+            allow_unicode=True,
+            default_flow_style=False,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
 
 
 def process_file_streaming(
@@ -424,6 +496,10 @@ def process_file_streaming(
     fmt: str,
     hash_query_strings: bool,
 ) -> None:
+    if hash_query_strings and src.suffix in (".yaml", ".yml"):
+        _process_yaml_queries(src, dst, namespaces, hash_len, fmt)
+        return
+
     prefix_to_ns = collect_prefixes(src, namespaces)
 
     patterns: dict[str, re.Pattern[str]] = {
