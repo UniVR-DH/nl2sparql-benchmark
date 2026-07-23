@@ -226,8 +226,7 @@ def hash_sparql_string(
 ) -> str:
     prefix_to_ns: dict[str, str] = {}
     for line in sparql.splitlines():
-        sm = SPARQL_PREFIX_RE.search(line)
-        if sm:
+        for sm in SPARQL_PREFIX_RE.finditer(line):
             pref, ns = sm.group(1), sm.group(2)
             ns_norm = normalize_namespace(ns)
             if ns_norm in namespaces:
