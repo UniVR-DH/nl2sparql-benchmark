@@ -6,3 +6,5 @@ graphs/gptkb/gptkb-void.ttl filter=lfs diff=lfs merge=lfs -text
 graphs/gptkb-h/gptkb-data-shapes-h.ttl filter=lfs diff=lfs merge=lfs -text
 graphs/gptkb-h/gptkb-data-vocab-h.ttl filter=lfs diff=lfs merge=lfs -text
 graphs/gptkb-h/gptkb-void-h.ttl filter=lfs diff=lfs merge=lfs -text
+graphs/dbpedia/dbpedia-data-shapes.ttl filter=lfs diff=lfs merge=lfs -text
+graphs/dbpedia/dbpedia-void.ttl filter=lfs diff=lfs merge=lfs -text
