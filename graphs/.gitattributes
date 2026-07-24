@@ -1,0 +1,2 @@
+dbpedia-h/dbpedia-data-shapes-h.ttl filter=lfs diff=lfs merge=lfs -text
+dbpedia-h/dbpedia-void-h.ttl filter=lfs diff=lfs merge=lfs -text

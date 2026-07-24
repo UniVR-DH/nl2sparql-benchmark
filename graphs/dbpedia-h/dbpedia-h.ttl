@@ -1,0 +1,11 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://dbpedia-h.org/dataset> a void:Dataset;
+  rdfs:label "Global and Unified Access to Knowledge Graphs"@en;
+  owl:imports <http://dbpedia-h.org/>, 
+    <http://dbpedia-h.org/.well-known/void#>,
+    <http://dbpedia-h.org/.well-known/examples#>,
+    <http://dbpedia-h.org/.well-known/shapes#>,
+    <http://dbpedia-h.org/.well-known/queries#>> .
