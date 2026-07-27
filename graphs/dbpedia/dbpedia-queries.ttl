@@ -7,19 +7,6 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-:1 a lsqv:Query,
-        qat:Factoid ;
-    rdfs:label "How many unique authors have written science fiction novels?" ;
-    lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT COUNT(DISTINCT ?author) WHERE {  
-  ?x <http://dbpedia.org/ontology/literaryGenre> <http://dbpedia.org/resource/Science_fiction> .  
-  ?x <http://dbpedia.org/ontology/author> ?author .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 :10 a lsqv:Query,
         qat:Enumeration,
         qat:Factoid ;
@@ -90,39 +77,6 @@ SELECT SUM(?numStudents) WHERE {
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
-:13 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Which movie features Johnny Depp as a lead actor?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  ?uri <http://dbpedia.org/property/starring> <http://dbpedia.org/resource/Johnny_Depp> .
-  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:14 a lsqv:Query,
-        qat:Confirmation ;
-    rdfs:label "Did J.K. Rowling write the Harry Potter series?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 0 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Ask ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """ASK WHERE {
-  <http://dbpedia.org/resource/Harry_Potter> <http://dbpedia.org/property/author> <http://dbpedia.org/resource/J._K._Rowling>
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 :15 a lsqv:Query,
         qat:Enumeration,
         qat:Factoid ;
@@ -157,24 +111,6 @@ SELECT SUM(?numStudents) WHERE {
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
-:17 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "What are some movies available on Netflix?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  ?uri <http://dbpedia.org/ontology/distributor> <http://dbpedia.org/resource/Netflix> .
-  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 :19 a lsqv:Query,
         qat:Enumeration,
         qat:Factoid ;
@@ -190,29 +126,6 @@ PREFIX res: <http://dbpedia.org/resource/>
 SELECT DISTINCT ?uri WHERE {
   res:Amazon_River dbo:sourceCountry ?uri .
 }
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:2 a lsqv:Query,
-        qat:Factoid,
-        qat:LimitedRankedListing ;
-    rdfs:label "What are the 10 most populated countries?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Limit,
-                lsqv:OrderBy,
-                lsqv:Orderby,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?country WHERE {
-  ?country rdf:type dbo:Country .
-  ?country dbo:populationTotal ?population .
-} ORDER BY DESC(?population) LIMIT 10
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
@@ -268,30 +181,6 @@ SELECT ?country WHERE {
   ?x <http://dbpedia.org/property/producer> <http://dbpedia.org/resource/Steven_Spielberg> .
   ?x <http://dbpedia.org/ontology/director> ?uri .
   ?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:23 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Which organizations were founded in 1990?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 3 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Filter,
-                lsqv:Regex,
-                lsqv:Select,
-                lsqv:Union ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT DISTINCT ?uri WHERE {
-  ?uri rdf:type dbo:Organisation .
-  { ?uri dbo:formationYear ?date . } UNION { ?uri dbo:foundingYear ?date. }
-  FILTER regex(?date, '^1990') .
 }
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
@@ -448,25 +337,6 @@ SELECT COUNT(DISTINCT ?uri) WHERE {
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
-:32 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Who were the managers of the squad located at Old Trafford?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
-SELECT DISTINCT ?m WHERE {
-  ?x dbo:homeStadium <http://dbpedia.org/resource/Old_Trafford> .
-  ?x dbo:manager ?m
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 :33 a lsqv:Query,
         qat:Factoid ;
     rdfs:label "How many books have been authored by J.K. Rowling?" ;
@@ -493,24 +363,6 @@ SELECT DISTINCT ?m WHERE {
   <http://dbpedia.org/resource/Butters'_Very_Own_Episode> <http://dbpedia.org/ontology/previousWork> ?x .
   ?x <http://dbpedia.org/ontology/director> ?uri .
   ?x <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/TelevisionEpisode>
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:35 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Which political parties have governed over Varanasi, and is Narendra Modi a member of any of them?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  <http://dbpedia.org/resource/Narendra_Modi> <http://dbpedia.org/ontology/party> ?uri .
-  <http://dbpedia.org/resource/Varanasi> <http://dbpedia.org/ontology/leaderName> ?uri
 }
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
@@ -706,23 +558,6 @@ SELECT ?uri WHERE {
   ?country <http://dbpedia.org/ontology/governmentType> <http://dbpedia.org/resource/Parliamentary_republic> .
   ?country <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> .
   ?country <http://dbpedia.org/ontology/capital> ?capital .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:45 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "When did the Apollo 11 mission land on the moon?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?d WHERE {
-  <http://dbpedia.org/resource/Apollo_11> <http://dbpedia.org/ontology/launchDate> ?d .
 }
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
@@ -935,23 +770,6 @@ WHERE
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
-:57 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Which instruments are commonly used in genres that emerged from jazz?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?instrument WHERE {
-  <http://dbpedia.org/resource/Jazz> <http://dbpedia.org/ontology/instrument> ?instrument .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 :58 a lsqv:Query,
         qat:Confirmation ;
     rdfs:label "Was Emma Watson a part of Harry Potter cast?" ;
@@ -981,43 +799,6 @@ WHERE
   <http://dbpedia.org/resource/Leonardo_da_Vinci> <http://dbpedia.org/ontology/birthPlace> ?place.
   ?place <http://dbpedia.org/ontology/country> ?country.
   ?country <http://dbpedia.org/property/capital> ?uri
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:6 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Identify the corporation associated with products such as iPhone and iPad?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 3 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Company> .
-  ?uri <http://dbpedia.org/ontology/product> <http://dbpedia.org/resource/IPhone> .
-  ?uri <http://dbpedia.org/ontology/product> <http://dbpedia.org/resource/IPad> .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:60 a lsqv:Query,
-        qat:Factoid ;
-    rdfs:label "What is the population of the largest city in Canada?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
-PREFIX res: <http://dbpedia.org/resource/>
-SELECT ?num WHERE {
-  res:Canada dbo:largestCity ?x .
-  ?x dbo:populationTotal ?num .
 }
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
@@ -1162,54 +943,6 @@ SELECT ?num WHERE {
     lsqv:resultCount 1 ;
     lsqv:text """SELECT DISTINCT ?uri WHERE {
   <http://dbpedia.org/resource/Wikimedia_Foundation> <http://dbpedia.org/property/keyPeople> ?uri
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:7 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Which nearest city of the Eiffel Tower is the birthplace of Gustave Eiffel?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
-SELECT DISTINCT ?uri WHERE {
-  <http://dbpedia.org/resource/Gustave_Eiffel> dbo:birthPlace ?uri
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:70 a lsqv:Query,
-        qat:Factoid ;
-    rdfs:label "How many are the Generals of the United States?" ;
-    lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT COUNT(DISTINCT ?uri)
-WHERE {
-  ?uri <http://dbpedia.org/property/rank> <http://dbpedia.org/resource/General_(United_States)> .
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:71 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Who are the key figures associated with the United Nations?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  <http://dbpedia.org/resource/United_Nations> <http://dbpedia.org/property/leaderName> ?uri
 }
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
@@ -1670,23 +1403,6 @@ WHERE
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
-:95 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "Which notable figures are buried in Père Lachaise Cemetery?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  ?uri <http://dbpedia.org/property/placeofburial> <http://dbpedia.org/resource/Père_Lachaise_Cemetery>
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 :96 a lsqv:Query,
         qat:AggregateEnumeration,
         qat:Factoid ;
@@ -1712,6 +1428,347 @@ SELECT ?country WHERE {
 }
 GROUP BY ?country
 ORDER BY ASC(COUNT(?university))
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:99 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "What is the city and country of the Michelin company headquarters?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select,
+                lsqv:Union ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  { <http://dbpedia.org/resource/Michelin> <http://dbpedia.org/property/locationCountry> ?uri . }
+  UNION
+  { <http://dbpedia.org/resource/Michelin> <http://dbpedia.org/property/locationCity> ?uri }
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:1 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "How many unique authors have written science fiction novels?" ;
+    lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT COUNT(DISTINCT ?author) WHERE {  
+  ?x <http://dbpedia.org/ontology/literaryGenre> <http://dbpedia.org/resource/Science_fiction> .  
+  ?x <http://dbpedia.org/ontology/author> ?author .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:13 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Which movie features Johnny Depp as a lead actor?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  ?uri <http://dbpedia.org/property/starring> <http://dbpedia.org/resource/Johnny_Depp> .
+  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:14 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Did J.K. Rowling write the Harry Potter series?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Ask ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """ASK WHERE {
+  <http://dbpedia.org/resource/Harry_Potter> <http://dbpedia.org/property/author> <http://dbpedia.org/resource/J._K._Rowling>
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:17 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "What are some movies available on Netflix?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  ?uri <http://dbpedia.org/ontology/distributor> <http://dbpedia.org/resource/Netflix> .
+  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:18 a lsqv:Query,
+        qat:Factoid,
+        qat:LimitedRankedListing ;
+    rdfs:label "Which country has the highest population?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Limit,
+                lsqv:OrderBy,
+                lsqv:Orderby,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX res: <http://dbpedia.org/resource/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+SELECT DISTINCT ?country WHERE {
+  ?country dbo:populationTotal ?population .
+} ORDER BY DESC(?population) LIMIT 1
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:2 a lsqv:Query,
+        qat:Factoid,
+        qat:LimitedRankedListing ;
+    rdfs:label "What are the 10 most populated countries?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Limit,
+                lsqv:OrderBy,
+                lsqv:Orderby,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?country WHERE {
+  ?country rdf:type dbo:Country .
+  ?country dbo:populationTotal ?population .
+} ORDER BY DESC(?population) LIMIT 10
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:23 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Which organizations were founded in 1990?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 3 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Filter,
+                lsqv:Regex,
+                lsqv:Select,
+                lsqv:Union ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT DISTINCT ?uri WHERE {
+  ?uri rdf:type dbo:Organisation .
+  { ?uri dbo:formationYear ?date . } UNION { ?uri dbo:foundingYear ?date. }
+  FILTER regex(?date, '^1990') .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:32 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Who were the managers of the squad located at Old Trafford?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
+SELECT DISTINCT ?m WHERE {
+  ?x dbo:homeStadium <http://dbpedia.org/resource/Old_Trafford> .
+  ?x dbo:manager ?m
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:35 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Which political parties have governed over Varanasi, and is Narendra Modi a member of any of them?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  <http://dbpedia.org/resource/Narendra_Modi> <http://dbpedia.org/ontology/party> ?uri .
+  <http://dbpedia.org/resource/Varanasi> <http://dbpedia.org/ontology/leaderName> ?uri
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:45 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "When did the Apollo 11 mission land on the moon?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?d WHERE {
+  <http://dbpedia.org/resource/Apollo_11> <http://dbpedia.org/ontology/launchDate> ?d .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:50 a lsqv:Query,
+        qat:Confirmation ;
+    rdfs:label "Was Edmund Hillary the first person to reach the summit of Mount Everest?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 0 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Ask ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """ASK WHERE { 
+  <http://dbpedia.org/resource/Mount_Everest> <http://dbpedia.org/ontology/firstAscentPerson> <http://dbpedia.org/resource/Edmund_Hillary> 
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:57 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Which instruments are commonly used in genres that emerged from jazz?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?instrument WHERE {
+  <http://dbpedia.org/resource/Jazz> <http://dbpedia.org/ontology/instrument> ?instrument .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:6 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Identify the corporation associated with products such as iPhone and iPad?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 3 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  ?uri <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Company> .
+  ?uri <http://dbpedia.org/ontology/product> <http://dbpedia.org/resource/IPhone> .
+  ?uri <http://dbpedia.org/ontology/product> <http://dbpedia.org/resource/IPad> .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:60 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "What is the population of the largest city in Canada?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 2 ;
+            lsqv:usesFeature lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX res: <http://dbpedia.org/resource/>
+SELECT ?num WHERE {
+  res:Canada dbo:largestCity ?x .
+  ?x dbo:populationTotal ?num .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:7 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Which nearest city of the Eiffel Tower is the birthplace of Gustave Eiffel?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """PREFIX dbo: <http://dbpedia.org/ontology/>
+SELECT DISTINCT ?uri WHERE {
+  <http://dbpedia.org/resource/Gustave_Eiffel> dbo:birthPlace ?uri
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:70 a lsqv:Query,
+        qat:Factoid ;
+    rdfs:label "How many are the Generals of the United States?" ;
+    lsqv:hasStructuralFeatures [ lsqv:usesFeature lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT COUNT(DISTINCT ?uri)
+WHERE {
+  ?uri <http://dbpedia.org/property/rank> <http://dbpedia.org/resource/General_(United_States)> .
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:71 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Who are the key figures associated with the United Nations?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  <http://dbpedia.org/resource/United_Nations> <http://dbpedia.org/property/leaderName> ?uri
+}
+""" ;
+    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
+
+:95 a lsqv:Query,
+        qat:Enumeration,
+        qat:Factoid ;
+    rdfs:label "Which notable figures are buried in Père Lachaise Cemetery?" ;
+    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
+            lsqv:projectVarCount 1 ;
+            lsqv:tpCount 1 ;
+            lsqv:usesFeature lsqv:Distinct,
+                lsqv:Select ] ;
+    lsqv:resultCount 1 ;
+    lsqv:text """SELECT DISTINCT ?uri WHERE {
+  ?uri <http://dbpedia.org/property/placeofburial> <http://dbpedia.org/resource/Père_Lachaise_Cemetery>
+}
 """ ;
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
@@ -1749,63 +1806,6 @@ ORDER BY ASC(COUNT(?university))
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
-:99 a lsqv:Query,
-        qat:Enumeration,
-        qat:Factoid ;
-    rdfs:label "What is the city and country of the Michelin company headquarters?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 2 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 2 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Select,
-                lsqv:Union ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """SELECT DISTINCT ?uri WHERE {
-  { <http://dbpedia.org/resource/Michelin> <http://dbpedia.org/property/locationCountry> ?uri . }
-  UNION
-  { <http://dbpedia.org/resource/Michelin> <http://dbpedia.org/property/locationCity> ?uri }
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:18 a lsqv:Query,
-        qat:Factoid,
-        qat:LimitedRankedListing ;
-    rdfs:label "Which country has the highest population?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 1 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Distinct,
-                lsqv:Limit,
-                lsqv:OrderBy,
-                lsqv:Orderby,
-                lsqv:Select ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """PREFIX res: <http://dbpedia.org/resource/>
-PREFIX dbo: <http://dbpedia.org/ontology/>
-SELECT DISTINCT ?country WHERE {
-  ?country dbo:populationTotal ?population .
-} ORDER BY DESC(?population) LIMIT 1
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
-:50 a lsqv:Query,
-        qat:Confirmation ;
-    rdfs:label "Was Edmund Hillary the first person to reach the summit of Mount Everest?" ;
-    lsqv:hasStructuralFeatures [ lsqv:bgpCount 1 ;
-            lsqv:projectVarCount 0 ;
-            lsqv:tpCount 1 ;
-            lsqv:usesFeature lsqv:Ask ] ;
-    lsqv:resultCount 1 ;
-    lsqv:text """ASK WHERE { 
-  <http://dbpedia.org/resource/Mount_Everest> <http://dbpedia.org/ontology/firstAscentPerson> <http://dbpedia.org/resource/Edmund_Hillary> 
-}
-""" ;
-    dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
-    dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
-
 [] a qa:AnnotationQuestion ;
     oa:hasBody [ a qat:LinguisticIssue,
                 qat:OrthographicNoise ] ;
@@ -1817,4 +1817,95 @@ SELECT DISTINCT ?country WHERE {
                 qat:LinguisticIssue,
                 qat:SemanticIssue ] ;
     oa:hasTarget :18 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :1 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :2 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :6 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue,
+                qat:VaguePredicateGrounding ] ;
+    oa:hasTarget :7 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SchemaCoverageMismatch,
+                qat:SemanticIssue ] ;
+    oa:hasTarget :13 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :14 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :17 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :23 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :32 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :35 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:EntityAttributeMismatch,
+                qat:SemanticIssue ] ;
+    oa:hasTarget :45 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:ImplicitRelationInference,
+                qat:SemanticIssue ] ;
+    oa:hasTarget :57 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue ] ;
+    oa:hasTarget :60 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue,
+                qat:SemanticIssue,
+                qat:SyntacticDistortion,
+                qat:VaguePredicateGrounding ] ;
+    oa:hasTarget :70 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue,
+                qat:VaguePredicateGrounding ] ;
+    oa:hasTarget :71 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:SemanticIssue,
+                qat:VaguePredicateGrounding ] ;
+    oa:hasTarget :95 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LinguisticIssue,
+                qat:SyntacticDistortion ] ;
+    oa:hasTarget :97 .
+
+[] a qa:AnnotationQuestion ;
+    oa:hasBody [ a qat:LexicalGroundingMismatch,
+                qat:LinguisticIssue ] ;
+    oa:hasTarget :98 .
 
