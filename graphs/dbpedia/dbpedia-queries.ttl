@@ -1806,6 +1806,126 @@ WHERE {
     dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
     dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime .
 
+101:
+  question: "How many unique authors have works in Science Fiction literary genre?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 1
+
+102:
+  question: "What are the 10 countries with the highest total population?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 2
+
+103:
+  question: "Identify the company associated with products such as iPhone and iPad."
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 6
+
+104:
+  question: "What is the birthplace of Gustave Eiffel?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 7
+
+105:
+  question: "Which films star Johnny Depp as a lead actor?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 13
+
+106:
+  question: "Is J.K. Rowling the author of the Harry Potter series?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 14
+
+107:
+  question: "What films have Netflix as their distributor?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 17
+
+108:
+  question: "Which country has the highest total population?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 18
+
+109:
+  question: "Which organizations were founded or formed in 1990?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 23
+
+110:
+  question: "Who are the managers of the football club whose home stadium is Old Trafford?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 32
+
+111:
+  question: "Which political party does Varanasi's current leader belong to, and is Narendra Modi a member of that party?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 35
+
+112:
+  question: "When was the Apollo 11 mission launched?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 45
+
+113:
+  question: "What instruments are used in jazz?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 57
+
+114:
+  question: "What is the total population of the largest city in Canada?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 60
+
+115:
+  question: "How many people hold the rank of General in the United States military?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 70
+
+116:
+  question: "Who is listed as a leader of the United Nations?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 71
+
+117:
+  question: "What is the capital of the state of California?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 73
+
+118:
+  question: "Which people are buried in Père Lachaise Cemetery?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 95
+
+119:
+  question: "Which rivers originate from the Rocky Mountains?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 97
+
+120:
+  question: "What are the areas served by FedEx?"
+  dct:created "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  dct:modified "2026-07-22T15:16:26+00:00"^^xsd:dateTime ;
+  closeMatch: 98
+
 [] a qa:AnnotationQuestion ;
     oa:hasBody [ a qat:LinguisticIssue,
                 qat:OrthographicNoise ] ;
