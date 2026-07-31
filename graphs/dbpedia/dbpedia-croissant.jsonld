@@ -35,7 +35,10 @@
     { "@type": "FileObject", "@id": "queries-graph", "name": "dbpedia-queries.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
 
     { "@type": "FileObject", "@id": "void", "name": "dbpedia-void.ttl", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "text/turtle" },
-    { "@type": "FileObject", "@id": "void-graph", "name": "dbpedia-void.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" }
+    { "@type": "FileObject", "@id": "void-graph", "name": "dbpedia-void.graph", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/octet-stream" },
+
+    {"@type": "FileObject", "@id": "json", "name": "dbpedia.json", "contentUrl": "https://zenodo.org/records/20073836", "encodingFormat": "application/json"}
+
   ],
 
   "recordSet": [
