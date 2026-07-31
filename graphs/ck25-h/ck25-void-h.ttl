@@ -9,7 +9,7 @@
 <http://ld.company.org/>
     a void:Dataset ;
     dcterms:title "Corporate VoID Description" ;
-    void:sparqlEndpoint <http://157.27.26.146:7001> ;
+    void:sparqlEndpoint <http://157.27.26.146:7003> ;
     void:triples "27035"^^xsd:integer ;
     void:distinctSubjects "2693"^^xsd:integer ;
     void:distinctObjects "2641"^^xsd:integer ;
