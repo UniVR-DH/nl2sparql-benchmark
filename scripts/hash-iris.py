@@ -486,6 +486,40 @@ def _process_yaml_queries(
         encoding="utf-8",
     )
 
+import json
+
+def _process_json_file(
+    src: Path,
+    dst: Path,
+    namespaces: list[str],
+    hash_len: int,
+    fmt: str,
+) -> None:
+    import json
+    data = json.load(src.open(encoding="utf-8"))
+
+    def _hash_obj(obj: object) -> object:
+        if isinstance(obj, dict):
+            new_dict = {}
+            for k, v in obj.items():
+                if k == "sparql" and isinstance(v, str):
+                    # Hash IRIs inside the SPARQL query string
+                    new_dict[k] = hash_sparql_string(v, namespaces, hash_len, fmt)
+                else:
+                    new_dict[k] = _hash_obj(v)
+            return new_dict
+        if isinstance(obj, list):
+            return [_hash_obj(item) for item in obj]
+        if isinstance(obj, str):
+            # Hash plain IRIs that start with a configured namespace
+            for ns in namespaces:
+                if obj.startswith(ns):
+                    return hash_full_iri(obj, namespaces, hash_len, fmt)
+            return obj
+        return obj
+
+    hashed = _hash_obj(data)
+    json.dump(hashed, dst.open("w", encoding="utf-8"), indent=2, ensure_ascii=False)
 
 def process_file_streaming(
     src: Path,
@@ -495,6 +529,10 @@ def process_file_streaming(
     fmt: str,
     hash_query_strings: bool,
 ) -> None:
+    if src.suffix in (".json", ".jsonld"):
+        _process_json_file(src, dst, namespaces, hash_len, fmt)
+        return
+    
     if hash_query_strings and src.suffix in (".yaml", ".yml"):
         _process_yaml_queries(src, dst, namespaces, hash_len, fmt)
         return
