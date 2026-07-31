@@ -1,0 +1,359 @@
+{
+  "dataset": {
+    "id": "https://text2sparql.aksw.org/2025/corporate/",
+    "prefix": "corp",
+    "defaultNamespace": "http://ld.company.org/prod-vocab/"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": { "en": "In which department is Ms. Brant?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  <http://ld.company.org/prod-instances/empl-Karen.Brant%40company.org> pv:memberOf ?result .\n  ?result a pv:Department .\n}"
+      }
+    },
+    {
+      "id": 2,
+      "question": { "en": "What is the telephone of Baldwin Dirksen?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  <http://ld.company.org/prod-instances/empl-Baldwin.Dirksen%40company.org> pv:phone ?result .\n}"
+      }
+    },
+    {
+      "id": 3,
+      "question": { "en": "Who is the manager of Heinrich Hoch?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  <http://ld.company.org/prod-instances/empl-Heinrich.Hoch%40company.org> pv:hasManager ?result .\n}"
+      }
+    },
+    {
+      "id": 4,
+      "question": { "en": "What is the email of Sabrina from Marketing?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?department pv:name \"Marketing\" .\n  ?person pv:memberOf ?department .\n  ?person pv:email ?result .\n  ?person pv:name ?name .\n  FILTER (CONTAINS(?name, \"Sabrina\"))\n}"
+      }
+    },
+    {
+      "id": 5,
+      "question": { "en": "Who has expertise in Transistors?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Transistor> .\n}"
+      }
+    },
+    {
+      "id": 6,
+      "question": { "en": "Who is our Sensor expert?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?result pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Sensor> .\n}"
+      }
+    },
+    {
+      "id": 7,
+      "question": { "en": "Who is the manager of the Data Services department?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?person pv:memberOf <http://ld.company.org/prod-instances/dept-41622> .\n  ?person pv:hasManager ?result .\n}"
+      }
+    },
+    {
+      "id": 8,
+      "question": { "en": "Which department is responsible for the Sensor Switch M558-2275045?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?result pv:responsibleFor <http://ld.company.org/prod-instances/hw-M558-2275045> .\n}"
+      }
+    },
+    {
+      "id": 9,
+      "question": { "en": "How many Sensor Switches do we offer?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT (COUNT(DISTINCT ?resultR) as ?result)\nWHERE {\n  ?resultR pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Sensor> .\n  ?resultR pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Switch> .\n}"
+      }
+    },
+    {
+      "id": 10,
+      "question": { "en": "What is the name of the Network expert from the Marketing Department?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?employee pv:memberOf <http://ld.company.org/prod-instances/dept-85880> .\n  ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Network> .\n  ?employee pv:name ?result .\n}"
+      }
+    },
+    {
+      "id": 11,
+      "question": { "en": "Which departments have Transducer Experts?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?employee pv:memberOf ?result .\n  ?employee pv:areaOfExpertise <http://ld.company.org/prod-instances/prod-cat-Transducer> .\n}"
+      }
+    },
+    {
+      "id": 12,
+      "question": { "en": "Which supplier are available to deliver Compensators?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?hardware pv:hasSupplier ?result .\n  ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Compensator> .\n}"
+      }
+    },
+    {
+      "id": 13,
+      "question": { "en": "How many suppliers do we have in France?" },
+      "query": {
+        "sparql": "PREFIX dbPedia: <http://dbpedia.org/resource/> \nPREFIX pv: <http://ld.company.org/prod-vocab/> \n\nSELECT (COUNT(DISTINCT ?supplier) as ?result)\nWHERE {\n  ?product pv:hasSupplier ?supplier .\n  ?supplier pv:country dbPedia:France .\n}"
+      }
+    },
+    {
+      "id": 14,
+      "question": { "en": "Which supplier in France delivers Compensators?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nPREFIX dbPedia: <http://dbpedia.org/resource/> \n\nSELECT DISTINCT ?result\nWHERE {\n  ?product pv:hasSupplier ?result .\n  ?product pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Compensator> .\n  ?result pv:country dbPedia:France .\n}"
+      }
+    },
+    {
+      "id": 15,
+      "question": { "en": "What is the cheapest Encoder we can get from a french or german supplier?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result \nWHERE {\n  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Encoder> .\n  ?result pv:price ?priceR .\n  ?priceR pv:amount ?price .\n  ?result pv:hasSupplier ?supplier .\n  ?supplier pv:addressCountry ?country .\n  FILTER ( (?country = \"France\") || (?country = \"Germany\") )\n\n  {\n    SELECT (MIN(?p) AS ?minPrice)\n    WHERE {\n      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Encoder> .\n      ?r pv:price ?pr .\n      ?pr pv:amount ?p .\n      ?r pv:hasSupplier ?s .\n      ?s pv:addressCountry ?c .\n      FILTER ( (?c = \"France\") || (?c = \"Germany\") )\n    }\n  }\n\n  FILTER (?price = ?minPrice)\n}"
+      }
+    },
+    {
+      "id": 16,
+      "question": { "en": "Do we have suppliers in Toulouse?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nASK\nWHERE {\n  ?result a pv:Supplier .\n  ?supplier pv:addressLocality \"Toulouse\" .\n}"
+      }
+    },
+    {
+      "id": 17,
+      "question": { "en": "Which suppliers do we have in Toulouse?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?result a pv:Supplier .\n  ?result pv:addressLocality \"Toulouse\" .\n}"
+      }
+    },
+    {
+      "id": 18,
+      "question": { "en": "What is the cheapest Oscillator we have?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result \nWHERE {\n  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .\n  ?result pv:price ?priceR .\n  ?priceR pv:amount ?price .\n\n  {\n    SELECT (MIN(?p) AS ?minPrice)\n    WHERE {\n      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Oscillator> .\n      ?r pv:price ?pr .\n      ?pr pv:amount ?p .\n    }\n  }\n\n  FILTER (?price = ?minPrice)\n}"
+      }
+    },
+    {
+      "id": 19,
+      "question": { "en": "What is the most expensive service we offer?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result \nWHERE {\n  ?result a pv:Service .\n  ?result pv:price ?priceR .\n  ?priceR pv:amount ?price .\n\n  {\n    SELECT (MAX(?p) AS ?maxPrice)\n    WHERE {\n      ?r a pv:Service .\n      ?r pv:price ?pr .\n      ?pr pv:amount ?p .\n    }\n  }\n\n  FILTER (?price = ?maxPrice)\n}"
+      }
+    },
+    {
+      "id": 20,
+      "question": { "en": "Who is responsible for the most expensive service we offer?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result\nWHERE {\n  ?service a pv:Service .\n  ?service pv:hasProductManager ?result .\n  ?service pv:price ?priceR .\n  ?priceR pv:amount ?price .\n\n  {\n    SELECT (MAX(?p) AS ?maxPrice)\n    WHERE {\n      ?s a pv:Service .\n      ?s pv:price ?pr .\n      ?pr pv:amount ?p .\n    }\n  }\n\n  FILTER (?price = ?maxPrice)\n}"
+      }
+    },
+    {
+      "id": 21,
+      "question": { "en": "What is the heaviest coil that does not exceed a base area of 15x15 milimeter?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result \nWHERE {\n  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .\n  ?result pv:weight_g ?weight_g .\n  ?result pv:width_mm ?width_mm .\n  ?result pv:depth_mm ?depth_mm .\n\n  FILTER (?width_mm <= 15)\n  FILTER (?depth_mm <= 15)\n\n  {\n    SELECT (MAX(?w) AS ?maxWeight)\n    WHERE {\n      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .\n      ?r pv:weight_g ?w .\n      ?r pv:width_mm ?wmm .\n      ?r pv:depth_mm ?dmm .\n      FILTER (?wmm <= 15)\n      FILTER (?dmm <= 15)\n    }\n  }\n\n  FILTER (?weight_g = ?maxWeight)\n}"
+      }
+    },
+    {
+      "id": 22,
+      "question": { "en": "What products are compatible with the U990 LCD Inductor?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  <http://ld.company.org/prod-instances/hw-U990-5234138> pv:compatibleProduct ?result .\n}"
+      }
+    },
+    {
+      "id": 23,
+      "question": { "en": "What products can I get from US suppliers that are compatible with the U990 LCD Inductor?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  <http://ld.company.org/prod-instances/hw-U990-5234138> pv:compatibleProduct ?result .\n  ?result pv:hasSupplier ?supplier .\n  ?supplier pv:country <http://dbpedia.org/resource/United_States> .\n}"
+      }
+    },
+    {
+      "id": 24,
+      "question": { "en": "What is the pontiometer with the smallest volume?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result\nWHERE {\n  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Potentiometer> .\n  ?result pv:width_mm ?width_mm .\n  ?result pv:depth_mm ?depth_mm .\n  ?result pv:height_mm ?height_mm .\n\n  BIND(?width_mm * ?depth_mm * ?height_mm AS ?volume)\n\n  {\n    SELECT (MIN(?v) AS ?minVolume)\n    WHERE {\n      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Potentiometer> .\n      ?r pv:width_mm ?w .\n      ?r pv:depth_mm ?d .\n      ?r pv:height_mm ?h .\n      BIND(?w * ?d * ?h AS ?v)\n    }\n  }\n\n  FILTER (?volume = ?minVolume)\n}"
+      }
+    },
+    {
+      "id": 25,
+      "question": { "en": "Which coil has the highest density?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result\nWHERE {\n  ?result pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .\n  ?result pv:width_mm ?width_mm .\n  ?result pv:depth_mm ?depth_mm .\n  ?result pv:height_mm ?height_mm .\n  ?result pv:weight_g ?weight_g .\n\n  BIND(?width_mm * ?depth_mm * ?height_mm / 1000000000 AS ?volume_m3)\n  BIND(?weight_g / 1000 AS ?weight_kg)\n  BIND(?weight_kg / ?volume_m3 AS ?density)\n\n  {\n    SELECT (MAX(?d) AS ?maxDensity)\n    WHERE {\n      ?r pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Coil> .\n      ?r pv:width_mm ?w .\n      ?r pv:depth_mm ?dp .\n      ?r pv:height_mm ?h .\n      ?r pv:weight_g ?wg .\n\n      BIND(?w * ?dp * ?h / 1000000000 AS ?v_m3)\n      BIND(?wg / 1000 AS ?kg)\n      BIND(?kg / ?v_m3 AS ?d)\n    }\n  }\n\n  FILTER (?density = ?maxDensity)\n}"
+      }
+    },
+    {
+      "id": 26,
+      "question": { "en": "In which cities are our US suppliers for LCDs?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?product pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-LCD> .\n  ?product pv:hasSupplier ?supplier .\n  ?supplier pv:country <http://dbpedia.org/resource/United_States> .\n  ?supplier pv:addressLocality ?result .\n}"
+      }
+    },
+    {
+      "id": 27,
+      "question": { "en": "Give me a phone directory of everyone on staff who does not manage anyone, I need name, email, and phone, sorted by name?" },
+      "query": {
+        "sparql": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?empl ?name ?email ?phone\nWHERE {\n  ?emplClass rdfs:subClassOf* pv:Employee .\n  ?empl a ?emplClass ;\n      pv:name ?name ;\n      pv:email ?email .\n  OPTIONAL { ?empl pv:phone ?phone }\n  FILTER NOT EXISTS { [] pv:hasManager ?empl . }\n}\nORDER BY ?name"
+      }
+    },
+    {
+      "id": 28,
+      "question": { "en": "Do we have any service that does apply to a BOM where parts are sourced from Russia?" },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nASK\nWHERE {\n  { # all Russia-sourced hardware in any BOM\n    SELECT ?bom ?hw\n    WHERE {\n      ?bom pv:hasBomPart ?bomPart .\n      ?bomPart pv:hasPart ?hw .\n      ?hw pv:hasSupplier ?suppl .\n      ?suppl pv:addressCountry ?country .\n      FILTER (CONTAINS(LCASE(?country), LCASE(\"Russia\")))\n    }\n  }\n\n  # is there a service eligible for that specific Russia-sourced hardware?\n  ?s a pv:Service .\n  ?s pv:eligibleFor ?hw .\n}"
+      }
+    },
+    {
+      "id": 29,
+      "question": { "en": "What suppliers - I need name, country and price - deliver the 6th to 10th most expensive hardware items." },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?name ?country ?price\nWHERE {\n  ?sup a pv:Supplier ;\n    pv:addressCountry ?country ;\n  pv:name ?name .\n  ?hw a pv:Hardware ;\n  pv:price/pv:amount ?price ;\n    pv:price/pv:currency \"EUR\" ;\n    pv:hasSupplier ?sup .\n}\nORDER BY DESC(?price)\nLIMIT 5 OFFSET 10"
+      }
+    },
+    {
+      "id": 30,
+      "question": { "en": "Which department have more than 5 employees? I need their names and the number of employees." },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?name (COUNT(?emp) AS ?numEmployees)\nWHERE {\n  ?dept a pv:Department ;\n    pv:name ?name .\n  ?emp a pv:Employee ;\n    pv:memberOf ?dept .\n}\nGROUP BY ?dept ?name\nHAVING (COUNT(?emp) > 5)"
+      }
+    },
+    {
+      "id": 31,
+      "question": { "en": "Per product category, what's our lightest and heaviest hardware item?" },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?cat (MIN(?w) AS ?minWeight) (MAX(?w) AS ?maxWeight)\nWHERE {\n  ?catItem a pv:ProductCategory ;\n    pv:name ?cat .\n  ?hw a pv:Hardware ;\n    pv:hasCategory ?catItem ;\n    pv:weight_g ?w .\n}\nGROUP BY ?cat"
+      }
+    },
+    {
+      "id": 32,
+      "question": { "en": "For each supplier, what's the average price (in EUR) of what they sell, round reasonably?" },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?name (ROUND(AVG(?amt) * 100) / 100 AS ?avgEur) WHERE {\n  ?sup a pv:Supplier ;\n    pv:name ?name .\n  ?hw pv:hasSupplier ?sup ;\n    pv:price/pv:amount ?amt ;\n    pv:price/pv:currency \"EUR\" .\n}\nGROUP BY ?sup ?name"
+      }
+    },
+    {
+      "id": 33,
+      "question": { "en": "Are there departments with no manager assigned?" },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nASK\nWHERE {\n  ?dept a pv:Department .\n  FILTER NOT EXISTS {\n    ?m pv:memberOf ?dept .\n    ?m a pv:Manager .\n  }\n}"
+      }
+    },
+    {
+      "id": 34,
+      "question": { "en": "I need to update my supplier rolodex, give me every supplier's name and all address details." },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?name ?locality ?ccode ?country\nWHERE {\n  ?sup a pv:Supplier ;\n    pv:name ?name .\n  OPTIONAL { ?sup pv:addressLocality ?locality . }\n  OPTIONAL { ?sup pv:addressCountryCode ?ccode . }\n  OPTIONAL { ?sup pv:addressCountry ?country . }\n}"
+      }
+    },
+    {
+      "id": 35,
+      "question": { "en": "For every product, list what other products it is compatible with and the price differences between both." },
+      "query": {
+        "sparql": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv:    <http://ld.company.org/prod-vocab/>\n\nSELECT ?prod ?compatible (?prodAmount - ?compatibleAmount AS ?priceDiff)\nWHERE {\n  ?prodClass rdfs:subClassOf* pv:Product .\n  ?prod a ?prodClass ;\n    pv:compatibleProduct ?compatible .\n  ?prod pv:price/pv:amount ?prodAmount ;\n    pv:price/pv:currency \"EUR\" .\n  ?compatible pv:price/pv:amount ?compatibleAmount ;\n    pv:price/pv:currency \"EUR\" .\n}"
+      }
+    },
+    {
+      "id": 36,
+      "question": { "en": "Which area of expertise is most relevant among our products, what are the top three skills?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?cat ?name\nWHERE {\n  {\n    SELECT ?cat ?name (COUNT(?hw) AS ?cnt)\n    WHERE {\n      ?hw a pv:Hardware ;\n          pv:hasCategory ?cat .\n      ?cat pv:name ?name .\n    }\n    GROUP BY ?cat ?name\n  }\n  {\n    SELECT (MIN(?c_threshold) AS ?minTopThree)\n    WHERE {\n      {\n        SELECT ?cat_inner (COUNT(?hw_inner) AS ?c_inner)\n        WHERE {\n          ?hw_inner a pv:Hardware ;\n                    pv:hasCategory ?cat_inner .\n        }\n        GROUP BY ?cat_inner\n      }\n      {\n        SELECT (COUNT(DISTINCT ?cat_rank) AS ?rank_count) \n               ?c_threshold\n        WHERE {\n          {\n            SELECT ?cat_inner2 (COUNT(?hw_inner2) AS ?c_inner2)\n            WHERE {\n              ?hw_inner2 a pv:Hardware ;\n                         pv:hasCategory ?cat_inner2 .\n            }\n            GROUP BY ?cat_inner2\n          }\n          {\n            SELECT ?cat_rank (COUNT(?hw_rank) AS ?c_rank)\n            WHERE {\n              ?hw_rank a pv:Hardware ;\n                       pv:hasCategory ?cat_rank .\n            }\n            GROUP BY ?cat_rank\n          }\n          FILTER (?c_rank > ?c_inner2)\n          BIND(?c_inner2 AS ?c_threshold)\n        }\n        GROUP BY ?c_threshold\n        HAVING (COUNT(DISTINCT ?cat_rank) < 3)\n      }\n      FILTER (?c_inner = ?c_threshold)\n    }\n  }\n  FILTER (?cnt >= ?minTopThree)\n}\nORDER BY DESC(?cnt)"
+      }
+    },
+    {
+      "id": 37,
+      "question": { "en": "For each Bill of Material, how many parts does it contain and what is the total material quantity — show me only those BOMs exceeding 600 total items and order them descending." },
+      "query": {
+        "sparql": "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?bom (COUNT(?part) AS ?partCount) (SUM(?qty) AS ?totalQty)\nWHERE {\n  ?bom a pv:BillOfMaterial ;\n    pv:hasBomPart ?part .\n  ?part pv:quantity ?qty_ .\n  BIND(xsd:int(?qty_) AS ?qty)\n}\nGROUP BY ?bom\nHAVING (SUM(?qty) > 600)\nORDER BY DESC(SUM(?qty))"
+      }
+    },
+    {
+      "id": 38,
+      "question": { "en": "I want to update my contact list, for each Employee give me name, email, phone number and the department they belong to as well as their direct report." },
+      "query": {
+        "sparql": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?name ?email ?phone ?dept ?manager\nWHERE {\n  ?agentClass rdfs:subClassOf* pv:Agent .\n  ?empl a ?agentClass ;\n    pv:name ?name .\n  OPTIONAL { ?empl pv:email ?email . }\n  OPTIONAL { ?empl pv:phone ?phone . }\n  OPTIONAL { ?empl pv:memberOf/pv:name ?dept . }\n  OPTIONAL { ?empl pv:hasManager/pv:name ?manager . }\n}"
+      }
+    },
+    {
+      "id": 39,
+      "question": { "en": "Which hardware items are wider than they are tall, and have a depth under 50 mm? List their dimensions." },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?hw ?width ?height ?depth\nWHERE {\n  ?hw a pv:Hardware ;\n    pv:width_mm ?width ;\n    pv:height_mm ?height ;\n    pv:depth_mm ?depth .\n  FILTER (?width > ?height && ?depth < 50)\n}"
+      }
+    },
+    {
+      "id": 40,
+      "question": { "en": "Which hardware items - list id and name - have no active product manager?" },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?hw ?id ?name\nWHERE {\n  ?hw a pv:Hardware ;\n    pv:id ?id ;\n    pv:name ?name .\n  FILTER NOT EXISTS { ?hw pv:hasProductManager/pv:name [] . }\n}"
+      }
+    },
+    {
+      "id": 41,
+      "question": { "en": "For each manager, what percentage of their entire team work in the same department as the manager?" },
+      "query": {
+        "sparql": "PREFIX prodi: <http://ld.company.org/prod-instances/>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?m ?name (?deptTeam / ?fullteam * 100 AS ?pct)\nWHERE {\n\n  ?m pv:name ?name .\n\n  { # full team\n    SELECT ?m (COUNT(*) AS ?fullteam) WHERE {\n      ?e pv:hasManager ?m .\n    } GROUP BY ?m\n  }\n\n  { # team in same dept\n    SELECT ?m (COUNT(*) AS ?deptTeam) WHERE {\n      ?m pv:memberOf ?dept .\n      ?e pv:hasManager ?m .\n      ?e pv:memberOf ?dept .\n    } GROUP BY ?m\n  }\n}"
+      }
+    },
+    {
+      "id": 42,
+      "question": { "en": "Which Bill-of-Material has the highest average unit cost of its hardware parts, and what is that average?" },
+      "query": {
+        "sparql": "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?bom ?avgUnitCost\nWHERE {\n  {\n    SELECT ?bom (ROUND(AVG(?spst / ?sq) * 100) / 100 AS ?avgUnitCost)\n    WHERE {\n      {\n        SELECT ?bom (SUM(?partSubTotal) AS ?spst) (SUM(xsd:int(?quant)) AS ?sq)\n        WHERE {\n          ?bom a pv:BillOfMaterial ;\n               pv:hasBomPart ?part .\n          ?part pv:quantity ?quant .\n          ?part pv:hasPart/pv:price/pv:amount ?amount .\n          ?part pv:hasPart/pv:price/pv:currency \"EUR\" .\n          BIND(xsd:int(?quant) * ?amount AS ?partSubTotal)\n        }\n        GROUP BY ?bom\n      }\n    }\n    GROUP BY ?bom\n  }\n\n  {\n    SELECT (MAX(?avg) AS ?maxAvg)\n    WHERE {\n      {\n        SELECT ?bom (ROUND(AVG(?spst / ?sq) * 100) / 100 AS ?avg)\n        WHERE {\n          {\n            SELECT ?bom (SUM(?partSubTotal) AS ?spst) (SUM(xsd:int(?quant)) AS ?sq)\n            WHERE {\n              ?bom a pv:BillOfMaterial ;\n                   pv:hasBomPart ?part .\n              ?part pv:quantity ?quant .\n              ?part pv:hasPart/pv:price/pv:amount ?amount .\n              ?part pv:hasPart/pv:price/pv:currency \"EUR\" .\n              BIND(xsd:int(?quant) * ?amount AS ?partSubTotal)\n            }\n            GROUP BY ?bom\n          }\n        }\n        GROUP BY ?bom\n      }\n    }\n  }\n\n  FILTER (?avgUnitCost = ?maxAvg)\n}"
+      }
+    },
+    {
+      "id": 43,
+      "question": { "en": "Show me any cycles of product compatibility — i.e. product A says it's compatible with B, and B says it's compatible with A (mutual pairs)." },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?a ?b\nWHERE {\n  ?a pv:compatibleProduct ?b .\n  ?b pv:compatibleProduct ?a .\n  FILTER (STR(?a) < STR(?b))\n}"
+      }
+    },
+    {
+      "id": 44,
+      "question": { "en": "Which hardware items have dimensions in the top 10 % of all widths, and what are their IDs, names and widths?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?id ?name ?width\nWHERE {\n  { # get min-max range\n    SELECT (MIN(?width) AS ?minW) (MAX(?width) AS ?maxW)\n    WHERE {\n      ?hw a pv:Hardware ;\n        pv:width_mm ?width .\n    }\n  }\n\n  # get 90. percentile\n  BIND(?minW + (0.9 * (?maxW - ?minW)) AS ?pct90)\n\n  ?hw a pv:Hardware ;\n    pv:id ?id ;\n    pv:name ?name ;\n    pv:width_mm ?width .\n\n  FILTER(?width >= ?pct90)\n}\nORDER BY DESC(?width)"
+      }
+    },
+    {
+      "id": 45,
+      "question": { "en": "Which supplier delivers the most reliable Inductor?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT DISTINCT ?result\nWHERE {\n  ?hardware pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .\n  ?hardware pv:reliabilityIndex ?reliabilityIndex .\n  ?hardware pv:hasSupplier ?result .\n\n  {\n    SELECT (MAX(?ri) AS ?maxRI)\n    WHERE {\n      ?h pv:hasCategory <http://ld.company.org/prod-instances/prod-cat-Inductor> .\n      ?h pv:reliabilityIndex ?ri .\n    }\n  }\n\n  FILTER(?reliabilityIndex = ?maxRI)\n}"
+      }
+    },
+    {
+      "id": 46,
+      "question": { "en": "What are the top 5 suppliers with best average reliability over their products." },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?supplier ?avgReliability\nWHERE {\n  {\n    SELECT ?supplier (AVG(?ri) AS ?avgReliability)\n    WHERE {\n      ?hardware pv:hasSupplier ?supplier ;\n                pv:reliabilityIndex ?ri .\n    }\n    GROUP BY ?supplier\n  }\n\n  {\n    SELECT (MIN(?topVal) AS ?threshold)\n    WHERE {\n      SELECT (AVG(?ri) AS ?topVal)\n      WHERE {\n        ?h pv:hasSupplier ?s ;\n           pv:reliabilityIndex ?ri .\n      }\n      GROUP BY ?s\n      ORDER BY DESC(?topVal)\n      LIMIT 5\n    }\n  }\n\n  FILTER(?avgReliability >= ?threshold)\n}\nORDER BY DESC(?avgReliability) ?supplier"
+      }
+    },
+    {
+      "id": 47,
+      "question": { "en": "From which countries are the BOM parts of our SkySync MechWave delivered?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  <http://ld.company.org/prod-instances/bom-17> pv:hasBomPart ?bomPart .\n  ?bomPart pv:hasPart ?product .\n  ?product pv:hasSupplier ?supplier .\n  ?supplier pv:country ?result\n}"
+      }
+    },
+    {
+      "id": 48,
+      "question": { "en": "Show me all BOMs which have at least on part from a polish supplier." },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT DISTINCT ?result\nWHERE {\n  ?result a pv:BillOfMaterial .\n  ?result pv:hasBomPart ?bomPart .\n  ?bomPart pv:hasPart ?product .\n  ?product pv:hasSupplier ?supplier .\n  ?supplier pv:country <http://dbpedia.org/resource/Poland> .\n}"
+      }
+    },
+    {
+      "id": 49,
+      "question": { "en": "How many suppliers can deliver alternative compatible products for the K367 Strain Encoder?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\nSELECT (COUNT(DISTINCT ?supplier) AS ?result)\nWHERE {\n  <http://ld.company.org/prod-instances/hw-K367-1320550> pv:compatibleProduct ?alternative .\n  ?alternative pv:hasSupplier ?supplier .\n}"
+      }
+    },
+    {
+      "id": 50,
+      "question": { "en": "Which department is resposible for the most product and how many product are this?" },
+      "query": {
+        "sparql": "PREFIX pv: <http://ld.company.org/prod-vocab/>\n\nSELECT ?result ?count\nWHERE {\n  {\n    SELECT ?result (COUNT(?product) AS ?count)\n    WHERE {\n      ?result pv:responsibleFor ?product .\n    }\n    GROUP BY ?result\n  }\n  {\n    SELECT (MAX(?c_inner) AS ?maxCount)\n    WHERE {\n      SELECT ?r_inner (COUNT(?p_inner) AS ?c_inner)\n      WHERE {\n        ?r_inner pv:responsibleFor ?p_inner .\n      }\n      GROUP BY ?r_inner\n    }\n  }\n  FILTER (?count = ?maxCount)\n}"
+      }
+    }
+  ]
+}

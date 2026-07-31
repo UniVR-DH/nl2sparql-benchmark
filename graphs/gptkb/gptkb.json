@@ -1,0 +1,184 @@
+{
+  "dataset": {
+    "id": "https://gptkb.org/",
+    "prefix": "gptkb",
+    "defaultNamespace": "http://gptkb.org/dataset"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": { "en": "When was Mahatma Gandhi born?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\nSELECT ?dob WHERE { gptkb:Mahatma_Gandhi gptkbp:birthDate ?dob . }"
+      }
+    },
+    {
+      "id": 2,
+      "question": { "en": "Which mountain(s) in Italy have the maximum elevation, and what are their IRIs, names and elevations?" },
+      "query": {
+        "sparql": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT ?mountain ?mountainLabel ?elev\nWHERE {\n  ?mountain gptkbp:instanceOf gptkb:mountain .\n  ?mountain gptkbp:country gptkb:Italy .\n  ?mountain gptkbp:elevation ?elev .\n\n  OPTIONAL { ?mountain rdfs:label ?mountainLabel }\n\n  {\n    SELECT (MAX(xsd:decimal(REPLACE(str(?e), \"[^0-9\\\\.\\\\-]\", \"\"))) AS ?maxElev)\n    WHERE {\n      ?m gptkbp:instanceOf gptkb:mountain .\n      ?m gptkbp:country gptkb:Italy .\n      ?m gptkbp:elevation ?e .\n    }\n  }\n\n  FILTER (\n    xsd:decimal(REPLACE(str(?elev), \"[^0-9\\\\.\\\\-]\", \"\")) = ?maxElev\n  )\n}"
+      }
+    },
+    {
+      "id": 3,
+      "question": { "en": "Which city hosted the 2012 Summer Olympics and what was the main venue?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT ?hostCity ?mainVenue\nWHERE {\n  gptkb:2012_Summer_Olympics\n      gptkbp:hostCity ?hostCity ;\n      gptkbp:mainVenue ?mainVenue .\n}"
+      }
+    },
+    {
+      "id": 4,
+      "question": { "en": "Which people are influenced by someone who was influenced by Mahatma Gandhi?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT ?s WHERE {\n  ?s gptkbp:influencedBy ?o .\n  ?o gptkbp:influencedBy gptkb:Mahatma_Gandhi .\n}"
+      }
+    },
+    {
+      "id": 5,
+      "question": { "en": "Which entities are headquartered in Mountain View, California?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT ?s\nWHERE {\n  ?s gptkbp:headquarters gptkb:Mountain_View%2C_California .\n}"
+      }
+    },
+    {
+      "id": 6,
+      "question": { "en": "Which entities are directly connected to Isaac Newton, either as people influenced by him or as entities that influenced him?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT DISTINCT ?o\nWHERE {\n  {\n    gptkb:Isaac_Newton gptkbp:influenced ?o .\n  }\n  UNION\n  {\n    ?o gptkbp:influenced gptkb:Isaac_Newton .\n  }\n}"
+      }
+    },
+    {
+      "id": 7,
+      "question": { "en": "How many people have a nationality that is either German or French?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT (COUNT(DISTINCT ?person) AS ?count)\nWHERE {\n  ?person gptkbp:nationality ?citizenship .\n  VALUES ?citizenship {\n    gptkb:German\n    gptkb:French\n  }\n}"
+      }
+    },
+    {
+      "id": 8,
+      "question": { "en": "What are the notable works of A. A. Milne?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT DISTINCT ?work\nWHERE {\n  gptkb:A._A._Milne gptkbp:notableWork ?work .\n}"
+      }
+    },
+    {
+      "id": 9,
+      "question": { "en": "Which persons work in chemistry or physics, either by their field of work or by their occupation, have received at least one award, and are members of at least one organisation? Return each person together with their field, award, and organisation." },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT DISTINCT ?person ?field ?award ?organisation\nWHERE {\n  ?person gptkbp:instanceOf gptkb:person ;\n          gptkbp:awardReceived ?award ;\n          gptkbp:memberOf ?organisation .\n  {\n    ?person gptkbp:fieldOfWork ?field .\n    FILTER(CONTAINS(LCASE(STR(?field)), \"chemistry\")\n        || CONTAINS(LCASE(STR(?field)), \"physics\"))\n  }\n  UNION\n  {\n    ?person gptkbp:occupation ?occ .\n    FILTER(?occ = gptkb:chemist\n        || ?occ = gptkb:physicist)\n    BIND(STR(?occ) AS ?field)\n  }\n}\nORDER BY ?person"
+      }
+    },
+    {
+      "id": 10,
+      "question": { "en": "Which artist won the Grammy Award for Best Male Pop Vocal Performance in 1999, and what was the winning work?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT DISTINCT ?winner ?work WHERE {\n  gptkb:Grammy_Award_for_Best_Male_Pop_Vocal_Performance_%281999%29\n      gptkbp:winner ?winner ;\n      gptkbp:winningWork ?work .\n}"
+      }
+    },
+    {
+      "id": 11,
+      "question": { "en": "Which persons do not have a recorded birth place in the dataset?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT DISTINCT ?person\nWHERE {\n  ?person gptkbp:instanceOf gptkb:person .\n  FILTER NOT EXISTS {\n    ?person gptkbp:birthPlace ?birthPlace .\n  }\n}"
+      }
+    },
+    {
+      "id": 12,
+      "question": { "en": "Which persons have received the highest number of awards? Return each person together with their award count and name." },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT ?person ?personName ?awardCount\nWHERE {\n  {\n    SELECT ?person (COUNT(DISTINCT ?award) AS ?awardCount)\n    WHERE {\n      ?person gptkbp:instanceOf gptkb:person ;\n              gptkbp:awardReceived ?award .\n    }\n    GROUP BY ?person\n  }\n\n  {\n    SELECT (MAX(?ac) AS ?maxAwardCount)\n    WHERE {\n      SELECT ?person (COUNT(DISTINCT ?award) AS ?ac)\n      WHERE {\n        ?person gptkbp:instanceOf gptkb:person ;\n                gptkbp:awardReceived ?award .\n      }\n      GROUP BY ?person\n    }\n  }\n\n  OPTIONAL {\n    ?person rdfs:label ?personName .\n    FILTER(LANG(?personName) = \"en\")\n  }\n\n  FILTER(?awardCount = ?maxAwardCount)\n}\nORDER BY ?person"
+      }
+    },
+    {
+      "id": 13,
+      "question": { "en": "How many people from each country have received both a Grammy Award and an Emmy Award?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT ?country (COUNT(DISTINCT ?person) AS ?count)\nWHERE {\n  ?person gptkbp:awardReceived gptkb:Emmy_Award ;\n          gptkbp:awardReceived gptkb:Grammy_Award ;\n          gptkbp:nationality ?country .\n}\nGROUP BY ?country"
+      }
+    },
+    {
+      "id": 14,
+      "question": { "en": "Which pairs of awards have been received by the same person?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT DISTINCT ?a1 ?a2\nWHERE {\n  ?p gptkbp:awardReceived ?a1 .\n  ?p gptkbp:awardReceived ?a2 .\n  FILTER (STR(?a1) < STR(?a2))\n}"
+      }
+    },
+    {
+      "id": 15,
+      "question": { "en": "Who won both the Academy Award for Best Director and the Golden Globe Award for Best Director?" },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT DISTINCT ?person WHERE {\n  ?person gptkbp:awardReceived gptkb:Academy_Award_for_Best_Director .\n  ?person gptkbp:awardReceived gptkb:Golden_Globe_Award_for_Best_Director .\n}"
+      }
+    },
+    {
+      "id": 16,
+      "question": { "en": "Are there System Managers with problem solving ability?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nASK {\n  gptkb:System_Manager gptkbp:abilities ?ability .\n  FILTER(\n    CONTAINS(LCASE(STR(?ability)), \"problem solving\")\n  )\n}"
+      }
+    },
+    {
+      "id": 17,
+      "question": { "en": "Which persons were members of the National Academy of Sciences and received at least one award? Return each person together with their awards." },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT DISTINCT ?person ?award\nWHERE {\n  ?person gptkbp:instanceOf gptkb:person ;\n          gptkbp:memberOf gptkb:National_Academy_of_Sciences ;\n          gptkbp:awardReceived ?award .\n}"
+      }
+    },
+    {
+      "id": 18,
+      "question": { "en": "Who served the longest term as president of an institution? Return the person, the institution, and the length of their term." },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?person ?institution ?years\nWHERE {\n  {\n    SELECT ?person ?institution ((xsd:integer(?termEnd) - xsd:integer(?termStart)) AS ?years)\n    WHERE {\n      ?person gptkbp:instanceOf gptkb:person ;\n              gptkbp:president ?institution ;\n              gptkbp:termStart ?termStart ;\n              gptkbp:termEnd ?termEnd .\n    }\n  }\n\n  {\n    SELECT (MAX(?termLength) AS ?maxYears)\n    WHERE {\n      ?p gptkbp:instanceOf gptkb:person ;\n         gptkbp:president ?inst ;\n         gptkbp:termStart ?ts ;\n         gptkbp:termEnd ?te .\n      BIND((xsd:integer(?te) - xsd:integer(?ts)) AS ?termLength)\n    }\n  }\n\n  FILTER(?years = ?maxYears)\n}"
+      }
+    },
+    {
+      "id": 19,
+      "question": { "en": "Which operas have more than 1 librettist?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT ?opera WHERE {\n  ?opera gptkbp:librettist ?librettist .\n}\nGROUP BY ?opera\nHAVING (COUNT(?librettist) > 1)"
+      }
+    },
+    {
+      "id": 20,
+      "question": { "en": "Who are the people that have been librettist for more than 7 operas?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT ?librettist WHERE {\n  ?opera gptkbp:librettist ?librettist .\n}\nGROUP BY ?librettist\nHAVING (COUNT(?opera) > 7)"
+      }
+    },
+    {
+      "id": 21,
+      "question": { "en": "Give me any 5 people who were born in France." },
+      "query": {
+        "sparql": "PREFIX gptkbp: <https://gptkb.org/prop/>\nPREFIX gptkb: <https://gptkb.org/entity/>\n\nSELECT ?person\nWHERE {\n  ?person gptkbp:instanceOf gptkb:person ;\n          gptkbp:birthPlace gptkb:France .\n}\nLIMIT 5"
+      }
+    },
+    {
+      "id": 22,
+      "question": { "en": "Show me 5 notable employees of Bolt Beranek and Newman." },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\nSELECT ?employee\nWHERE {\n  gptkb:Bolt_Beranek_and_Newman gptkbp:notableEmployee ?employee .\n}\nLIMIT 5"
+      }
+    },
+    {
+      "id": 23,
+      "question": { "en": "For each person, how many distinct organisations are they a member of?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\nSELECT ?person (COUNT(DISTINCT ?org) AS ?orgCount)\nWHERE {\n  ?person gptkbp:instanceOf gptkb:person ;\n          gptkbp:memberOf ?org .\n}\nGROUP BY ?person\nHAVING (COUNT(DISTINCT ?org) >= 2)\nORDER BY DESC(?orgCount)"
+      }
+    },
+    {
+      "id": 24,
+      "question": { "en": "List the five notable employees of Bolt Beranek and Newman ordered alphabetically by IRI." },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\nSELECT ?employee\nWHERE {\n  gptkb:Bolt_Beranek_and_Newman gptkbp:notableEmployee ?employee .\n}\nORDER BY ASC (?employee)\nLIMIT 5"
+      }
+    },
+    {
+      "id": 25,
+      "question": { "en": "Which person is associated with the maximum number of notable works in the dataset?" },
+      "query": {
+        "sparql": "PREFIX gptkb: <https://gptkb.org/entity/>\nPREFIX gptkbp: <https://gptkb.org/prop/>\n\nSELECT ?person ?workCount\nWHERE {\n  {\n    SELECT ?person (COUNT(DISTINCT ?work) AS ?workCount)\n    WHERE {\n      ?person gptkbp:instanceOf gptkb:person ;\n              gptkbp:notableWork ?work .\n    }\n    GROUP BY ?person\n  }\n  {\n    SELECT (MAX(?c_inner) AS ?maxCount)\n    WHERE {\n      SELECT ?p_inner\n             (COUNT(DISTINCT ?w_inner) AS ?c_inner)\n      WHERE {\n        ?p_inner gptkbp:instanceOf gptkb:person ;\n                 gptkbp:notableWork ?w_inner .\n      }\n      GROUP BY ?p_inner\n    }\n  }\n  FILTER(?workCount = ?maxCount)\n}"
+      }
+    }
+  ]
+}
